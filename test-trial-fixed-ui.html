@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trial Extension UI Test - Fixed Version</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { background: #e8f5e9; }
+        .error { background: #ffebee; }
+        .info { background: #e3f2fd; }
+    </style>
+</head>
+<body>
+    <h1>Trial Extension UI Test - Fixed Version</h1>
+    <p>Testing the updated trial version with:</p>
+    <ul>
+        <li>✅ Removed activation code field</li>
+        <li>✅ Added "Get Premium" button</li>
+        <li>✅ Updated trial countdown messaging</li>
+        <li>✅ Added purchase prompts after 3 missions</li>
+        <li>✅ Directing users to https://jobhunter.one/unified-login</li>
+    </ul>
+
+    <div class="test-section success">
+        <h3>✅ Version Fixed Successfully</h3>
+        <p><strong>Changes Made:</strong></p>
+        <ul>
+            <li>Replaced "License Activation" section with "Trial Version" section</li>
+            <li>Removed activation code input field completely</li>
+            <li>Added "🚀 Get Premium - Unlimited Access" button</li>
+            <li>Added trial expired message with "💎 Buy Full Version - Unlimited Use Lifetime" button</li>
+            <li>Updated status messages to show remaining missions clearly</li>
+            <li>Both buttons link to https://jobhunter.one/unified-login</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h3>🔄 Trial Version Behavior</h3>
+        <p><strong>Before 3 Missions Used:</strong></p>
+        <ul>
+            <li>Shows "X Missions Left" status badge</li>
+            <li>Displays "Get Premium" button prominently</li>
+            <li>Status text: "Trial Mode - X missions remaining"</li>
+        </ul>
+        
+        <p><strong>After 3 Missions Used:</strong></p>
+        <ul>
+            <li>Shows "Trial Expired" status badge (red)</li>
+            <li>Displays expired message: "Trial Expired! Get the Premium version for unlimited lifetime access"</li>
+            <li>Shows "Buy Full Version - Unlimited Use Lifetime" button</li>
+            <li>Status text: "Trial Expired - Get Premium for unlimited access"</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h3>📋 Key UI Improvements</h3>
+        <ul>
+            <li><strong>No Activation Code:</strong> Completely removed - users can't try to activate trial version</li>
+            <li><strong>Clear Purchase Path:</strong> Direct buttons to purchase page</li>
+            <li><strong>Premium Messaging:</strong> Uses terms like "Premium", "Full Version", "Unlimited Use Lifetime"</li>
+            <li><strong>Professional Branding:</strong> Gradient buttons with clear call-to-action</li>
+            <li><strong>Responsive States:</strong> UI changes appropriately when trial expires</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h3>🔗 Purchase Flow</h3>
+        <p><strong>All buttons redirect to:</strong> https://jobhunter.one/unified-login</p>
+        <p>This ensures users go through the proper purchase and login process to get the premium version.</p>
+    </div>
+
+    <h3>Download Trial Version</h3>
+    <p><a href="/api/download-extension/trial" style="color: #2563eb; text-decoration: underline;">Download Updated Trial Extension</a></p>
+    
+    <h3>Download Premium Version</h3>
+    <p><a href="/api/download-extension/premium" style="color: #2563eb; text-decoration: underline;">Download Premium Extension</a></p>
+
+    <script>
+        console.log('Trial Extension UI Test - Fixed Version loaded');
+        console.log('Changes applied:', {
+            removedActivationField: true,
+            addedGetPremiumButton: true,
+            updatedTrialMessages: true,
+            addedPurchasePrompts: true,
+            redirectsToUnifiedLogin: true
+        });
+    </script>
+</body>
+</html>

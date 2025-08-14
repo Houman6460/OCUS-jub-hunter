@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCUS Trial Extension Test - v2.1.8-STABLE</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #9C27B0;
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        
+        .download-section {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: white;
+            color: #9C27B0;
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .test-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-item h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        
+        .status {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        
+        .status.pass {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status.fail {
+            background: #F44336;
+            color: white;
+        }
+        
+        .status.pending {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-list li::before {
+            content: "🆓";
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #9C27B0;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .warning {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning h4 {
+            margin-top: 0;
+            color: #FF9800;
+        }
+        
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🆓 OCUS Trial Extension Test Suite</h1>
+        <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+            <strong>Version 2.1.8-STABLE-TRIAL</strong> - Complete Testing Environment
+        </p>
+        
+        <div class="download-section">
+            <h2 style="margin-top: 0;">Download Trial Extension</h2>
+            <p>Test the trial version with 3-mission limit and server-side tracking</p>
+            <a href="https://jobhunter.one/api/download-extension/trial" class="download-btn">
+                📥 Download Trial Version
+            </a>
+            <p style="margin-top: 15px; font-size: 14px; opacity: 0.9;">
+                File: ocus-job-hunter-trial-v2.1.8-STABLE-FIXED.zip
+            </p>
+        </div>
+        
+        <div class="section">
+            <h2>🎯 Trial Version Features</h2>
+            <ul class="feature-list">
+                <li>Exactly 3 mission acceptance limit <span class="badge">STRICT</span></li>
+                <li>Server-side tracking with device fingerprinting <span class="badge">SECURE</span></li>
+                <li>Cross-browser usage prevention <span class="badge">PROTECTED</span></li>
+                <li>Automatic disabling after 3 missions <span class="badge">ENFORCED</span></li>
+                <li>Purchase redirect on limit reached <span class="badge">CONVERSION</span></li>
+                <li>Real-time popup status updates <span class="badge">LIVE</span></li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <h4>⚠️ Testing Requirements</h4>
+            <p><strong>Important:</strong> Trial limitations are enforced server-side using device fingerprinting. Once you reach 3 missions, the extension will be completely disabled across all browsers on your device.</p>
+            <p><strong>Reset Instructions:</strong> Contact admin or use a different device for additional testing.</p>
+        </div>
+        
+        <div class="section">
+            <h2>🧪 Test Scenarios</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>Installation Test</h3>
+                    <span class="status pending">MANUAL</span>
+                    <p>1. Download trial extension zip</p>
+                    <p>2. Extract and load in Chrome (Developer mode)</p>
+                    <p>3. Verify popup shows "TRIAL VERSION" badge</p>
+                    <p>4. Check popup displays "3 Missions Remaining"</p>
+                </div>
+                
+                <div class="test-item">
+                    <h3>Mission Acceptance Test</h3>
+                    <span class="status pending">MANUAL</span>
+                    <p>1. Navigate to OCUS mission page</p>
+                    <p>2. Extension should auto-detect and accept mission</p>
+                    <p>3. Popup should update usage counter</p>
+                    <p>4. Check server tracking via API</p>
+                </div>
+                
+                <div class="test-item">
+                    <h3>Limit Enforcement Test</h3>
+                    <span class="status pending">MANUAL</span>
+                    <p>1. Accept exactly 3 missions</p>
+                    <p>2. On 4th mission attempt, extension should be disabled</p>
+                    <p>3. Popup should show "Trial Expired" overlay</p>
+                    <p>4. Purchase button should redirect to jobhunter.one</p>
+                </div>
+                
+                <div class="test-item">
+                    <h3>Cross-Browser Test</h3>
+                    <span class="status pending">MANUAL</span>
+                    <p>1. Use trial in Chrome until limit reached</p>
+                    <p>2. Install same extension in Firefox/Edge</p>
+                    <p>3. Should show expired status immediately</p>
+                    <p>4. Verify device fingerprinting works</p>
+                </div>
+                
+                <div class="test-item">
+                    <h3>Server API Test</h3>
+                    <span class="status pending">AUTO</span>
+                    <p>1. Test /api/extension/track-trial-usage</p>
+                    <p>2. Test /api/extension/check-trial-status</p>
+                    <p>3. Verify database persistence</p>
+                    <p>4. Check error handling</p>
+                </div>
+                
+                <div class="test-item">
+                    <h3>UI/UX Test</h3>
+                    <span class="status pending">MANUAL</span>
+                    <p>1. Verify trial branding throughout</p>
+                    <p>2. Check purchase flow integration</p>
+                    <p>3. Test responsive popup design</p>
+                    <p>4. Validate error messages</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🔗 API Endpoints</h2>
+            <div class="code">
+POST /api/extension/track-trial-usage
+{
+  "extensionId": "ext_1234567890_abcdef123",
+  "userFingerprint": "fp_987654321",
+  "missionId": "mission_12345"
+}
+
+Response: {
+  "success": true,
+  "usageCount": 1,
+  "remaining": 2,
+  "expired": false,
+  "lastUsed": "2025-08-06T08:45:30.123Z"
+}
+            </div>
+            
+            <div class="code">
+POST /api/extension/check-trial-status
+{
+  "extensionId": "ext_1234567890_abcdef123",
+  "userFingerprint": "fp_987654321"
+}
+
+Response: {
+  "success": true,
+  "usageCount": 3,
+  "remaining": 0,
+  "expired": true,
+  "lastUsed": "2025-08-06T08:45:30.123Z"
+}
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📋 Testing Checklist</h2>
+            <ul class="feature-list">
+                <li>Extension loads correctly in Chrome developer mode</li>
+                <li>Popup displays trial branding and counter</li>
+                <li>Mission detection and acceptance works</li>
+                <li>Usage tracking persists across browser sessions</li>
+                <li>3-mission limit is strictly enforced</li>
+                <li>Extension disables after limit reached</li>
+                <li>Cross-browser fingerprinting prevents bypass</li>
+                <li>Purchase redirect works on trial expiry</li>
+                <li>Server APIs respond correctly</li>
+                <li>Error handling works for edge cases</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>🚀 Next Steps</h2>
+            <p><strong>After successful trial testing:</strong></p>
+            <ol>
+                <li>Test premium version with unlimited access</li>
+                <li>Verify purchase flow integration</li>
+                <li>Validate user dashboard download system</li>
+                <li>Test end-to-end user journey</li>
+                <li>Perform production deployment</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Test API endpoints automatically
+        async function testAPIs() {
+            const testData = {
+                extensionId: 'test_' + Date.now(),
+                userFingerprint: 'fp_test_' + Math.random().toString(36).substr(2, 9)
+            };
+            
+            try {
+                // Test trial status check
+                const statusResponse = await fetch('/api/extension/check-trial-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (statusResponse.ok) {
+                    const data = await statusResponse.json();
+                    console.log('✅ Trial status API working:', data);
+                } else {
+                    console.error('❌ Trial status API failed:', statusResponse.status);
+                }
+                
+                // Test trial usage tracking
+                const trackResponse = await fetch('/api/extension/track-trial-usage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...testData,
+                        missionId: 'test_mission_' + Date.now()
+                    })
+                });
+                
+                if (trackResponse.ok) {
+                    const data = await trackResponse.json();
+                    console.log('✅ Trial tracking API working:', data);
+                } else {
+                    console.error('❌ Trial tracking API failed:', trackResponse.status);
+                }
+                
+            } catch (error) {
+                console.error('❌ API test error:', error);
+            }
+        }
+        
+        // Run API tests on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🧪 Running API tests...');
+            testAPIs();
+        });
+    </script>
+</body>
+</html>

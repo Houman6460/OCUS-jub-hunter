@@ -1,0 +1,114 @@
+{
+  "manifest_version": 3,
+  "name": "OCUS Job Hunter Chrome Extension", 
+  "version": "2.1.7",
+  "version_token": "b7d3f8e2-4a1b-4c7d-9e2f-3d8a5c9e7f1b",
+  "description": "Automates login, mission monitoring, and acceptance on the OCUS platform",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "OCUS Unified Extension",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "contextMenus",
+    "notifications",
+    "alarms",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://app.ocus.com/*",
+    "https://*.ocus.work/*",
+    "https://api.telegram.org/*",
+    "http://localhost:5000/*",
+    "https://*.replit.app/*",
+    "https://jobhunter.one/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["config.js", "activation-manager.js", "document-head-fix.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["fix-extension-conflicts.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["emergency-panel.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["dropdown-stabilizer.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/photographer/*", "https://*.ocus.work/photographer/*"],
+      "js": ["auto-start-trigger.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*", "https://app.ocus.com/login*", "https://*.ocus.work/login*", "https://app.ocus.com/auth*", "https://*.ocus.work/auth*"],
+      "js": ["login-functions.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*", "https://app.ocus.com/login*", "https://*.ocus.work/login*", "https://app.ocus.com/auth*", "https://*.ocus.work/auth*"],
+      "js": ["document-head-fix.js", "content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["mission-monitor.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["vue-support.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://app.ocus.com/mission/*", 
+        "https://*.ocus.work/mission/*",
+        "https://app.ocus.com/missions/*", 
+        "https://*.ocus.work/missions/*"
+      ],
+      "js": ["new-mission-acceptor.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["helper-functions.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["sound-manager.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.ocus.com/*", "https://*.ocus.work/*"],
+      "js": ["page-refresh-timer.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

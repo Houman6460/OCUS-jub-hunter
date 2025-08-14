@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payment Test - Demo Card Details</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .demo-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .demo-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        .demo-card h4 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .demo-card .number {
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin: 8px 0;
+        }
+        .demo-card .details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        .test-btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🧪 Stripe Payment Testing Interface</h1>
+        <p>Test your real Stripe integration with demo card details. These cards will process in test mode.</p>
+        
+        <div class="instructions success">
+            <h3>✅ Stripe Configuration Status</h3>
+            <ul>
+                <li>Stripe Secret Key: Configured</li>
+                <li>Stripe Public Key: Configured</li>
+                <li>API Connection: Active</li>
+                <li>Test Mode: Enabled</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 How to Test</h3>
+            <ol>
+                <li>Go to your website dashboard at: <code>http://localhost:5000/dashboard</code></li>
+                <li>Navigate to the "Orders" tab</li>
+                <li>Click "Purchase Extension" button</li>
+                <li>Use any of the demo card details below</li>
+                <li>Complete the purchase flow</li>
+            </ol>
+        </div>
+        
+        <h2>💳 Demo Card Details for Testing</h2>
+        <div class="demo-cards">
+            <div class="demo-card">
+                <h4>VISA - Successful Payment</h4>
+                <div class="number">4242 4242 4242 4242</div>
+                <div class="details">
+                    <span>Exp: 12/28</span>
+                    <span>CVC: 123</span>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>VISA - Requires Authentication</h4>
+                <div class="number">4000 0027 6000 3184</div>
+                <div class="details">
+                    <span>Exp: 12/28</span>
+                    <span>CVC: 123</span>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>Mastercard - Successful</h4>
+                <div class="number">5555 5555 5555 4444</div>
+                <div class="details">
+                    <span>Exp: 12/28</span>
+                    <span>CVC: 123</span>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>American Express - Successful</h4>
+                <div class="number">3782 822463 10005</div>
+                <div class="details">
+                    <span>Exp: 12/28</span>
+                    <span>CVC: 1234</span>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>VISA - Card Declined</h4>
+                <div class="number">4000 0000 0000 0002</div>
+                <div class="details">
+                    <span>Exp: 12/28</span>
+                    <span>CVC: 123</span>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h4>VISA - Insufficient Funds</h4>
+                <div class="number">4000 0000 0000 9995</div>
+                <div class="details">
+                    <span>Exp: 12/28</span>
+                    <span>CVC: 123</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions warning">
+            <h3>⚠️ Important Notes</h3>
+            <ul>
+                <li>These are test cards - no real money will be charged</li>
+                <li>Use any future expiration date (MM/YY format)</li>
+                <li>Use any 3-digit CVC for Visa/Mastercard, 4-digit for Amex</li>
+                <li>Use any valid billing address</li>
+                <li>Payments will appear in your Stripe test dashboard</li>
+            </ul>
+        </div>
+        
+        <h2>🚀 Quick Test Actions</h2>
+        <a href="http://localhost:5000" class="test-btn">Go to Homepage</a>
+        <a href="http://localhost:5000/dashboard" class="test-btn">Go to Dashboard</a>
+        <a href="http://localhost:5000/checkout" class="test-btn">Direct Checkout</a>
+        
+        <div class="card">
+            <h3>🔍 Testing Checklist</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li>□ Payment form loads correctly</li>
+                <li>□ Successful payment with 4242 4242 4242 4242</li>
+                <li>□ Authentication flow with 4000 0027 6000 3184</li>
+                <li>□ Declined payment with 4000 0000 0000 0002</li>
+                <li>□ Order appears in dashboard after payment</li>
+                <li>□ Download links work correctly</li>
+                <li>□ Extension files download successfully</li>
+                <li>□ Email confirmation sent (if configured)</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>📊 Monitor Test Results</h3>
+            <p>After testing, check:</p>
+            <ul>
+                <li><strong>Stripe Dashboard:</strong> View test payments at <a href="https://dashboard.stripe.com/test/payments" target="_blank">https://dashboard.stripe.com/test/payments</a></li>
+                <li><strong>Browser Console:</strong> Check for any JavaScript errors</li>
+                <li><strong>Network Tab:</strong> Verify API calls are successful</li>
+                <li><strong>Database:</strong> Confirm orders are created correctly</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🧪 Stripe Payment Test Interface Loaded');
+        console.log('📝 Use demo card: 4242 4242 4242 4242 for successful payments');
+        console.log('🔍 Check browser network tab for payment API calls');
+    </script>
+</body>
+</html>

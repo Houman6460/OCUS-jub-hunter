@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test v2.3.1 Extension Activation - FIXED VERSION</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .alert {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .alert.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .download-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .download-link:hover {
+            background: #0056b3;
+        }
+        .master-keys {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        .key {
+            background: #e9ecef;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .key:hover {
+            background: #dee2e6;
+        }
+        .steps {
+            counter-reset: step-counter;
+        }
+        .step {
+            counter-increment: step-counter;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            position: relative;
+            padding-left: 50px;
+        }
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: #007bff;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 OCUS Extension v2.3.1-ACTIVATION-FIXED</h1>
+        
+        <div class="alert success">
+            <strong>✅ ACTIVATION SYSTEM COMPLETELY FIXED!</strong><br>
+            This version has a completely rewritten popup.js with working button handlers and master key validation.
+        </div>
+
+        <div class="alert info">
+            <strong>🎯 What's Fixed in v2.3.1:</strong><br>
+            • Rewritten activation function with proper error handling<br>
+            • Fixed button click event listeners<br>
+            • Added test activation button for easy debugging<br>
+            • Auto-fill master key functionality<br>
+            • Working UI transformation to premium mode<br>
+            • Enhanced console logging for debugging
+        </div>
+
+        <h2>📥 Download Fixed Extension</h2>
+        <a href="/api/download-extension/ocus-extension-v2.3.1-ACTIVATION-FIXED.zip" class="download-link">
+            Download v2.3.1-ACTIVATION-FIXED.zip (135 KB)
+        </a>
+
+        <h2>🔑 Working Master Keys</h2>
+        <div class="master-keys">
+            <p><strong>Click any key to copy:</strong></p>
+            <div class="key" onclick="copyToClipboard(this)">OCUS-PRO-7X9K-2M8L-QW3R-UNLIMITED-2025</div>
+            <div class="key" onclick="copyToClipboard(this)">JOBHUNTER-ENTERPRISE-5N4B-8F7G-H1J2-PREMIUM-KEY</div>
+            <div class="key" onclick="copyToClipboard(this)">UNLIMITED-ACCESS-9P0L-3K5M-6V8C-MASTER-2025</div>
+            <div class="key" onclick="copyToClipboard(this)">PREMIUM-EXTENSION-4R7T-2Y9U-1I8O-ENTERPRISE-CODE</div>
+        </div>
+
+        <h2>🧪 Testing Instructions</h2>
+        <div class="steps">
+            <div class="step">
+                <strong>Download & Install</strong><br>
+                Download the extension ZIP file and extract it. Load it in Chrome as an unpacked extension.
+            </div>
+            
+            <div class="step">
+                <strong>Open Extension</strong><br>
+                Click the extension icon to open the popup. You should see enhanced console logging immediately.
+            </div>
+            
+            <div class="step">
+                <strong>Test Activation Button</strong><br>
+                Look for the orange "🧪 Test Activation" button next to the main activation button. Click it to auto-fill and test.
+            </div>
+            
+            <div class="step">
+                <strong>Manual Activation</strong><br>
+                Or enter any master key manually in the activation field and click "🚀 Activate Extension".
+            </div>
+            
+            <div class="step">
+                <strong>Check Console</strong><br>
+                Open Chrome DevTools (F12) to see detailed activation logging. Every step is logged with emojis.
+            </div>
+            
+            <div class="step">
+                <strong>Verify Premium UI</strong><br>
+                After activation, the popup should transform to show "💎 PREMIUM ACTIVATED" with green premium styling.
+            </div>
+        </div>
+
+        <div class="alert warning">
+            <strong>🔍 Debugging Tips:</strong><br>
+            • Check browser console (F12) for detailed logs<br>
+            • Look for "🔥🔥🔥 ACTIVATION FUNCTION STARTED!" message<br>
+            • Test button auto-fills the master key automatically<br>
+            • UI should transform within 2 seconds of successful activation
+        </div>
+
+        <h2>🆘 If Still Not Working</h2>
+        <div class="alert info">
+            1. <strong>Check Console Errors:</strong> Look for any JavaScript errors in the browser console<br>
+            2. <strong>Verify Popup HTML:</strong> Make sure popup.html has the correct button IDs<br>
+            3. <strong>Try Test Button:</strong> Use the orange test button instead of manual entry<br>
+            4. <strong>Reload Extension:</strong> Refresh the extension in Chrome's extensions page
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(element) {
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = element.style.background;
+                element.style.background = '#28a745';
+                element.style.color = 'white';
+                setTimeout(() => {
+                    element.style.background = original;
+                    element.style.color = '';
+                }, 1000);
+            });
+        }
+    </script>
+</body>
+</html>

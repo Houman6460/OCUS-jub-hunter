@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Master Key Activation</title>
+</head>
+<body>
+    <h1>Master Key Test</h1>
+    <input type="text" id="testKey" value="OCUS-MASTER-2025" placeholder="Enter activation key">
+    <button onclick="testActivation()">Test Activation</button>
+    <div id="result"></div>
+
+    <script>
+        async function testActivation() {
+            const key = document.getElementById('testKey').value;
+            const result = document.getElementById('result');
+            
+            // Master keys that work universally
+            const masterKeys = [
+                'OCUS-MASTER-2025',
+                'JOBHUNTER-PRO-KEY', 
+                'UNLIMITED-ACCESS-2025',
+                'PREMIUM-EXTENSION-KEY',
+                'MASTER-ACTIVATION-CODE',
+                'OCUS-2024-DEMO-KEY', 
+                'OCUS-TRIAL-2024-EXT'
+            ];
+            
+            result.innerHTML = `<p>Testing key: ${key}</p>`;
+            
+            if (masterKeys.includes(key.toUpperCase())) {
+                result.innerHTML += `<p style="color: green;">✅ MASTER KEY VALID!</p>`;
+                result.innerHTML += `<p>Key: ${key.toUpperCase()}</p>`;
+                result.innerHTML += `<p>Status: Activated with unlimited access</p>`;
+            } else {
+                result.innerHTML += `<p style="color: red;">❌ Invalid key</p>`;
+                result.innerHTML += `<p>Try: OCUS-MASTER-2025</p>`;
+            }
+        }
+        
+        // Test on page load
+        testActivation();
+    </script>
+</body>
+</html>

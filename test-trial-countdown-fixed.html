@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trial Countdown Fixed - Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test-section { margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .error { background: #ffebee; border-left: 4px solid #f44336; }
+        .info { background: #e3f2fd; border-left: 4px solid #2196f3; }
+        .warning { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .feature { background: white; border-left: 4px solid #9c27b0; }
+        .download-section { background: #f3e5f5; border-left: 4px solid #673ab7; }
+        h1 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        h3 { margin-top: 0; color: #555; }
+        .big-number { font-size: 48px; color: #667eea; font-weight: bold; text-align: center; margin: 10px 0; }
+        ul { margin: 10px 0; }
+        li { margin: 5px 0; }
+        a { color: #2563eb; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+        .code { background: #f1f1f1; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Trial Countdown System - FIXED</h1>
+    <p><strong>Trial countdown functionality has been completely fixed and enhanced!</strong></p>
+
+    <div class="test-section success">
+        <h3>✅ Fixed Issues</h3>
+        <ul>
+            <li><strong>Mission Acceptance Restored:</strong> Trial version can now properly accept missions</li>
+            <li><strong>Floating Panel Added:</strong> Always-visible trial countdown panel on all OCUS pages</li>
+            <li><strong>Live Countdown:</strong> Shows remaining missions, counts down from 3 → 2 → 1 → 0</li>
+            <li><strong>Premium Button:</strong> Replaces countdown with "GET PREMIUM" button when exhausted</li>
+            <li><strong>Installation ID Tracking:</strong> Prevents trial reset by reinstalling extension</li>
+        </ul>
+    </div>
+
+    <div class="test-section feature">
+        <h3>🎯 Floating Trial Panel Behavior</h3>
+        <div style="display: flex; align-items: center; gap: 30px;">
+            <div style="flex: 1;">
+                <p><strong>Initial State (3 missions remaining):</strong></p>
+                <ul>
+                    <li>Shows "TRIAL VERSION" header</li>
+                    <li>Large number <span class="code">3</span> in blue</li>
+                    <li>"missions remaining" text</li>
+                    <li>Blue border color</li>
+                </ul>
+            </div>
+            <div style="text-align: center; background: rgba(0,0,0,0.9); color: white; padding: 15px; border-radius: 10px; border: 2px solid #667eea; min-width: 150px;">
+                <div style="font-size: 12px; color: #ccc; margin-bottom: 5px;">TRIAL VERSION</div>
+                <div class="big-number" style="font-size: 24px; color: #667eea; margin: 5px 0;">3</div>
+                <div style="font-size: 12px;">missions remaining</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 30px; margin-top: 20px;">
+            <div style="flex: 1;">
+                <p><strong>Exhausted State (0 missions remaining):</strong></p>
+                <ul>
+                    <li>Shows "TRIAL EXPIRED" header in red</li>
+                    <li>"GET PREMIUM" button</li>
+                    <li>Clicks open: https://jobhunter.one/unified-login</li>
+                    <li>Red border color</li>
+                </ul>
+            </div>
+            <div style="text-align: center; background: rgba(0,0,0,0.9); color: white; padding: 15px; border-radius: 10px; border: 2px solid #ff6b6b; min-width: 150px;">
+                <div style="font-size: 12px; color: #ff6b6b; margin-bottom: 8px;">TRIAL EXPIRED</div>
+                <button style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px;">
+                    GET PREMIUM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section info">
+        <h3>🔄 Mission Acceptance Flow</h3>
+        <p><strong>1. Page Load:</strong></p>
+        <ul>
+            <li>Extension initializes trial panel on all OCUS pages</li>
+            <li>Shows current remaining missions count</li>
+            <li>Panel stays visible during navigation</li>
+        </ul>
+        
+        <p><strong>2. Mission Acceptance:</strong></p>
+        <ul>
+            <li>Detects mission pages: <span class="code">app.ocus.com/missions/</span></li>
+            <li>Finds and clicks "Accept assignment" button</li>
+            <li>Updates trial counter: decrements remaining count</li>
+            <li>Shows floating notification with new count</li>
+            <li>Updates persistent panel immediately</li>
+        </ul>
+        
+        <p><strong>3. Trial Exhaustion:</strong></p>
+        <ul>
+            <li>After 3rd mission: panel shows "TRIAL EXPIRED"</li>
+            <li>Replaces countdown with "GET PREMIUM" button</li>
+            <li>Shows confirmation dialog with purchase link</li>
+            <li>All future clicks redirect to purchase page</li>
+        </ul>
+    </div>
+
+    <div class="test-section warning">
+        <h3>⚠️ Anti-Bypass Protection</h3>
+        <ul>
+            <li><strong>Installation ID Tracking:</strong> Unique ID generated on first install</li>
+            <li><strong>Reinstall Detection:</strong> Counter resets only if completely different installation</li>
+            <li><strong>Browser Switching:</strong> Each browser gets separate installation ID</li>
+            <li><strong>Storage Persistence:</strong> Trial data survives browser restarts</li>
+        </ul>
+    </div>
+
+    <div class="test-section download-section">
+        <h3>📦 Download Fixed Version</h3>
+        <p>The trial extension with working countdown is ready for download:</p>
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="/api/download-extension/trial" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; font-size: 16px;">
+                📥 Download Trial Extension v2.1.0
+            </a>
+        </div>
+        <p><strong>What's included:</strong></p>
+        <ul>
+            <li>Working mission acceptance functionality</li>
+            <li>Floating trial countdown panel (always visible)</li>
+            <li>Smart trial tracking with installation ID</li>
+            <li>Premium purchase integration</li>
+            <li>All original extension features</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h3>🎉 Testing Instructions</h3>
+        <ol>
+            <li><strong>Install Extension:</strong> Download and install in Chrome developer mode</li>
+            <li><strong>Visit OCUS:</strong> Go to any OCUS page (app.ocus.com)</li>
+            <li><strong>Check Panel:</strong> Look for floating trial panel (top-right, shows "3 missions remaining")</li>
+            <li><strong>Find Mission:</strong> Navigate to a mission page with "Accept assignment" button</li>
+            <li><strong>Accept Mission:</strong> Extension should auto-accept and show "2 missions remaining"</li>
+            <li><strong>Repeat 2 More Times:</strong> Panel should count down: 2 → 1 → 0</li>
+            <li><strong>Trial Exhausted:</strong> Panel shows "TRIAL EXPIRED" with "GET PREMIUM" button</li>
+            <li><strong>Click Button:</strong> Should open https://jobhunter.one/unified-login</li>
+        </ol>
+    </div>
+
+    <script>
+        console.log('Trial Countdown Test Page - Fixed');
+        console.log('Features implemented:');
+        console.log('- Floating panel with live countdown');
+        console.log('- Mission acceptance tracking');
+        console.log('- Premium button on exhaustion');
+        console.log('- Installation ID anti-bypass');
+        
+        // Test download endpoint
+        fetch('/api/download-extension/trial', { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Trial download endpoint working');
+                } else {
+                    console.log('❌ Trial download endpoint error:', response.status);
+                }
+            })
+            .catch(error => console.log('❌ Download test failed:', error));
+    </script>
+</body>
+</html>

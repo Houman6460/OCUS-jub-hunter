@@ -1,0 +1,8 @@
+{
+  // Cloudflare Workers (static assets) config
+  "name": "ocusjobhunter-static",
+  "compatibility_date": "2025-08-14",
+  "assets": {
+    "directory": "dist/public"
+  }
+}

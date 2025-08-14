@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-card { background: white; padding: 20px; margin: 15px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .error { color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .warning { color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Extension CORS & API Debug Test</h1>
+        <p>This page tests the exact same API calls the extension makes to help debug issues.</p>
+        
+        <div class="test-card">
+            <h3>Current Environment</h3>
+            <div id="envInfo"></div>
+        </div>
+
+        <div class="test-card">
+            <h3>API Connectivity Tests</h3>
+            <button onclick="testBasicConnectivity()">Test Basic Connection</button>
+            <button onclick="testValidationEndpoint()">Test Validation Endpoint</button>
+            <button onclick="testRegistrationEndpoint()">Test Registration</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <div id="connectivityResults"></div>
+        </div>
+
+        <div class="test-card">
+            <h3>Extension Simulation</h3>
+            <p>This simulates exactly what the extension does:</p>
+            <button onclick="simulateExtensionFlow()">Simulate Full Extension Flow</button>
+            <div id="simulationResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize environment info
+        document.getElementById('envInfo').innerHTML = `
+            <strong>Domain:</strong> ${window.location.hostname}<br>
+            <strong>Port:</strong> ${window.location.port}<br>
+            <strong>Protocol:</strong> ${window.location.protocol}<br>
+            <strong>Backend URL:</strong> ${detectBaseURL()}<br>
+            <strong>User Agent:</strong> ${navigator.userAgent.slice(0, 80)}...
+        `;
+
+        function detectBaseURL() {
+            const hostname = window.location.hostname;
+            
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:5000';
+            }
+            
+            if (hostname.includes('replit.app') || hostname.includes('replit.dev')) {
+                return window.location.origin;
+            }
+            
+            return 'https://your-production-domain.com';
+        }
+
+        function generateInstallationId() {
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substring(2, 15);
+            const userAgent = navigator.userAgent.slice(0, 50);
+            const fingerprint = btoa(userAgent + timestamp + random).substring(0, 32);
+            return `install-${timestamp}-${fingerprint}`;
+        }
+
+        async function testBasicConnectivity() {
+            const resultsDiv = document.getElementById('connectivityResults');
+            resultsDiv.innerHTML = '<div class="warning">Testing basic connectivity...</div>';
+            
+            try {
+                const baseURL = detectBaseURL();
+                const response = await fetch(`${baseURL}/api/products/pricing`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Basic connectivity working<br>
+                            Status: ${response.status}<br>
+                            Product: ${data.name}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Basic connectivity failed<br>
+                            Status: ${response.status} ${response.statusText}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Network error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testValidationEndpoint() {
+            const resultsDiv = document.getElementById('connectivityResults');
+            resultsDiv.innerHTML = '<div class="warning">Testing validation endpoint...</div>';
+            
+            try {
+                const baseURL = detectBaseURL();
+                const installationId = generateInstallationId();
+                const testCode = 'OCUS-1754324507792-K05VJND6';
+                
+                const response = await fetch(`${baseURL}/api/extension/validate-activation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        activationCode: testCode,
+                        installationId: installationId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.valid) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Validation endpoint working<br>
+                            Code: ${testCode}<br>
+                            Message: ${result.message}<br>
+                            Activation ID: ${result.activationId}
+                        </div>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Validation failed<br>
+                            Message: ${result.message}
+                        </div>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Validation endpoint error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testRegistrationEndpoint() {
+            const resultsDiv = document.getElementById('connectivityResults');
+            resultsDiv.innerHTML = '<div class="warning">Testing registration endpoint...</div>';
+            
+            try {
+                const baseURL = detectBaseURL();
+                const installationId = generateInstallationId();
+                
+                const response = await fetch(`${baseURL}/api/extension/register-installation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        installationId: installationId,
+                        deviceFingerprint: 'test-fingerprint',
+                        userAgent: navigator.userAgent,
+                        extensionVersion: '2.1.9'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Registration endpoint working<br>
+                            Installation ID: ${installationId}<br>
+                            Message: ${result.message}
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Registration failed<br>
+                            Error: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Registration endpoint error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function simulateExtensionFlow() {
+            const resultsDiv = document.getElementById('simulationResults');
+            resultsDiv.innerHTML = '<div class="warning">Simulating full extension flow...</div>';
+            
+            const log = [];
+            const baseURL = detectBaseURL();
+            const installationId = generateInstallationId();
+            
+            try {
+                // Step 1: Register installation
+                log.push('🔄 Step 1: Registering installation...');
+                const regResponse = await fetch(`${baseURL}/api/extension/register-installation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        installationId: installationId,
+                        deviceFingerprint: btoa('test-device-fingerprint'),
+                        userAgent: navigator.userAgent,
+                        extensionVersion: '2.1.9'
+                    })
+                });
+                
+                const regResult = await regResponse.json();
+                if (regResult.success) {
+                    log.push('✅ Registration successful');
+                } else {
+                    log.push(`❌ Registration failed: ${regResult.error}`);
+                }
+                
+                // Step 2: Validate activation code
+                log.push('🔄 Step 2: Validating activation code...');
+                const testCode = 'OCUS-1754324507792-K05VJND6';
+                const valResponse = await fetch(`${baseURL}/api/extension/validate-activation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        activationCode: testCode,
+                        installationId: installationId
+                    })
+                });
+                
+                const valResult = await valResponse.json();
+                if (valResult.valid) {
+                    log.push(`✅ Activation successful: ${valResult.message}`);
+                    log.push(`🆔 Activation ID: ${valResult.activationId}`);
+                } else {
+                    log.push(`❌ Activation failed: ${valResult.message}`);
+                }
+                
+                // Display results
+                const isSuccess = regResult.success && valResult.valid;
+                resultsDiv.innerHTML = `
+                    <div class="${isSuccess ? 'success' : 'error'}">
+                        <strong>${isSuccess ? '✅ EXTENSION FLOW WORKING' : '❌ EXTENSION FLOW FAILED'}</strong><br>
+                        Installation ID: ${installationId}
+                    </div>
+                    <pre>${log.join('\n')}</pre>
+                    <pre>Full Results:\n${JSON.stringify({registration: regResult, validation: valResult}, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                log.push(`❌ Network error: ${error.message}`);
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Extension flow failed with network error
+                    </div>
+                    <pre>${log.join('\n')}</pre>
+                `;
+            }
+        }
+
+        async function runAllTests() {
+            await testBasicConnectivity();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testValidationEndpoint();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testRegistrationEndpoint();
+        }
+    </script>
+</body>
+</html>

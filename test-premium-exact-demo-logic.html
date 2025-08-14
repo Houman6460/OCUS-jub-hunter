@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Extension v2.1.9 - Exact Demo Logic Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 20px;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .success { border-color: #4CAF50; background: #f1f8e9; }
+        .info { border-color: #2196F3; background: #e3f2fd; }
+        .warning { border-color: #ff9800; background: #fff3e0; }
+
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .download-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .download-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Premium Extension v2.1.9 - Exact Demo Logic</h1>
+            <h2>Using Proven Working Logic from v2.1.2 Demo</h2>
+            <p><strong>This version uses the EXACT acceptance logic from the working demo, with NO trial limits</strong></p>
+        </div>
+
+        <div class="test-section success">
+            <h3>✅ What's Fixed</h3>
+            <ul>
+                <li><strong>Exact Copy of Working Demo:</strong> Uses the identical button detection and clicking logic from v2.1.2 that works correctly</li>
+                <li><strong>No Trial Limits:</strong> Premium users have unlimited mission acceptance</li>
+                <li><strong>Same Accept Process:</strong> Identical acceptance flow as the working demo version</li>
+                <li><strong>Proven Logic:</strong> No experimental changes - just the code that already works</li>
+            </ul>
+        </div>
+
+        <div class="test-section info">
+            <h3>📋 Key Components from Working Demo</h3>
+            <pre>
+<strong>1. Button Detection (Exact Copy):</strong>
+   - Primary: button[data-test="accept-assignment-btn"] with text "Accept assignment"
+   - Fallback: All buttons with text "Accept assignment" or "Accept"
+   - No complex visibility checks or Vue attributes
+
+<strong>2. Click Method (Exact Copy):</strong>
+   - button.scrollIntoView({ behavior: 'smooth', block: 'center' })
+   - button.click()
+   - Simple try/catch error handling
+
+<strong>3. Mutation Observer (Exact Copy):</strong>
+   - Monitors childList changes only
+   - Checks for button when new nodes added
+   - Immediate click attempt if found
+
+<strong>4. Mission Page Detection (Exact Copy):</strong>
+   - URL check: app.ocus.com/missions/
+   - Fallback URL: /mission/ or /assignments/
+   - Button presence check as final verification
+            </pre>
+        </div>
+
+        <div class="test-section warning">
+            <h3>⚡ How This Version Works</h3>
+            <div class="code-block">
+                <strong>Premium Version = Demo Version - Trial Limits</strong><br><br>
+                • Uses EXACT same button finding logic as working demo<br>
+                • Uses EXACT same clicking method as working demo<br>
+                • Uses EXACT same mutation observer as working demo<br>
+                • Only difference: No trial counter updates<br>
+                • Result: Should work exactly like demo but unlimited
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📥 Download Options</h3>
+            <div style="text-align: center;">
+                <a href="/api/download-extension/premium" class="download-link">
+                    📦 Download Premium v2.1.9 (Exact Demo Logic)
+                </a>
+                <br><br>
+                <p><strong>File:</strong> ocus-premium-v2.1.9-EXACT-DEMO-LOGIC.zip</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Testing Instructions</h3>
+            <ol>
+                <li>Uninstall any previous versions of the extension</li>
+                <li>Download and install this new premium version</li>
+                <li>Navigate to an OCUS mission page: <code>app.ocus.com/missions/[mission-id]</code></li>
+                <li>The extension should automatically:</li>
+                <ul>
+                    <li>Detect the mission page</li>
+                    <li>Find the "Accept assignment" button</li>
+                    <li>Click the button</li>
+                    <li>Redirect to homepage after 3 seconds</li>
+                </ul>
+                <li>Check console for: <code>✅ Button clicked</code> and <code>🎉 MISSION ACCEPTED!</code></li>
+            </ol>
+        </div>
+
+        <div class="test-section info">
+            <h3>📊 Console Output You Should See</h3>
+            <pre>
+🔧 OCUS Premium Mission Acceptor loaded - UNLIMITED USAGE
+🚀 PREMIUM MISSION ACCEPTOR INITIALIZING
+✅ PREMIUM MODE - UNLIMITED USAGE
+✅ Mission page detected
+✅ PREMIUM MISSION ACCEPTOR READY
+🔄 Attempt 1/20
+✅ Accept button found, clicking...
+✅ Button clicked
+🎉 MISSION ACCEPTED!
+📈 PREMIUM MISSIONS: 1 completed (unlimited)
+✅ Premium statistics updated
+🏠 Redirecting to homepage
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Premium Extension Test Page Loaded');
+            console.log('📦 This version uses EXACT logic from working demo v2.1.2');
+            console.log('✅ Only difference: No trial limits for premium users');
+            console.log('🔧 Should work exactly like the demo but with unlimited usage');
+        });
+    </script>
+</body>
+</html>

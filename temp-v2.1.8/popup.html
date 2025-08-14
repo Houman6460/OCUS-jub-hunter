@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCUS Unified Extension</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --primary-hover: #1976D2;
+            --success-color: #4CAF50;
+            --danger-color: #F44336;
+            --warning-color: #FF9800;
+            --info-color: #17a2b8;
+            --text-color: #333;
+            --text-secondary: #666;
+            --light-bg: #f8f9fa;
+            --border-color: #e1e5e9;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+            --border-radius: 8px;
+            --border-radius-sm: 4px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            width: 400px;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-color);
+            min-height: 600px;
+        }
+        
+        .container {
+            padding: 0;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin-top: 0;
+            box-shadow: var(--shadow-md);
+            color: #e2e8f0;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 20px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header h1::before {
+            content: "🎯";
+            font-size: 24px;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--success-color);
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .status-badge.disabled {
+            background: var(--danger-color);
+        }
+        
+        .status-badge.warning {
+            background: var(--warning-color);
+        }
+        
+        .section {
+            margin: 0 20px 20px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+        
+        .section:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        
+        .section-header {
+            background: var(--light-bg);
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .section-content {
+            padding: 16px;
+            background: white;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+        
+        .form-row {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+        
+        .form-row .form-group:last-child {
+            margin-right: 0;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: all 0.3s ease;
+            border-radius: 28px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background: #D32F2F;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background: #388E3C;
+        }
+        
+        /* Refresh Timer Styles */
+        .refresh-options {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .refresh-option {
+            flex: 1;
+            text-align: center;
+            background: var(--light-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .refresh-option:hover {
+            background: #e0e0e0;
+        }
+        
+        .refresh-option.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 10px 10px 10px;
+            gap: 10px;
+        }
+        
+        .stats {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            border-radius: var(--border-radius-sm);
+            padding: 14px;
+            margin-top: 15px;
+            font-size: 13px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            box-shadow: var(--shadow-sm);
+            color: #e2e8f0;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .stats-label {
+            font-weight: 500;
+            color: #94a3b8;
+        }
+        
+        .stats-row span:last-child {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        
+        .notification {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        .notification.success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #A5D6A7;
+            display: block;
+        }
+        
+        .notification.error {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #EF9A9A;
+            display: block;
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>OCUS Unified Extension</h1>
+        <span id="mainStatus" class="status-badge">Active</span>
+    </div>
+    
+    <div class="container">
+        <div id="notification" class="notification"></div>
+        
+        <!-- Activation Section -->
+        <div class="section" id="activationSection">
+            <div class="section-header">
+                <span>License Activation</span>
+                <span id="activationStatus" class="status-badge warning">Demo Mode</span>
+            </div>
+            <div class="section-content">
+                <div id="activationContent">
+                    <div class="info-box trial-info">
+                        <p><strong>Trial Mode Active</strong></p>
+                        <p>You're using the trial version (3 jobs limit)</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="activationKey">Activation Code</label>
+                        <input type="text" id="activationKey" class="form-control" placeholder="Enter activation code (e.g., OCUS-XXXX-XXXX-XXXX)">
+                    </div>
+                    <button id="activateButton" class="btn btn-success">🚀 Activate Extension</button>
+                    <div id="activation-error" class="error-message" style="display: none; color: red; margin-top: 10px;"></div>
+                    
+                    <div id="demoInfo" class="stats">
+                        <div class="stats-row">
+                            <span class="stats-label">Trial Uses Remaining:</span>
+                            <span id="demoUsesRemaining">3</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">Status:</span>
+                            <span id="extensionStatus">Demo Mode - Limited to 3 jobs</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="activatedContent" style="display: none;">
+                    <div class="success-box" style="background: #E8F5E9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p class="success-message" style="margin: 0 0 5px 0; font-weight: bold; color: #2E7D32;">✅ Extension Activated Successfully!</p>
+                        <p class="success-submessage" style="margin: 0; color: #388E3C;">Enjoy unlimited mission acceptance!</p>
+                    </div>
+                    <div class="stats">
+                        <div class="stats-row">
+                            <span class="stats-label">Status:</span>
+                            <span style="color: var(--success-color); font-weight: bold;">✓ Activated</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">Usage:</span>
+                            <span>Unlimited</span>
+                        </div>
+                        <div class="stats-row">
+                            <span class="stats-label">Customer ID:</span>
+                            <span id="activated-customer-id">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Auto Login Section -->
+        <div class="section">
+            <div class="section-header">
+                <span>Auto Login Configuration</span>
+                <label class="toggle-switch" for="autoLoginEnabled">
+                    <input type="checkbox" id="autoLoginEnabled" aria-label="Enable Auto Login" title="Toggle Auto Login Functionality">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="username">OCUS Username</label>
+                    <input type="text" id="username" class="form-control" placeholder="Enter your OCUS username">
+                </div>
+                <div class="form-group">
+                    <label for="password">OCUS Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter your OCUS password">
+                </div>
+
+            </div>
+        </div>
+        
+        <!-- Mission Monitor Section -->
+        <div class="section">
+            <div class="section-header">
+                <span>Mission Monitor Configuration</span>
+                <label class="toggle-switch" for="missionMonitorEnabled">
+                    <input type="checkbox" id="missionMonitorEnabled" aria-label="Enable Mission Monitor" title="Toggle Mission Monitor Functionality">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="refreshInterval">Refresh Interval (sec)</label>
+                    <input type="number" id="refreshInterval" class="form-control" min="15" max="120">
+                </div>
+                <div class="form-group">
+                    <label for="showNotifications">Show Notifications</label>
+                    <label class="toggle-switch" for="showNotifications">
+                        <input type="checkbox" id="showNotifications" aria-label="Enable Notifications" title="Toggle Notifications">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mission Acceptor Section -->
+        <div class="section">
+            <div class="section-header">
+                <span>Mission Acceptor Configuration</span>
+                <label class="toggle-switch" for="missionAcceptEnabled">
+                    <input type="checkbox" id="missionAcceptEnabled" aria-label="Enable Mission Acceptor" title="Toggle Mission Acceptor Functionality">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="autoCloseTab">Auto Close Tab After Accept</label>
+                    <label class="toggle-switch" for="autoCloseTab">
+                        <input type="checkbox" id="autoCloseTab" aria-label="Enable Auto Close Tab" title="Toggle Auto Close Tab Functionality">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="closeDelay">Close Delay (sec)</label>
+                    <input type="number" id="closeDelay" class="form-control" min="1" max="10">
+                </div>
+                <div class="form-group">
+                    <label for="soundEnabled">Play Success Sound</label>
+                    <label class="toggle-switch" for="soundEnabled">
+                        <input type="checkbox" id="soundEnabled" aria-label="Enable Success Sound" title="Toggle Mission Success Sound">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page Refresh Timer Section -->
+        <div class="section">
+            <div class="section-header">
+                <span>Page Refresh Timer</span>
+                <label class="toggle-switch" for="pageRefreshEnabled">
+                    <input type="checkbox" id="pageRefreshEnabled" aria-label="Enable Page Refresh Timer" title="Toggle Page Refresh Timer">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="refreshTimerValue">Refresh Interval</label>
+                    <div class="refresh-options">
+                        <button type="button" class="btn btn-sm refresh-option" data-value="5">5s</button>
+                        <button type="button" class="btn btn-sm refresh-option" data-value="10">10s</button>
+                        <button type="button" class="btn btn-sm refresh-option" data-value="20">20s</button>
+                        <button type="button" class="btn btn-sm refresh-option" data-value="30">30s</button>
+                    </div>
+                    <div class="form-row refresh-custom-row">
+                        <div class="form-group">
+                            <input type="number" id="customRefreshTime" class="form-control" min="1" placeholder="Custom time in seconds">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" id="setCustomRefresh" class="btn">Set</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="showRefreshCountdown">Show Countdown Panel</label>
+                    <label class="toggle-switch" for="showRefreshCountdown">
+                        <input type="checkbox" id="showRefreshCountdown" aria-label="Show Countdown Panel" title="Toggle Countdown Panel">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Section -->
+        <div class="section">
+            <div class="section-header">
+                <span>Statistics</span>
+                <button id="resetStats" class="btn btn-sm">Reset</button>
+            </div>
+            <div class="section-content">
+                <div class="stats">
+                    <div class="stats-row">
+                        <span class="stats-label">Missions Refreshing:</span>
+                        <span id="missionsRefreshing">0</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">Missions Opened:</span>
+                        <span id="missionsOpened">0</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">Missions Accepted:</span>
+                        <span id="missionsAccepted">0</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">Login Attempts:</span>
+                        <span id="loginAttempts">0</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">Successful Logins:</span>
+                        <span id="successfulLogins">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button id="saveConfig" class="btn btn-success">Save Configuration</button>
+            <button id="emergencyStop" class="btn btn-danger">Emergency Stop</button>
+        </div>
+        
+        <div class="footer-note">
+            Press Alt+E on any OCUS page to access emergency controls
+        </div>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

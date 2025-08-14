@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image Upload - OCUS Job Hunter</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .result { 
+            margin: 20px 0; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border-radius: 5px; 
+            border-left: 4px solid #007bff;
+        }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        img { 
+            max-width: 400px; 
+            margin: 10px 0; 
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input, button { 
+            margin: 10px 0; 
+            padding: 12px; 
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { 
+            background: #6c757d; 
+            cursor: not-allowed; 
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 SEO Settings Image Upload Test</h1>
+        <p>This page tests the image upload functionality directly to confirm it's working.</p>
+        
+        <form id="uploadForm">
+            <div>
+                <label><strong>Site Title:</strong></label><br>
+                <input type="text" name="siteTitle" value="OCUS Job Hunter - Test Upload" style="width: 100%; max-width: 400px;">
+            </div>
+            
+            <div>
+                <label><strong>Custom Social Media Image:</strong></label><br>
+                <input type="file" name="customOgImage" accept="image/*" id="fileInput">
+                <br><small>Upload your custom social media preview image (PNG/JPG, max 5MB)</small>
+            </div>
+            
+            <button type="submit" id="submitBtn">
+                <span id="btnText">Upload Image</span>
+                <span id="btnLoader" class="loading" style="display: none;"></span>
+            </button>
+        </form>
+        
+        <div id="result" class="result" style="display: none;"></div>
+        
+        <h2>📊 Current Settings</h2>
+        <div id="current" class="result">
+            <div class="loading"></div> Loading current settings...
+        </div>
+
+        <h2>🔍 Upload Status</h2>
+        <div id="status" class="result">Ready to test upload</div>
+    </div>
+
+    <script>
+        let isUploading = false;
+
+        // Load current settings
+        async function loadCurrent() {
+            try {
+                console.log('Fetching current SEO settings...');
+                const response = await fetch('/api/admin/seo-settings');
+                const data = await response.json();
+                
+                const currentDiv = document.getElementById('current');
+                currentDiv.innerHTML = `
+                    <h3>✅ Current Database Settings:</h3>
+                    <strong>Site Title:</strong> ${data.siteTitle || 'Not set'}<br>
+                    <strong>Has Custom Image:</strong> ${data.customOgImage ? '✅ Yes' : '❌ No'}<br>
+                    ${data.customOgImage ? `
+                        <strong>Image Preview:</strong><br>
+                        <img src="${data.customOgImage}" alt="Current OG Image" style="max-width: 200px;">
+                        <br><small>Image Size: ${data.customOgImage.length} characters (base64)</small>
+                    ` : ''}
+                    <details>
+                        <summary>Full Settings JSON</summary>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+                
+                updateStatus('Current settings loaded successfully', 'success');
+            } catch (error) {
+                document.getElementById('current').innerHTML = `
+                    <div class="error">❌ Error loading settings: ${error.message}</div>
+                `;
+                updateStatus(`Error loading settings: ${error.message}`, 'error');
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString();
+            statusDiv.className = `result ${type === 'error' ? 'error' : type === 'success' ? 'success' : ''}`;
+            statusDiv.innerHTML = `[${timestamp}] ${message}`;
+        }
+
+        // Handle form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (isUploading) return;
+            
+            const formData = new FormData(e.target);
+            const resultDiv = document.getElementById('result');
+            const fileInput = document.getElementById('fileInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            
+            // Check if file is selected
+            if (!fileInput.files[0]) {
+                updateStatus('❌ Please select an image file first', 'error');
+                return;
+            }
+            
+            isUploading = true;
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline-block';
+            
+            try {
+                updateStatus('🚀 Starting upload...', 'info');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `
+                    <div class="loading"></div> Uploading "${fileInput.files[0].name}"...
+                    <br><small>File size: ${(fileInput.files[0].size / 1024 / 1024).toFixed(2)} MB</small>
+                `;
+                
+                console.log('Uploading file:', {
+                    name: fileInput.files[0].name,
+                    size: fileInput.files[0].size,
+                    type: fileInput.files[0].type
+                });
+                
+                const response = await fetch('/api/admin/seo-settings', {
+                    method: 'PUT',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Upload successful:', result);
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Upload Successful!</h3>
+                        <strong>Site Title Updated:</strong> ${result.siteTitle}<br>
+                        <strong>Custom Image:</strong> ${result.customOgImage ? '✅ Uploaded' : '❌ Not saved'}<br>
+                        ${result.customOgImage ? `
+                            <strong>New Image Preview:</strong><br>
+                            <img src="${result.customOgImage}" alt="Uploaded Image">
+                            <br><small>Base64 data length: ${result.customOgImage.length} characters</small>
+                        ` : ''}
+                        <details>
+                            <summary>Server Response</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                    
+                    updateStatus('✅ Image uploaded and saved successfully!', 'success');
+                    
+                    // Reload current settings
+                    setTimeout(loadCurrent, 1000);
+                } else {
+                    const error = await response.text();
+                    console.error('Upload failed:', error);
+                    
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<h3>❌ Upload Failed!</h3><pre>${error}</pre>`;
+                    updateStatus(`❌ Upload failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ Network Error!</h3><pre>${error.message}</pre>`;
+                updateStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                isUploading = false;
+                submitBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
+            }
+        });
+
+        // Load current settings on page load
+        updateStatus('🔄 Loading current settings...', 'info');
+        loadCurrent();
+    </script>
+</body>
+</html>

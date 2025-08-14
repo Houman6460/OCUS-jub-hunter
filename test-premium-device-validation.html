@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Device Validation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .results {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .fingerprint {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Premium Device Validation System Test</h1>
+        <p>Testing the single-device license system for OCUS Job Hunter Premium Extension</p>
+
+        <div class="test-section info">
+            <h3>Device Information</h3>
+            <p><strong>User ID:</strong> <span id="userId">Loading...</span></p>
+            <p><strong>Extension ID:</strong> <span id="extensionId">test-extension-id</span></p>
+            <p><strong>Device Fingerprint:</strong></p>
+            <div id="deviceFingerprint" class="fingerprint">Generating...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Device Validation Tests</h3>
+            
+            <button onclick="testDeviceValidation()">Test Device Validation</button>
+            <button onclick="testDeviceHeartbeat()">Test Device Heartbeat</button>
+            <button onclick="testNewDeviceRegistration()">Test New Device Registration</button>
+            <button onclick="testDeviceConflict()">Test Device Conflict</button>
+            
+            <div id="validationResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Database Operations</h3>
+            
+            <button onclick="checkUserDevices()">Check User Devices</button>
+            <button onclick="clearTestData()">Clear Test Data</button>
+            
+            <div id="dbResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>System Status</h3>
+            <p>API Endpoint: <code>https://ocus-extension-platform.replit.app</code></p>
+            <p>Database: PostgreSQL with premiumDevices table</p>
+            <p>Version: v2.1.8-STABLE with device validation</p>
+        </div>
+    </div>
+
+    <script>
+        let userId = null;
+        let deviceFingerprint = null;
+        const extensionId = 'test-extension-id';
+        const apiBase = 'https://ocus-extension-platform.replit.app';
+
+        // Generate UUID-like ID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Generate device fingerprint
+        async function generateDeviceFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Device fingerprint test', 2, 2);
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL()
+            ].join('|');
+            
+            // Create hash of fingerprint data
+            const encoder = new TextEncoder();
+            const data = encoder.encode(fingerprint);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Initialize test data
+        async function initializeTest() {
+            userId = generateUUID();
+            deviceFingerprint = await generateDeviceFingerprint();
+            
+            document.getElementById('userId').textContent = userId;
+            document.getElementById('deviceFingerprint').textContent = deviceFingerprint;
+        }
+
+        // Test device validation
+        async function testDeviceValidation() {
+            const results = document.getElementById('validationResults');
+            results.textContent = 'Testing device validation...';
+
+            try {
+                const response = await fetch(`${apiBase}/api/premium/validate-device`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        deviceFingerprint: deviceFingerprint,
+                        extensionId: extensionId
+                    })
+                });
+
+                const result = await response.json();
+                results.textContent = `Device Validation Result:\n${JSON.stringify(result, null, 2)}`;
+                
+                if (result.authorized) {
+                    results.className = 'results success';
+                } else {
+                    results.className = 'results error';
+                }
+            } catch (error) {
+                results.textContent = `Error: ${error.message}`;
+                results.className = 'results error';
+            }
+        }
+
+        // Test device heartbeat
+        async function testDeviceHeartbeat() {
+            const results = document.getElementById('validationResults');
+            results.textContent = 'Testing device heartbeat...';
+
+            try {
+                const response = await fetch(`${apiBase}/api/premium/device-heartbeat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        deviceFingerprint: deviceFingerprint
+                    })
+                });
+
+                const result = await response.json();
+                results.textContent = `Device Heartbeat Result:\n${JSON.stringify(result, null, 2)}`;
+                results.className = 'results info';
+            } catch (error) {
+                results.textContent = `Error: ${error.message}`;
+                results.className = 'results error';
+            }
+        }
+
+        // Test new device registration
+        async function testNewDeviceRegistration() {
+            const newUserId = generateUUID();
+            const results = document.getElementById('validationResults');
+            results.textContent = 'Testing new device registration...';
+
+            try {
+                const response = await fetch(`${apiBase}/api/premium/validate-device`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: newUserId,
+                        deviceFingerprint: await generateDeviceFingerprint(),
+                        extensionId: extensionId
+                    })
+                });
+
+                const result = await response.json();
+                results.textContent = `New Device Registration Result:\n${JSON.stringify(result, null, 2)}`;
+                results.className = 'results info';
+            } catch (error) {
+                results.textContent = `Error: ${error.message}`;
+                results.className = 'results error';
+            }
+        }
+
+        // Test device conflict (second device for same user)
+        async function testDeviceConflict() {
+            const results = document.getElementById('validationResults');
+            results.textContent = 'Testing device conflict scenario...';
+
+            try {
+                // First register the current device
+                await testDeviceValidation();
+                
+                // Then try to register a different device for the same user
+                const newFingerprint = await generateDeviceFingerprint();
+                
+                const response = await fetch(`${apiBase}/api/premium/validate-device`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId, // Same user
+                        deviceFingerprint: newFingerprint + '-conflict', // Different device
+                        extensionId: extensionId
+                    })
+                });
+
+                const result = await response.json();
+                results.textContent = `Device Conflict Test Result:\n${JSON.stringify(result, null, 2)}`;
+                
+                if (!result.authorized) {
+                    results.className = 'results success'; // Expected to be denied
+                } else {
+                    results.className = 'results error'; // Should not be authorized
+                }
+            } catch (error) {
+                results.textContent = `Error: ${error.message}`;
+                results.className = 'results error';
+            }
+        }
+
+        // Check user devices
+        async function checkUserDevices() {
+            const results = document.getElementById('dbResults');
+            results.textContent = 'Checking user devices...';
+
+            // This would need a specific API endpoint for admin/debug purposes
+            results.textContent = `User ${userId} devices check would require admin API endpoint.`;
+            results.className = 'results info';
+        }
+
+        // Clear test data
+        async function clearTestData() {
+            const results = document.getElementById('dbResults');
+            results.textContent = 'Test data cleared (would require admin API endpoint)';
+            results.className = 'results info';
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeTest);
+    </script>
+</body>
+</html>

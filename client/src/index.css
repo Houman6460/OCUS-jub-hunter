@@ -1,0 +1,410 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global text selection styling matching button gradient colors */
+::selection {
+  background: #3b82f6 !important; /* Blue color from gradient */
+  color: white !important;
+  text-shadow: none !important;
+}
+
+::-moz-selection {
+  background: #3b82f6 !important; /* Blue color from gradient */
+  color: white !important;
+  text-shadow: none !important;
+}
+
+/* Apply to all elements to ensure it works everywhere */
+* ::selection {
+  background: #3b82f6 !important;
+  color: white !important;
+  text-shadow: none !important;
+}
+
+* ::-moz-selection {
+  background: #3b82f6 !important;
+  color: white !important;
+  text-shadow: none !important;
+}
+
+/* Specific targeting for common elements */
+body ::selection,
+div ::selection,
+p ::selection,
+span ::selection,
+h1 ::selection,
+h2 ::selection,
+h3 ::selection,
+h4 ::selection,
+h5 ::selection,
+h6 ::selection,
+a ::selection,
+li ::selection,
+td ::selection,
+th ::selection,
+input ::selection,
+textarea ::selection,
+button ::selection {
+  background: #3b82f6 !important;
+  color: white !important;
+  text-shadow: none !important;
+}
+
+/* Firefox specific */
+body ::-moz-selection,
+div ::-moz-selection,
+p ::-moz-selection,
+span ::-moz-selection,
+h1 ::-moz-selection,
+h2 ::-moz-selection,
+h3 ::-moz-selection,
+h4 ::-moz-selection,
+h5 ::-moz-selection,
+h6 ::-moz-selection,
+a ::-moz-selection,
+li ::-moz-selection,
+td ::-moz-selection,
+th ::-moz-selection,
+input ::-moz-selection,
+textarea ::-moz-selection,
+button ::-moz-selection {
+  background: #3b82f6 !important;
+  color: white !important;
+  text-shadow: none !important;
+}
+
+/* Banner height CSS variable for dynamic spacing */
+:root {
+  --banner-height: 0px;
+}
+
+/* Dynamic spacing for sections when banner is active */
+.banner-aware-section {
+  padding-top: 100px; /* Navigation height (64px) + base margin (36px) when no banner */
+}
+
+/* When banner is active, add margin to content */
+.banner-active .banner-aware-section {
+  padding-top: 180px; /* Navigation height (64px) + banner height (116px) */
+}
+
+/* Additional spacing adjustment for sections that need minimal offset */
+.banner-aware-additional-spacing {
+  margin-top: 36px; /* Base margin when no banner */
+}
+
+.banner-active .banner-aware-additional-spacing {
+  margin-top: 116px; /* Banner height for proper spacing */
+}
+
+@layer utilities {
+  /* Custom animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes gradient {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  .animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+  
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+  
+  /* Grid background pattern */
+  .bg-grid-slate-100 {
+    background-image: 
+      linear-gradient(to right, rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+    background-size: 2rem 2rem;
+  }
+  
+  /* Enhanced lighting effects */
+  @keyframes cardGlow {
+    0%, 100% {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    50% {
+      box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  @keyframes particleFloat {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+      opacity: 0.7;
+    }
+    33% {
+      transform: translateY(-8px) rotate(120deg);
+      opacity: 1;
+    }
+    66% {
+      transform: translateY(-4px) rotate(240deg);
+      opacity: 0.8;
+    }
+  }
+  
+  @keyframes borderGlow {
+    0%, 100% {
+      opacity: 0.5;
+      transform: scale(1.02);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+  
+  .animate-cardGlow:hover {
+    animation: cardGlow 2s ease-in-out infinite;
+  }
+  
+  .animate-particleFloat {
+    animation: particleFloat 3s ease-in-out infinite;
+  }
+  
+  .animate-borderGlow {
+    animation: borderGlow 2s ease-in-out infinite;
+  }
+}
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Smooth scrolling for all elements */
+  * {
+    scroll-behavior: smooth;
+  }
+
+  /* Enhanced hover effects */
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  }
+
+  /* Staggered animation delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* Advanced video cover animations */
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(168, 85, 247, 0.4);
+    }
+  }
+
+  @keyframes breathe {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  .animate-breathe {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  .animate-slideIn {
+    animation: slideIn 0.6s ease-out forwards;
+  }
+
+  /* Backdrop blur support */
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(8px);
+  }
+
+  /* Hero section enhancements */
+  @keyframes heroGlow {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.1);
+    }
+  }
+
+  @keyframes textShimmer {
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  .animate-heroGlow {
+    animation: heroGlow 4s ease-in-out infinite;
+  }
+
+  .animate-textShimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+    background-size: 200% 100%;
+    animation: textShimmer 2s infinite;
+  }
+
+  /* Glass morphism effects */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(227, 65%, 37%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(142, 76%, 36%);
+  --accent-foreground: hsl(355, 7%, 97%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
