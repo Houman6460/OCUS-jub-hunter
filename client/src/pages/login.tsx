@@ -12,6 +12,26 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { UserCog, Users, Shield, Info } from "lucide-react";
 
+// Simple inline SVG target icon to show next to the header title
+function TargetIcon({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+      <circle cx="50" cy="50" r="40" fill="#2F6FB2" />
+      <circle cx="50" cy="50" r="30" fill="#ffffff" />
+      <circle cx="50" cy="50" r="22" fill="#2F6FB2" />
+      <circle cx="50" cy="50" r="12" fill="#ffffff" />
+      <circle cx="50" cy="50" r="6" fill="#2F6FB2" />
+    </svg>
+  );
+}
+
 export default function Login() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
@@ -110,7 +130,7 @@ export default function Login() {
     localStorage.removeItem('customer_token');
     setIsAuthenticated(false);
     setUserType(null);
-    setAdminUsername("");
+    setAdminEmail("");
     setAdminPassword("");
     setCustomerEmail("");
     setCustomerPassword("");
@@ -159,7 +179,10 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">OCUS Login</CardTitle>
+          <div className="flex items-center justify-center gap-2">
+            <TargetIcon className="w-7 h-7" />
+            <CardTitle className="text-2xl font-bold">OCUS Login</CardTitle>
+          </div>
           <p className="text-gray-600 dark:text-gray-400">
             Choose your account type to sign in
           </p>
