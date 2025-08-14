@@ -12,7 +12,9 @@ import { apiRequest } from '@/lib/queryClient';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_LIVE_PUBLIC_KEY || '');
+// Initialize Stripe only if a publishable key exists
+const stripeKey = (import.meta as any)?.env?.VITE_STRIPE_LIVE_PUBLIC_KEY || (import.meta as any)?.env?.VITE_STRIPE_PUBLIC_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface Order {
   id: number;
@@ -183,14 +185,16 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
             Get unlimited access to the OCUS Job Hunter Chrome extension. After purchase, you'll get direct download access to the premium version.
           </DialogDescription>
         </DialogHeader>
-        {clientSecret ? (
+        {clientSecret && stripePromise ? (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
             <PurchaseForm onSuccess={handleSuccess} paymentIntentId={paymentIntentId} />
           </Elements>
         ) : (
           <div className="text-center py-8">
             <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-            <p className="text-gray-600">Initializing payment...</p>
+            <p className="text-gray-600">
+              {clientSecret ? 'Waiting for Stripe to initialize...' : 'Initializing payment...'}
+            </p>
           </div>
         )}
       </DialogContent>

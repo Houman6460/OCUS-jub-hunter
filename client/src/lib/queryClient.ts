@@ -14,7 +14,11 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   let body: string | FormData | undefined;
-  
+  // Resolve API base URL when running behind Cloudflare Pages or separate domains
+  const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
+  const base = apiBase ? apiBase.replace(/\/$/, "") : "";
+  const fullUrl = url.startsWith("http") ? url : `${base}${url}`;
+
   // Handle different data types
   if (data instanceof FormData) {
     // For FormData, don't set Content-Type (browser will set it with boundary)
@@ -24,14 +28,14 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
     body = JSON.stringify(data);
   }
-  
+
   // Add authentication token if available
   const userToken = localStorage.getItem('user_token');
   if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/'))) {
     headers.Authorization = `Bearer ${userToken}`;
   }
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body,
@@ -49,15 +53,18 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
+    const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
+    const base = apiBase ? apiBase.replace(/\/$/, "") : "";
+    const fullUrl = url.startsWith("http") ? url : `${base}${url}`;
     const headers: Record<string, string> = {};
-    
+
     // Add authentication token if available
     const userToken = localStorage.getItem('user_token');
     if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/'))) {
       headers.Authorization = `Bearer ${userToken}`;
     }
 
-    const res = await fetch(url, {
+    const res = await fetch(fullUrl, {
       credentials: "include",
       headers,
     });
