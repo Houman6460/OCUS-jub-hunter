@@ -1,4 +1,4 @@
-export const onRequest: PagesFunction = async ({ request, env }) => {
+export const onRequest = async ({ request, env }: any) => {
   const url = new URL(request.url);
 
   // Let real assets pass through
