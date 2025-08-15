@@ -1,0 +1,44 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+DATABASE_URL not set - database operations will fail until configured
+Missing PAYPAL_CLIENT_ID - PayPal integration disabled
+Missing PAYPAL_CLIENT_SECRET - PayPal integration disabled
+Missing OPENAI_API_KEY - Chat functionality disabled
+Failed to initialize OAuth strategies: Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at Object.get (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/db.ts:25:13)
+    at DatabaseStorage.getAuthSettings (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/storage.ts:637:36)
+    at initializeStrategies (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/socialAuth.ts:15:40)
+    at <anonymous> (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/socialAuth.ts:171:1)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadESM (node:internal/process/esm_loader:34:7)
+    at async handleMainPromise (node:internal/modules/run_main:106:12)
+Error initializing Stripe: Error: DATABASE_URL must be set. Did you forget to provision a database?
+    at Object.get (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/db.ts:25:13)
+    at DatabaseStorage.getAuthSettings (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/storage.ts:637:36)
+    at initializeStripe (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/routes.ts:38:40)
+    at <anonymous> (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/server/routes.ts:82:1)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadESM (node:internal/process/esm_loader:34:7)
+    at async handleMainPromise (node:internal/modules/run_main:106:12)
+node:internal/errors:496
+    ErrorCaptureStackTrace(err);
+    ^
+
+TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined
+    at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+    at new NodeError (node:internal/errors:405:5)
+    at validateString (node:internal/validators:162:11)
+    at Object.resolve (node:path:1115:7)
+    at <anonymous> (/Users/houmanghavamzadeh/Downloads/Replit/2025-08-14/OcusJobHunter/vite.config.ts:21:17)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadESM (node:internal/process/esm_loader:34:7)
+    at async handleMainPromise (node:internal/modules/run_main:106:12) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+
+Node.js v18.20.8

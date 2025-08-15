@@ -1,0 +1,44 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Chrome Extension Icon -->
+  <circle cx="180" cy="315" r="60" fill="#ffffff" opacity="0.1"/>
+  <circle cx="180" cy="315" r="40" fill="#ffffff"/>
+  <rect x="160" y="295" width="40" height="40" rx="8" fill="#3b82f6"/>
+  <path d="M170 305 L175 310 L190 295" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Main Title -->
+  <text x="300" y="280" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="white">
+    OCUS Job Hunter
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="300" y="340" font-family="Arial, sans-serif" font-size="32" fill="rgba(255,255,255,0.9)">
+    Premium Chrome Extension
+  </text>
+  
+  <!-- Features -->
+  <text x="300" y="400" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.8)">
+    ✓ Automated Mission Detection  ✓ Smart Job Acceptance
+  </text>
+  
+  <!-- Call to Action -->
+  <rect x="300" y="450" width="300" height="60" rx="30" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="2"/>
+  <text x="450" y="490" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">
+    Get Started Today
+  </text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="1000" cy="150" r="100" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="1050" cy="500" r="80" fill="rgba(255,255,255,0.03)"/>
+  <rect x="950" y="250" width="200" height="2" fill="rgba(255,255,255,0.1)" rx="1"/>
+  <rect x="950" y="270" width="150" height="2" fill="rgba(255,255,255,0.08)" rx="1"/>
+</svg>
