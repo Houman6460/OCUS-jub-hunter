@@ -35,8 +35,16 @@ export default function Header({ variant = "default" }: HeaderProps) {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">O</span>
+            <div className="w-8 h-8 flex items-center justify-center" aria-hidden="true">
+              {/* Target icon SVG (concentric circles) */}
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+                <circle cx="50" cy="50" r="48" fill="#ffffff" />
+                <circle cx="50" cy="50" r="40" fill="#2F6FB2" />
+                <circle cx="50" cy="50" r="30" fill="#ffffff" />
+                <circle cx="50" cy="50" r="22" fill="#2F6FB2" />
+                <circle cx="50" cy="50" r="12" fill="#ffffff" />
+                <circle cx="50" cy="50" r="6" fill="#2F6FB2" />
+              </svg>
             </div>
             <span className="font-bold text-xl text-gray-900">OCUS Job Hunter</span>
           </Link>
