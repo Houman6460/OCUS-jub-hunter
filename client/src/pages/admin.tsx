@@ -153,8 +153,16 @@ function TicketManagementTab() {
     queryKey: [`/api/tickets/${selectedTicket?.id}/messages`],
     queryFn: async () => {
       if (!selectedTicket) return [];
-      const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}/messages`);
-      const data = await response.json();
+      let data: any = [];
+      try {
+        const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}/messages`);
+        data = await response.json();
+      } catch (err: any) {
+        if (typeof err?.message === 'string' && err.message.startsWith('404:')) {
+          return [];
+        }
+        throw err;
+      }
       // Normalize message fields for admin UI
       return Array.isArray(data)
         ? data.map((m: any) => ({
