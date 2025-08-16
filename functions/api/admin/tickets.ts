@@ -30,7 +30,16 @@ export const onRequestGet = async ({ request, env }: any) => {
     if (cookie) headers['cookie'] = cookie;
     if (auth) headers['authorization'] = auth;
     const proxied = await fetch(url, { headers, redirect: 'manual' });
-    return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+    // Clone headers to safely adjust Set-Cookie for the Pages host
+    const respHeaders = new Headers(proxied.headers);
+    const setCookie = respHeaders.get('set-cookie');
+    if (setCookie) {
+      // Remove Domain attribute so cookie is scoped to current host (Pages domain)
+      const rewritten = setCookie.replace(/;\s*Domain=[^;]+/i, '');
+      respHeaders.delete('set-cookie');
+      respHeaders.append('set-cookie', rewritten);
+    }
+    return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
   }
 
   const store = getStore();

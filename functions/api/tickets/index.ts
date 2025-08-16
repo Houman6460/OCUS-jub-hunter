@@ -68,7 +68,14 @@ export const onRequestGet = async ({ request, env }: any) => {
     if (cookie) headers['cookie'] = cookie;
     if (auth) headers['authorization'] = auth;
     const proxied = await fetch(url, { headers, redirect: 'manual' });
-    return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+    const respHeaders = new Headers(proxied.headers);
+    const setCookie = respHeaders.get('set-cookie');
+    if (setCookie) {
+      const rewritten = setCookie.replace(/;\s*Domain=[^;]+/i, '');
+      respHeaders.delete('set-cookie');
+      respHeaders.append('set-cookie', rewritten);
+    }
+    return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
   }
 
   const url = new URL(request.url);
@@ -96,7 +103,14 @@ export const onRequestPost = async ({ request, env }: any) => {
       if (ct) headers['content-type'] = ct;
       if (auth) headers['authorization'] = auth;
       const proxied = await fetch(url, { method: 'POST', headers, body: request.body, redirect: 'manual' });
-      return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+      const respHeaders = new Headers(proxied.headers);
+      const setCookie = respHeaders.get('set-cookie');
+      if (setCookie) {
+        const rewritten = setCookie.replace(/;\s*Domain=[^;]+/i, '');
+        respHeaders.delete('set-cookie');
+        respHeaders.append('set-cookie', rewritten);
+      }
+      return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
     const body = await request.json();
     const { title, description, category, priority, customerEmail, customerName } = body || {};

@@ -43,11 +43,15 @@ export const onRequestPost = async ({ request, params, env }: any) => {
         body: request.body,
         redirect: 'manual',
       });
-      // Return proxied response as-is
-      return new Response(proxied.body, {
-        status: proxied.status,
-        headers: proxied.headers,
-      });
+      // Rewrite Set-Cookie to scope to current host
+      const respHeaders = new Headers(proxied.headers);
+      const setCookie = respHeaders.get('set-cookie');
+      if (setCookie) {
+        const rewritten = setCookie.replace(/;\s*Domain=[^;]+/i, '');
+        respHeaders.delete('set-cookie');
+        respHeaders.append('set-cookie', rewritten);
+      }
+      return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
     // Robust body parsing: JSON -> FormData -> Text
     let content: string | undefined;
@@ -134,10 +138,14 @@ export const onRequestGet = async ({ request, params, env }: any) => {
     if (cookie) headers['cookie'] = cookie;
     if (auth) headers['authorization'] = auth;
     const proxied = await fetch(url, { headers, redirect: 'manual' });
-    return new Response(proxied.body, {
-      status: proxied.status,
-      headers: proxied.headers,
-    });
+    const respHeaders = new Headers(proxied.headers);
+    const setCookie = respHeaders.get('set-cookie');
+    if (setCookie) {
+      const rewritten = setCookie.replace(/;\s*Domain=[^;]+/i, '');
+      respHeaders.delete('set-cookie');
+      respHeaders.append('set-cookie', rewritten);
+    }
+    return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
   }
 
   const store = getStore();

@@ -46,7 +46,14 @@ export const onRequestPut = async ({ request, params, env }: any) => {
       if (ct) headers['content-type'] = ct;
       if (auth) headers['authorization'] = auth;
       const proxied = await fetch(url, { method: 'PUT', headers, body: request.body, redirect: 'manual' });
-      return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+      const respHeaders = new Headers(proxied.headers);
+      const setCookie = respHeaders.get('set-cookie');
+      if (setCookie) {
+        const rewritten = setCookie.replace(/;\s*Domain=[^;]+/i, '');
+        respHeaders.delete('set-cookie');
+        respHeaders.append('set-cookie', rewritten);
+      }
+      return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
     const body = await request.json().catch(() => ({}));
     const status = body?.status;
