@@ -180,16 +180,23 @@ function TicketManagementTab() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { ticketId: number; content: string; attachments?: File[] }) => {
+      const hasAttachments = !!(data.attachments && data.attachments.length > 0);
+      // Prefer JSON for Express compatibility when there are no attachments
+      if (!hasAttachments) {
+        const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, {
+          content: data.content,
+          isAdmin: true,
+        });
+        return response.json();
+      }
+
+      // Fall back to multipart only when attachments are present (Cloudflare-compatible)
       const formData = new FormData();
       formData.append('content', data.content);
-      
-      if (data.attachments) {
-        data.attachments.forEach((file, index) => {
-          formData.append(`attachment_${index}`, file);
-        });
-      }
-      
-      // Use shared apiRequest helper to include base URL and credentials
+      formData.append('isAdmin', 'true');
+      data.attachments?.forEach((file, index) => {
+        formData.append(`attachment_${index}`, file);
+      });
       const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, formData);
       return response.json();
     },
