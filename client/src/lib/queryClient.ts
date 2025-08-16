@@ -3,7 +3,11 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    // Include resolved URL in error for easier debugging
+    const urlInfo = res.url ? ` url=${res.url}` : '';
+    const message = `${res.status}: ${text}`;
+    console.error('API request failed:', message, urlInfo);
+    throw new Error(message);
   }
 }
 
@@ -17,10 +21,12 @@ export async function apiRequest(
   // Resolve API base URL when running behind Cloudflare Pages or separate domains
   const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
   const base = apiBase ? apiBase.replace(/\/$/, "") : "";
-  let fullUrl = url;
+  // Ensure client-provided relative paths always start with a leading slash
+  const normalizedUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
+  let fullUrl = normalizedUrl;
   if (!fullUrl.startsWith("http")) {
     if (!base) {
-      fullUrl = url; // use as-is (relative path like /api/...)
+      fullUrl = normalizedUrl; // use as-is (relative path like /api/...)
     } else {
       // Avoid double-prefixing when base already includes the same leading segment (e.g., '/api')
       const samePrefix = fullUrl.startsWith(base + "/");
@@ -64,10 +70,12 @@ export const getQueryFn: <T>(options: {
     const url = queryKey.join("/") as string;
     const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
     const base = apiBase ? apiBase.replace(/\/$/, "") : "";
-    let fullUrl = url;
+    // Ensure relative paths used in query keys begin with a slash
+    const normalizedUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
+    let fullUrl = normalizedUrl;
     if (!fullUrl.startsWith("http")) {
       if (!base) {
-        fullUrl = url;
+        fullUrl = normalizedUrl;
       } else {
         const samePrefix = fullUrl.startsWith(base + "/");
         fullUrl = samePrefix ? fullUrl : `${base}${fullUrl}`;
