@@ -2357,7 +2357,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   });
 
   // Admin ticket routes
-  app.get("/api/admin/tickets", async (req, res) => {
+  app.get("/api/admin/tickets", requireAdmin, async (req, res) => {
     try {
       const tickets = await storage.getAllTickets();
       res.json(tickets);
@@ -2366,7 +2366,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
     }
   });
 
-  app.put("/api/tickets/:id/status", async (req, res) => {
+  app.put("/api/tickets/:id/status", requireAdmin, async (req, res) => {
     try {
       const ticketId = parseInt(req.params.id);
       const { status } = req.body;
@@ -2380,7 +2380,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
 
   // REMOVED DUPLICATE - Using secure authenticated endpoint below
 
-  app.delete("/api/tickets/:id", async (req, res) => {
+  app.delete("/api/tickets/:id", requireAdmin, async (req, res) => {
     const ticketId = parseInt(req.params.id);
     try {
       console.log(`Attempting to delete ticket ${ticketId}`);
@@ -3193,20 +3193,22 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   // Get tickets route - accessible to all users
   app.get("/api/tickets", async (req, res) => {
     try {
-      const { isAdmin, customerEmail } = req.query;
-      
-      if (isAdmin === 'true') {
-        // Admin can see all tickets - but this requires proper admin authentication
-        // For now, return empty array as this should go through admin routes
-        return res.json([]);
-      } else if (customerEmail) {
-        // Regular user sees only their tickets
-        const tickets = await storage.getTicketsByCustomerEmail(customerEmail as string);
-        return res.json(tickets);
+      // Determine role from session, never trust client-provided flags
+      const sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
+      const sessionEmail = (req as any).user?.email as string | undefined;
+
+      if (sessionIsAdmin) {
+        // Admins should use the dedicated admin endpoint
+        return res.status(400).json({ error: "Use /api/admin/tickets for admin access" });
       }
-      
-      // No valid query parameters
-      return res.status(400).json({ error: "Missing query parameters" });
+
+      if (!sessionEmail) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      // Users can only see their own tickets
+      const userTickets = await storage.getTicketsByCustomerEmail(sessionEmail);
+      return res.json(userTickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
       res.status(500).json({ error: "Failed to fetch tickets" });
@@ -3244,23 +3246,20 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.get("/api/tickets/:id/messages", async (req, res) => {
     try {
       const ticketId = parseInt(req.params.id);
-      const customerEmail = req.query.customerEmail as string;
-      const isAdmin = req.query.isAdmin === 'true';
+      // Derive identity from session; ignore untrusted query flags
+      const sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
+      const sessionEmail = (req as any).user?.email as string | undefined;
 
-      console.log("GET /api/tickets/:id/messages called with:", {
-        ticketId,
-        customerEmail,
-        isAdmin
-      });
+      console.log("GET /api/tickets/:id/messages called with:", { ticketId, sessionIsAdmin, hasEmail: !!sessionEmail });
 
       // Validate ticketId is a valid number
       if (isNaN(ticketId) || ticketId <= 0) {
         return res.status(400).json({ error: "Invalid ticket ID" });
       }
 
-      // Admin can access any ticket, users need email verification
-      if (!isAdmin && !customerEmail) {
-        return res.status(400).json({ error: "Customer email required" });
+      // Admin can access any ticket, users must be authenticated and own the ticket
+      if (!sessionIsAdmin && !sessionEmail) {
+        return res.status(401).json({ error: "Authentication required" });
       }
 
       // First verify the ticket exists
@@ -3273,7 +3272,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       }
 
       // Check ownership for non-admin users
-      if (!isAdmin && ticket[0].customerEmail !== customerEmail) {
+      if (!sessionIsAdmin && ticket[0].customerEmail !== sessionEmail) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -3292,24 +3291,22 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.post("/api/tickets/:id/messages", async (req, res) => {
     try {
       const ticketId = parseInt(req.params.id);
-      const { message, content, customerEmail, customerName, isAdmin } = req.body;
+      const { message, content, customerName } = req.body;
       const messageContent = message || content;
 
-      console.log("POST /api/tickets/:id/messages called with:", {
-        ticketId,
-        messageContent: !!messageContent,
-        customerEmail,
-        customerName,
-        isAdmin
-      });
+      // Derive identity from session; ignore untrusted body flags
+      const sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
+      const sessionEmail = (req as any).user?.email as string | undefined;
+
+      console.log("POST /api/tickets/:id/messages called with:", { ticketId, hasContent: !!messageContent, sessionIsAdmin, hasEmail: !!sessionEmail });
 
       if (!messageContent) {
         return res.status(400).json({ error: "Message content required" });
       }
 
-      // Admin can reply to any ticket, users need email verification
-      if (!isAdmin && !customerEmail) {
-        return res.status(400).json({ error: "Customer email required" });
+      // Admin can reply to any ticket; users must be authenticated
+      if (!sessionIsAdmin && !sessionEmail) {
+        return res.status(401).json({ error: "Authentication required" });
       }
 
       // First verify the ticket exists
@@ -3322,7 +3319,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       }
 
       // Check ownership for non-admin users
-      if (!isAdmin && ticket[0].customerEmail !== customerEmail) {
+      if (!sessionIsAdmin && ticket[0].customerEmail !== sessionEmail) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -3330,10 +3327,10 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       const messageData = {
         ticketId,
         content: messageContent,
-        authorName: isAdmin ? 'Support Team' : (customerName || customerEmail),
-        senderEmail: isAdmin ? 'support@ocus.com' : customerEmail,
-        isAdmin: !!isAdmin,
-        isStaff: !!isAdmin
+        authorName: sessionIsAdmin ? 'Support Team' : (customerName || sessionEmail),
+        senderEmail: sessionIsAdmin ? 'support@ocus.com' : sessionEmail,
+        isAdmin: sessionIsAdmin,
+        isStaff: sessionIsAdmin
       };
 
       const newMessage = await storage.addTicketMessage(messageData);
@@ -3349,15 +3346,15 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.delete("/api/tickets/:id", async (req, res) => {
     try {
       const ticketId = parseInt(req.params.id);
-      const { customerEmail } = req.body;
+      const sessionEmail = (req as any).user?.email as string | undefined;
 
       // Validate ticketId is a valid number
       if (isNaN(ticketId) || ticketId <= 0) {
         return res.status(400).json({ error: "Invalid ticket ID" });
       }
 
-      if (!customerEmail) {
-        return res.status(400).json({ error: "Customer email required" });
+      if (!sessionEmail) {
+        return res.status(401).json({ error: "Authentication required" });
       }
 
       // First verify the ticket belongs to the customer
@@ -3370,7 +3367,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       }
 
       // Check ownership - user can only delete their own tickets
-      if (ticket[0].customerEmail !== customerEmail) {
+      if (ticket[0].customerEmail !== sessionEmail) {
         return res.status(403).json({ error: "Access denied" });
       }
 
