@@ -1,49 +1,44 @@
+// Access shared in-memory store created in /api/tickets/index.ts
+function getStore() {
+  const s: any = (globalThis as any).__TICKET_STORE__;
+  if (!s) {
+    (globalThis as any).__TICKET_STORE__ = { tickets: [], messages: new Map(), seq: 1, msgSeq: 1 };
+  }
+  return (globalThis as any).__TICKET_STORE__ as {
+    tickets: any[];
+    messages: Map<number, any[]>;
+    seq: number;
+    msgSeq: number;
+  };
+}
+
+function mapStatus(status: string) {
+  // Admin UI expects: 'open' | 'in_progress' | 'closed'
+  if (status === 'in-progress') return 'in_progress';
+  if (status === 'resolved') return 'closed';
+  return status || 'open';
+}
+
 export const onRequestGet = async () => {
-  // Demo admin tickets list with more details
-  const tickets = [
-    {
-      id: 1,
-      subject: 'Login Issues',
-      message: 'Unable to login with correct credentials',
-      priority: 'high',
-      category: 'technical',
-      status: 'open',
-      createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-      userId: 'demo-user-1',
-      userEmail: 'user1@example.com',
-      attachments: []
-    },
-    {
-      id: 2,
-      subject: 'Feature Request',
-      message: 'Would like to see dark mode option',
-      priority: 'low',
-      category: 'feature',
-      status: 'in-progress',
-      createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-      userId: 'demo-user-2',
-      userEmail: 'user2@example.com',
-      attachments: []
-    },
-    {
-      id: 3,
-      subject: 'Billing Question',
-      message: 'Question about subscription charges',
-      priority: 'medium',
-      category: 'billing',
-      status: 'resolved',
-      createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-      userId: 'demo-user-3',
-      userEmail: 'user3@example.com',
-      attachments: []
-    }
-  ];
+  const store = getStore();
+  const tickets = (store.tickets || []).map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    status: mapStatus(t.status),
+    priority: t.priority,
+    userId: t.assigned_to_user_id || 0,
+    userName: t.customer_name,
+    userEmail: t.customer_email,
+    createdAt: t.created_at,
+    updatedAt: t.updated_at,
+  }));
 
   return new Response(JSON.stringify(tickets), {
-    headers: { 
+    headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    }
+      'Access-Control-Allow-Origin': '*',
+    },
   });
 };
 
@@ -52,7 +47,7 @@ export const onRequestOptions = async () => {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
   });
 };

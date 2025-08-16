@@ -100,7 +100,17 @@ export const onRequestGet = async ({ params }: any) => {
   const ticketId = Number(params.id);
   const store = getStore();
   const list = store.messages.get(ticketId) || [];
-  return json(list);
+  // Map to admin UI shape
+  const mapped = list.map((m: any) => ({
+    id: m.id,
+    ticketId: m.ticket_id,
+    content: m.message,
+    isAdmin: !m.is_from_customer,
+    authorName: m.sender_name,
+    createdAt: m.created_at,
+    attachments: m.attachments || [],
+  }));
+  return json(mapped);
 };
 
 export const onRequestOptions = async () => {
