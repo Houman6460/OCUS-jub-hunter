@@ -482,7 +482,6 @@ function SupportSection({ customer }: { customer: any }) {
         // Ticket missing on server (e.g., store reset). Refresh tickets and messages quietly.
         toast({ title: "Conversation unavailable", description: "This ticket no longer exists on the server. Reloading your tickets.", variant: "destructive" });
         queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
-        queryClient.invalidateQueries({ queryKey: [`/api/tickets/${ticketId}/messages`] });
         return;
       }
       toast({ title: "Error", description: msg || 'Failed to send message', variant: "destructive" });

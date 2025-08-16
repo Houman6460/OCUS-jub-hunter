@@ -22,9 +22,33 @@ function json(data: any, status = 200) {
   });
 }
 
-export const onRequestPost = async ({ request, params }: any) => {
+export const onRequestPost = async ({ request, params, env }: any) => {
   try {
     const ticketId = Number(params.id);
+    // If EXPRESS_API_BASE is configured, proxy the request to Express (preserves persistence and auth via cookies)
+    const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+    if (expressBase) {
+      const base = expressBase.replace(/\/$/, "");
+      const url = `${base}/api/tickets/${ticketId}/messages`;
+      const headers: Record<string, string> = {};
+      const cookie = request.headers.get('cookie');
+      const ct = request.headers.get('content-type');
+      const auth = request.headers.get('authorization');
+      if (cookie) headers['cookie'] = cookie;
+      if (ct) headers['content-type'] = ct;
+      if (auth) headers['authorization'] = auth;
+      const proxied = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: request.body,
+        redirect: 'manual',
+      });
+      // Return proxied response as-is
+      return new Response(proxied.body, {
+        status: proxied.status,
+        headers: proxied.headers,
+      });
+    }
     // Robust body parsing: JSON -> FormData -> Text
     let content: string | undefined;
     let customerEmail: string | undefined;
@@ -97,8 +121,25 @@ export const onRequestPost = async ({ request, params }: any) => {
   }
 };
 
-export const onRequestGet = async ({ params }: any) => {
+export const onRequestGet = async ({ request, params, env }: any) => {
   const ticketId = Number(params.id);
+  // If EXPRESS_API_BASE is configured, proxy the GET to Express to read from DB
+  const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+  if (expressBase) {
+    const base = expressBase.replace(/\/$/, "");
+    const url = `${base}/api/tickets/${ticketId}/messages`;
+    const headers: Record<string, string> = {};
+    const cookie = request.headers.get('cookie');
+    const auth = request.headers.get('authorization');
+    if (cookie) headers['cookie'] = cookie;
+    if (auth) headers['authorization'] = auth;
+    const proxied = await fetch(url, { headers, redirect: 'manual' });
+    return new Response(proxied.body, {
+      status: proxied.status,
+      headers: proxied.headers,
+    });
+  }
+
   const store = getStore();
   const list = store.messages.get(ticketId) || [];
   // Map to admin UI shape
