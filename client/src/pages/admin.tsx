@@ -187,7 +187,11 @@ function TicketManagementTab() {
           content: data.content,
           isAdmin: true,
         });
-        return response.json();
+        const json = await response.json();
+        if (json && json.success === false) {
+          throw new Error(json.message || 'Failed to send message');
+        }
+        return json;
       }
 
       // Fall back to multipart only when attachments are present (Cloudflare-compatible)
@@ -198,7 +202,11 @@ function TicketManagementTab() {
         formData.append(`attachment_${index}`, file);
       });
       const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, formData);
-      return response.json();
+      const json = await response.json();
+      if (json && json.success === false) {
+        throw new Error(json.message || 'Failed to send message');
+      }
+      return json;
     },
     onSuccess: () => {
       setNewMessage('');
@@ -207,8 +215,17 @@ function TicketManagementTab() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
       toast({ title: "Message sent successfully" });
     },
-    onError: () => {
-      toast({ title: "Failed to send message", variant: "destructive" });
+    onError: (error: any) => {
+      const msg = typeof error?.message === 'string' ? error.message : '';
+      if (msg.startsWith('404:')) {
+        toast({ title: "Conversation unavailable", description: "This ticket no longer exists on the server. Reloading your tickets.", variant: "destructive" });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+        if (selectedTicket?.id) {
+          queryClient.invalidateQueries({ queryKey: [`/api/tickets/${selectedTicket.id}/messages`] });
+        }
+        return;
+      }
+      toast({ title: "Failed to send message", description: msg || undefined, variant: "destructive" });
     }
   });
 
@@ -490,7 +507,7 @@ function TicketManagementTab() {
                 {/* Attachments preview */}
                 {attachments.length > 0 && (
                   <div className="mb-3 space-y-2">
-                    <Label className="text-sm font-medium">Attachments ({attachments.length})</Label>
+                    <Label className="text-sm font-medium" htmlFor="attachment-input">Attachments ({attachments.length})</Label>
                     <div className="space-y-1">
                       {attachments.map((file, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-slate-50 rounded border">

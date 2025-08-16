@@ -929,7 +929,11 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
         message,
         senderEmail: customerEmail
       });
-      return await response.json();
+      const json = await response.json();
+      if (json && json.success === false) {
+        throw new Error(json.message || 'Failed to send message');
+      }
+      return json;
     },
     onSuccess: () => {
       setNewMessage('');

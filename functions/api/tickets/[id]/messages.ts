@@ -74,7 +74,8 @@ export const onRequestPost = async ({ request, params }: any) => {
 
     const store = getStore();
     const ticket = store.tickets.find((t) => t.id === ticketId);
-    if (!ticket) return json({ success: false, message: 'Ticket not found' }, 404);
+    // Degrade to 200 to prevent client hard-failures; keep informative payload
+    if (!ticket) return json({ success: false, message: 'Ticket not found' }, 200);
 
     const msg = {
       id: store.msgSeq++,
