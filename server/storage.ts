@@ -190,8 +190,8 @@ export interface IStorage {
   // Affiliate operations
   getCustomerByReferralCode(code: string): Promise<Customer | undefined>;
   createAffiliateTransaction(transaction: InsertAffiliateTransaction): Promise<AffiliateTransaction>;
-  getAffiliateTransactions(affiliateId: string): Promise<AffiliateTransaction[]>;
-  getAffiliateStats(affiliateId: string): Promise<{totalEarnings: number, totalReferrals: number, pendingCommissions: number}>;
+  getAffiliateTransactions(affiliateId: number): Promise<AffiliateTransaction[]>;
+  getAffiliateStats(affiliateId: number): Promise<{totalEarnings: number, totalReferrals: number, pendingCommissions: number}>;
   
   // Tickets
   createTicket(ticket: any): Promise<any>;
@@ -229,7 +229,7 @@ export interface IStorage {
   
   // Customer Payments
   recordPayment(payment: InsertCustomerPayment): Promise<CustomerPayment>;
-  getCustomerPayments(customerId: string): Promise<CustomerPayment[]>;
+  getCustomerPayments(customerId: number): Promise<CustomerPayment[]>;
   updatePaymentStatus(paymentId: number, status: string, processedAt?: Date): Promise<CustomerPayment>;
 
   // Invoice Management
@@ -1004,7 +1004,7 @@ export class DatabaseStorage implements IStorage {
     return affiliateTransaction;
   }
 
-  async getAffiliateTransactions(affiliateId: string): Promise<AffiliateTransaction[]> {
+  async getAffiliateTransactions(affiliateId: number): Promise<AffiliateTransaction[]> {
     const transactions = await db
       .select()
       .from(affiliateTransactions)
@@ -1013,7 +1013,7 @@ export class DatabaseStorage implements IStorage {
     return transactions;
   }
 
-  async getAffiliateStats(affiliateId: string): Promise<{totalEarnings: number, totalReferrals: number, pendingCommissions: number}> {
+  async getAffiliateStats(affiliateId: number): Promise<{totalEarnings: number, totalReferrals: number, pendingCommissions: number}> {
     const transactions = await this.getAffiliateTransactions(affiliateId);
     const totalEarnings = transactions
       .filter(t => t.status === 'paid')
@@ -1026,7 +1026,7 @@ export class DatabaseStorage implements IStorage {
     const referrals = await db
       .select({ count: count() })
       .from(customers)
-      .where(eq(customers.referredBy, affiliateId));
+      .where(eq(customers.referredBy, affiliateId.toString()));
     
     const totalReferrals = referrals[0]?.count || 0;
 
@@ -1343,7 +1343,7 @@ export class DatabaseStorage implements IStorage {
     return newPayment;
   }
 
-  async getCustomerPayments(customerId: string): Promise<CustomerPayment[]> {
+  async getCustomerPayments(customerId: number): Promise<CustomerPayment[]> {
     return await db
       .select()
       .from(customerPayments)
@@ -1811,13 +1811,17 @@ export class DatabaseStorage implements IStorage {
     return download;
   }
 
-  async getCustomerExtensionDownloads(customerId: number | string): Promise<ExtensionDownload[]> {
+  async getExtensionDownloads(customerId: string | number): Promise<ExtensionDownload[]> {
     const id = typeof customerId === 'string' ? parseInt(customerId) : customerId;
     return await db
       .select()
       .from(extensionDownloads)
-      .where(eq(extensionDownloads.customerId, id.toString()))
+      .where(eq(extensionDownloads.customerId, id))
       .orderBy(desc(extensionDownloads.createdAt));
+  }
+
+  async getCustomerExtensionDownloads(customerId: string): Promise<ExtensionDownload[]> {
+    return await this.getExtensionDownloads(customerId);
   }
 
   // Social Authentication Methods
@@ -2095,7 +2099,7 @@ export class DatabaseStorage implements IStorage {
     const result = [];
 
     for (const customer of customersList) {
-      const downloads = await this.getCustomerExtensionDownloads(customer.id);
+      const downloads = await this.getCustomerExtensionDownloads(customer.id.toString());
       result.push({ customer, downloads });
     }
 
@@ -2362,7 +2366,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerInvoices(customerId: string): Promise<Invoice[]> {
-    return await db.select().from(invoices).where(eq(invoices.customerId, customerId)).orderBy(desc(invoices.createdAt));
+    const id = typeof customerId === 'string' ? parseInt(customerId) : customerId;
+    return await db.select().from(invoices).where(eq(invoices.customerId, id)).orderBy(desc(invoices.createdAt));
   }
 
   async getAllInvoices(): Promise<Invoice[]> {

@@ -99,7 +99,7 @@ class CaptchaService {
 
   private cleanupExpired(): void {
     const now = Date.now();
-    for (const [id, challenge] of this.challenges.entries()) {
+    for (const [id, challenge] of Array.from(this.challenges.entries())) {
       if (now > challenge.expires) {
         this.challenges.delete(id);
       }

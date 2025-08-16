@@ -21,7 +21,7 @@ router.post('/create', async (req, res) => {
   try {
     // Extract customer ID from auth header for demo purposes
     const authHeader = req.headers.authorization;
-    let customerId = req.session?.customerId || req.body.customerId;
+    let customerId = (req.session as any)?.customerId || req.body.customerId;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
@@ -56,7 +56,7 @@ router.post('/create', async (req, res) => {
 router.get('/dashboard/:customerId', async (req, res) => {
   try {
     // Get customer ID from URL param first, then try other sources
-    let customerId = req.params.customerId || req.session?.customerId;
+    let customerId = req.params.customerId || (req.session as any)?.customerId;
     
     // Extract from auth header if not in params
     if (!customerId) {
@@ -143,7 +143,7 @@ router.post('/payment-method/:customerId', async (req, res) => {
       });
     }
 
-    const result = await affiliateService.updatePaymentMethod(customerId, method, details);
+    const result = await affiliateService.updatePaymentMethod(parseInt(customerId), method, details);
     res.json(result);
   } catch (error) {
     console.error('Update payment method error:', error);
@@ -176,7 +176,7 @@ router.post('/request-payout/:customerId', async (req, res) => {
     res.json(payout);
   } catch (error) {
     console.error('Request payout error:', error);
-    res.status(500).json({ error: error.message || 'Failed to request payout' });
+    res.status(500).json({ error: (error as Error).message || 'Failed to request payout' });
   }
 });
 
@@ -201,7 +201,7 @@ router.post('/track-referral', async (req, res) => {
 router.get('/admin/stats', async (req, res) => {
   try {
     // TODO: Add admin authentication check
-    const stats = await affiliateService.getAffiliateStats();
+    const stats = await affiliateService.getAllAffiliateStats();
     res.json(stats);
   } catch (error) {
     console.error('Get affiliate stats error:', error);

@@ -933,7 +933,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check current authenticated user's premium purchase status
   app.get("/api/me/purchase-status", requireAuth, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      if (!(req.user as any)?.id) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -953,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalSpent: totalSpent.toFixed(2),
         completedOrders: completedOrders.length,
         lastPurchaseDate: completedOrders.length > 0 ? 
-          Math.max(...completedOrders.map(o => new Date(o.completedAt || o.createdAt).getTime())) : null
+          Math.max(...completedOrders.map(o => new Date(o.completedAt || o.createdAt || new Date()).getTime())) : null
       });
     } catch (error: any) {
       console.error('Failed to get user purchase status:', error);
@@ -965,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user profile
   app.get("/api/me", requireAuth, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      if (!(req.user as any)?.id) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -983,15 +983,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current user downloads
-  app.get("/api/me/downloads", requireAuth, async (req, res) => {
+  // Get current user orders
+  app.get("/api/me/orders", requireAuth, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      if (!(req.user as any)?.id) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const userDownloads = await storage.getUserDownloads((req.user as any).id);
-      res.json(userDownloads);
+      const userOrders = await storage.getUserOrders((req.user as any).id);
+      res.json(userOrders);
+    } catch (error: any) {
+      console.error('Failed to get user orders:', error);
+      res.status(500).json({ message: "Failed to get orders: " + error.message });
+    }
+  });
+
+  // User-specific payment intent creation for dashboard purchases
+  app.post("/api/user/create-payment-intent", async (req, res) => {
+    try {
+      const { amount } = req.body;
     } catch (error: any) {
       console.error('Failed to get user downloads:', error);
       res.status(500).json({ message: "Failed to get downloads: " + error.message });
@@ -1540,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const invoice = await storage.createInvoice({
             invoiceNumber,
             orderId: order.id,
-            customerId: order.userId?.toString() || 'guest',
+            customerId: order.userId || null,
             customerName: order.customerName,
             customerEmail: order.customerEmail,
             invoiceDate: new Date(),
@@ -1623,14 +1633,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const invoice = await storage.createInvoice({
           invoiceNumber,
           orderId: order.id,
-          customerId: order.userId?.toString() || 'guest',
+          customerId: order.userId || null,
           customerName: order.customerName,
           customerEmail: order.customerEmail,
           invoiceDate: new Date(),
           dueDate: new Date(), // Paid immediately
           subtotal: order.finalAmount,
           totalAmount: order.finalAmount,
-          currency: order.currency.toUpperCase(),
+          currency: (order.currency || 'USD').toUpperCase(),
           status: 'paid',
           paidAt: new Date(),
           notes: `Invoice for order #${order.id}`
@@ -1954,14 +1964,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { customerId } = req.params;
       
       // Get customer by ID
-      const customer = await storage.getCustomer(customerId);
+      const customer = await storage.getCustomer(parseInt(customerId));
       if (!customer) {
         return res.status(404).json({ success: false, message: "Customer not found" });
       }
 
       // If customer doesn't have a referral code yet, generate one
       if (!customer.referralCode) {
-        const { referralCode } = await affiliateService.createAffiliate(customerId);
+        const { referralCode } = await affiliateService.createAffiliate(parseInt(customerId));
         
         res.json({ 
           success: true, 
@@ -3039,7 +3049,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
           });
         }
 
-        const stats = await storage.getAffiliateStats(userId);
+        const stats = await storage.getAffiliateStats(parseInt(userId));
         return res.json(stats);
       } else {
         return res.json({ totalEarnings: 0, totalReferrals: 0, pendingCommissions: 0 });
@@ -3167,7 +3177,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   // User tickets - only see your own tickets 
   app.get("/api/me/tickets", requireAuth, async (req, res) => {
     try {
-      if (!req.user?.email) {
+      if (!(req.user as any)?.email) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
@@ -3394,7 +3404,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.get("/api/admin/customers/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const customer = await storage.getCustomer(id);
+      const customer = await storage.getCustomer(parseInt(id));
 
       if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
@@ -3403,7 +3413,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       // Get customer's usage stats and payment history
       const [usageStats, payments, tickets] = await Promise.all([
         storage.getCustomerUsageStats(id),
-        storage.getCustomerPayments(id),
+        storage.getCustomerPayments(parseInt(id)),
         storage.getCustomerTickets(customer.email)
       ]);
 
@@ -4267,7 +4277,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   try {
     const { customerId } = req.params;
 
-    const customer = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1);
+    const customer = await db.select().from(customers).where(eq(customers.id, parseInt(customerId))).limit(1);
     if (!customer.length) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -4619,7 +4629,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
 
       // If not activated, increment trial usage
       if (!trial.isActivated) {
-        trial = await storage.updateTrialUsage(userId, (trial.trialsUsed || 0) + 1);
+        trial = await storage.updateTrialUsage(userId);
         
         // Mark mission as trial used if provided
         if (missionId) {
@@ -4630,8 +4640,8 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       res.json({ 
         success: true, 
         trial,
-        remaining: (trial.maxTrials || 3) - (trial.trialsUsed || 0),
-        canUse: trial.isActivated || (trial.trialsUsed || 0) < (trial.maxTrials || 3)
+        remaining: trial ? (trial.maxTrials || 3) - (trial.trialsUsed || 0) : 0,
+        canUse: trial ? trial.isActivated || (trial.trialsUsed || 0) < (trial.maxTrials || 3) : false
       });
     } catch (error) {
       console.error('Error using trial:', error);
@@ -5110,11 +5120,11 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
         // Replace static meta tags with dynamic ones
         // For production, always use the full production URL
         const baseUrl = process.env.NODE_ENV === 'production' ? 'https://jobhunter.one' : `http://${req.get('host')}`;
-        const ogImage = seoSettings.customOgImage ? `${baseUrl}/api/seo/custom-image/og` : `${baseUrl}/og-image.svg`;
-        const siteTitle = seoSettings.siteTitle || seoSettings.ogTitle || 'OCUS Job Hunter - Premium Chrome Extension';
-        const siteDescription = seoSettings.siteDescription || seoSettings.ogDescription || 'Boost your photography career with OCUS Job Hunter Chrome Extension';
-        const siteUrl = seoSettings.ogUrl || `${baseUrl}/`;
-        const siteName = seoSettings.ogSiteName || 'OCUS Job Hunter';
+        const ogImage = seoSettings?.customOgImage ? `${baseUrl}/api/seo/custom-image/og` : `${baseUrl}/og-image.svg`;
+        const siteTitle = seoSettings?.siteTitle || seoSettings?.ogTitle || 'OCUS Job Hunter - Premium Chrome Extension';
+        const siteDescription = seoSettings?.siteDescription || seoSettings?.ogDescription || 'Boost your photography career with OCUS Job Hunter Chrome Extension';
+        const siteUrl = seoSettings?.ogUrl || `${baseUrl}/`;
+        const siteName = seoSettings?.ogSiteName || 'OCUS Job Hunter';
         
         // Dynamic meta tag replacements
         html = html.replace(

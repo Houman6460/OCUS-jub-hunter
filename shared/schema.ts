@@ -274,7 +274,7 @@ export const customers = pgTable("customers", {
 
 export const affiliateTransactions = pgTable("affiliate_transactions", {
   id: serial("id").primaryKey(),
-  affiliateId: varchar("affiliate_id").notNull().references(() => customers.id),
+  affiliateId: integer("affiliate_id").notNull().references(() => customers.id),
   orderId: integer("order_id").notNull().references(() => orders.id),
   commission: decimal("commission", { precision: 10, scale: 2 }).notNull(),
   status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, paid, cancelled
@@ -285,7 +285,7 @@ export const affiliateTransactions = pgTable("affiliate_transactions", {
 // Extension usage statistics table
 export const extensionUsageStats = pgTable("extension_usage_stats", {
   id: serial("id").primaryKey(),
-  customerId: varchar("customer_id").notNull().references(() => customers.id),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
   sessionId: varchar("session_id", { length: 100 }).notNull(),
   usageDate: timestamp("usage_date").defaultNow().notNull(),
   jobsFound: integer("jobs_found").default(0).notNull(),
@@ -302,7 +302,7 @@ export const extensionUsageStats = pgTable("extension_usage_stats", {
 // Customer payments tracking table
 export const customerPayments = pgTable("customer_payments", {
   id: serial("id").primaryKey(),
-  customerId: varchar("customer_id").notNull().references(() => customers.id),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
   orderId: integer("order_id").notNull().references(() => orders.id),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(), // stripe, paypal
   paymentIntentId: varchar("payment_intent_id", { length: 255 }),
@@ -492,7 +492,7 @@ export const announcementBadges = pgTable('announcement_badges', {
 // Extension downloads tracking for registered users
 export const extensionDownloads = pgTable("extension_downloads", {
   id: serial("id").primaryKey(),
-  customerId: varchar("customer_id").notNull().references(() => customers.id),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
   downloadToken: varchar("download_token", { length: 100 }).notNull().unique(),
   downloadType: varchar("download_type", { length: 20 }).default("trial").notNull(), // trial, full
   downloadedAt: timestamp("downloaded_at").defaultNow(),
@@ -506,7 +506,7 @@ export const extensionDownloads = pgTable("extension_downloads", {
 // Extension usage logs for trial limitations
 export const extensionUsageLogs = pgTable("extension_usage_logs", {
   id: serial("id").primaryKey(),
-  customerId: varchar("customer_id").notNull().references(() => customers.id),
+  customerId: integer("customer_id").notNull().references(() => customers.id),
   sessionId: varchar("session_id", { length: 100 }).notNull(),
   jobsUsed: integer("jobs_used").default(1).notNull(),
   platform: varchar("platform", { length: 50 }).default("ocus").notNull(),
@@ -778,7 +778,7 @@ export const affiliateSettings = pgTable("affiliate_settings", {
 
 export const affiliatePayouts = pgTable("affiliate_payouts", {
   id: serial("id").primaryKey(),
-  affiliateId: varchar("affiliate_id").notNull().references(() => customers.id),
+  affiliateId: integer("affiliate_id").notNull().references(() => customers.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(), // paypal, bank, manual
   paymentEmail: varchar("payment_email", { length: 255 }),
@@ -826,7 +826,7 @@ export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   invoiceNumber: varchar("invoice_number", { length: 50 }).notNull().unique(),
   orderId: integer("order_id").references(() => orders.id),
-  customerId: varchar("customer_id").references(() => customers.id),
+  customerId: integer("customer_id").references(() => customers.id),
   customerName: varchar("customer_name", { length: 255 }).notNull(),
   customerEmail: varchar("customer_email", { length: 255 }).notNull(),
   customerAddress: text("customer_address"),
@@ -925,7 +925,7 @@ export const cities = pgTable("cities", {
   name: varchar("name", { length: 100 }).notNull(),
   countryId: integer("country_id").references(() => countries.id).notNull(),
   isAvailable: boolean("is_available").notNull().default(true),
-  assignedUserId: varchar("assigned_user_id").references(() => customers.id),
+  assignedUserId: integer("assigned_user_id").references(() => customers.id),
   assignedAt: timestamp("assigned_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -933,12 +933,12 @@ export const cities = pgTable("cities", {
 // User location assignments
 export const userLocationAssignments = pgTable("user_location_assignments", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => customers.id).notNull().unique(),
+  userId: integer("user_id").references(() => customers.id).notNull().unique(),
   continentId: integer("continent_id").references(() => continents.id).notNull(),
   countryId: integer("country_id").references(() => countries.id).notNull(),
   cityId: integer("city_id").references(() => cities.id).notNull(),
   assignedAt: timestamp("assigned_at").notNull().defaultNow(),
-  assignedBy: varchar("assigned_by").references(() => customers.id), // null for self-assignment, admin user id for admin assignment
+  assignedBy: integer("assigned_by").references(() => customers.id), // null for self-assignment, admin user id for admin assignment
   isLocked: boolean("is_locked").notNull().default(true),
 });
 

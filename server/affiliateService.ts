@@ -1,6 +1,6 @@
-import { db } from "./db";
-import { customers, orders, affiliateTransactions, affiliatePrograms, affiliatePayouts } from "@shared/schema";
-import { eq, and, desc, sum, count } from "drizzle-orm";
+import { db } from './db';
+import { customers, affiliateTransactions, affiliatePayouts, orders } from '../shared/schema';
+import { eq, desc, sum, count, and, gte, lte, isNotNull } from 'drizzle-orm';
 import { nanoid } from "nanoid";
 import { affiliateEmailService } from "./emailService/affiliateEmails";
 
@@ -27,7 +27,7 @@ export class AffiliateService {
   }
 
   // Create affiliate account
-  async createAffiliate(customerId: string, paymentEmail?: string): Promise<{ referralCode: string }> {
+  async createAffiliate(customerId: number, paymentEmail?: string): Promise<{ referralCode: string }> {
     const referralCode = await this.generateReferralCode();
     
     await db
@@ -87,7 +87,7 @@ export class AffiliateService {
   }
 
   // Get affiliate dashboard stats
-  async getAffiliateDashboard(customerId: string) {
+  async getAffiliateDashboard(customerId: number) {
     const affiliate = await db
       .select()
       .from(customers)
@@ -144,19 +144,54 @@ export class AffiliateService {
     };
   }
 
+  // Get affiliate stats
+  async getAffiliateStats(customerId: number): Promise<{
+    totalEarnings: string;
+    totalReferrals: number;
+    totalCommissions: string;
+  }> {
+    const affiliate = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, customerId))
+      .limit(1);
+
+    if (affiliate.length === 0) {
+      throw new Error('Affiliate not found');
+    }
+
+    const affiliateData = affiliate[0];
+
+    // Get commission statistics
+    const commissionStats = await db
+      .select({
+        totalCommissions: sum(affiliateTransactions.commission),
+        totalReferrals: count(affiliateTransactions.id)
+      })
+      .from(affiliateTransactions)
+      .where(eq(affiliateTransactions.affiliateId, customerId));
+
+    return {
+      totalEarnings: affiliateData.totalEarnings,
+      totalReferrals: commissionStats[0].totalReferrals,
+      totalCommissions: commissionStats[0].totalCommissions
+    };
+  }
+
   // Update payment method
-  async updatePaymentMethod(customerId: string, method: string, details: any) {
+  async updatePaymentMethod(customerId: number, paymentMethod: string, paymentDetails: any): Promise<{ success: boolean, message: string }> {
     // Update the customer's payment method
     const updateData: any = {
-      paymentMethod: method
+      paymentMethod: paymentMethod
     };
 
-    if (method === 'paypal') {
-      updateData.paymentEmail = details.email;
-    } else if (method === 'bank') {
-      updateData.bankDetails = details;
-    } else if (method === 'stripe') {
-      updateData.stripeAccountId = details.account_id;
+    if (paymentMethod === 'paypal') {
+      updateData.paymentEmail = paymentDetails.email;
+    } else if (paymentMethod === 'bank') {
+      updateData.bankDetails = paymentDetails;
+    } else if (paymentMethod === 'stripe') {
+      updateData.stripeAccountId = paymentDetails.account_id;
+      updateData.paymentEmail = paymentDetails.email;
     }
 
     await db
@@ -168,7 +203,7 @@ export class AffiliateService {
   }
 
   // Request payout
-  async requestPayout(customerId: string, amount: number, paymentMethod: string, paymentDetails: any) {
+  async requestPayout(customerId: number, amount: number, paymentMethod: string, paymentDetails: any) {
     // Check if affiliate has enough pending commission
     const pendingCommission = await db
       .select({
@@ -259,12 +294,12 @@ export class AffiliateService {
     }
   }
 
-  // Admin: Get all affiliate stats
-  async getAffiliateStats() {
+  // Admin: Get all affiliate overview stats
+  async getAllAffiliateStats() {
     const totalAffiliates = await db
       .select({ count: count() })
       .from(customers)
-      .where(eq(customers.referralCode, customers.referralCode)); // Not null
+      .where(isNotNull(customers.referralCode));
 
     const totalCommissions = await db
       .select({
@@ -292,7 +327,7 @@ export class AffiliateService {
       })
       .from(customers)
       .leftJoin(affiliateTransactions, eq(customers.id, affiliateTransactions.affiliateId))
-      .where(eq(customers.referralCode, customers.referralCode)) // Not null
+      .where(isNotNull(customers.referralCode))
       .groupBy(customers.id, customers.name, customers.email, customers.referralCode, customers.totalEarnings)
       .orderBy(desc(sum(affiliateTransactions.commission)))
       .limit(10);
@@ -342,7 +377,7 @@ export class AffiliateService {
       .from(affiliateTransactions)
       .where(eq(affiliateTransactions.status, "approved"))
       .groupBy(affiliateTransactions.affiliateId)
-      .having(({ totalCommission }) => totalCommission >= 50); // Minimum payout threshold
+      .having(({ totalCommission }: { totalCommission: any }) => totalCommission >= 50); // Minimum payout threshold
 
     for (const affiliate of approvedTransactions) {
       // Get affiliate payment details

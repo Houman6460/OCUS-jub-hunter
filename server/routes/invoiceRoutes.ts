@@ -125,7 +125,7 @@ router.get('/customer/:customerId', async (req, res) => {
       }
     }
     
-    const invoices = await invoiceService.getCustomerInvoices(customerId);
+    const invoices = await invoiceService.getCustomerInvoices(parseInt(customerId));
     res.json(invoices);
   } catch (error) {
     console.error('Get customer invoices error:', error);

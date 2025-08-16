@@ -80,13 +80,13 @@ export class AffiliateEmailService {
       </div>
     `;
 
-    return await emailService.sendEmail(
+    await emailService.sendEmail(
       data.affiliateEmail,
-      'support@ocusjobhunter.com',
       subject,
       htmlContent,
-      `Hi ${data.affiliateName}, someone just purchased OCUS Job Hunter using your referral code ${data.referralCode}! You earned $${data.commissionAmount} commission.`
+      'support@ocusjobhunter.com'
     );
+    return true;
   }
 
   // Send notification when commission is approved
@@ -138,13 +138,13 @@ export class AffiliateEmailService {
       </div>
     `;
 
-    return await emailService.sendEmail(
+    await emailService.sendEmail(
       data.affiliateEmail,
-      'support@ocusjobhunter.com',
       subject,
       htmlContent,
-      `Hi ${data.affiliateName}, your commission of $${data.commissionAmount} for order #${data.orderId} has been approved!`
+      'support@ocusjobhunter.com'
     );
+    return true;
   }
 
   // Send notification when payout is processed
@@ -201,13 +201,13 @@ export class AffiliateEmailService {
       </div>
     `;
 
-    return await emailService.sendEmail(
+    await emailService.sendEmail(
       data.affiliateEmail,
-      'support@ocusjobhunter.com',
       subject,
       htmlContent,
-      `Hi ${data.affiliateName}, your payout of $${data.payoutAmount} has been processed successfully via ${data.paymentMethod}.`
+      'support@ocusjobhunter.com'
     );
+    return true;
   }
 
   // Send welcome email to new affiliates
@@ -278,13 +278,13 @@ export class AffiliateEmailService {
       </div>
     `;
 
-    return await emailService.sendEmail(
+    await emailService.sendEmail(
       affiliateEmail,
-      'support@ocusjobhunter.com',
       subject,
       htmlContent,
-      `Welcome to OCUS Job Hunter Affiliate Program! Your referral code is ${referralCode}. Start earning 10% commission on every sale.`
+      'support@ocusjobhunter.com'
     );
+    return true;
   }
 }
 

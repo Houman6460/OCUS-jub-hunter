@@ -294,13 +294,13 @@ function generateInvoiceHTML(
           ${parseFloat(invoice.taxAmount || '0') > 0 ? `
             <div class="totals-row">
               <span>Tax:</span>
-              <span>${invoice.currency.toUpperCase()} ${parseFloat(invoice.taxAmount).toFixed(2)}</span>
+              <span>${invoice.currency.toUpperCase()} ${parseFloat(invoice.taxAmount || '0').toFixed(2)}</span>
             </div>
           ` : ''}
           ${parseFloat(invoice.discountAmount || '0') > 0 ? `
             <div class="totals-row">
               <span>Discount:</span>
-              <span>-${invoice.currency.toUpperCase()} ${parseFloat(invoice.discountAmount).toFixed(2)}</span>
+              <span>-${invoice.currency.toUpperCase()} ${parseFloat(invoice.discountAmount || '0').toFixed(2)}</span>
             </div>
           ` : ''}
           <div class="totals-row total">

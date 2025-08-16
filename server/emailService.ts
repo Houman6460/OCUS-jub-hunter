@@ -29,6 +29,23 @@ class EmailService {
     this.transporter = nodemailer.createTransport(emailConfig);
   }
 
+  async sendEmail(to: string, subject: string, html: string, from?: string): Promise<void> {
+    const mailOptions = {
+      from: from || process.env.EMAIL_FROM || 'noreply@ocusjobhunter.com',
+      to,
+      subject,
+      html,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Email sent to ${to}`);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      throw error;
+    }
+  }
+
   async sendPurchaseConfirmation(order: Order, activationKey?: string): Promise<void> {
     const downloadUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/download/${order.downloadToken}`;
     const activationDownloadUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/api/download-activation/${order.downloadToken}`;
@@ -133,7 +150,7 @@ class EmailService {
               <h3 style="margin-top: 0; color: #2563EB;">Order Details</h3>
               <p><strong>Order ID:</strong> #${order.id}</p>
               <p><strong>Customer:</strong> ${order.customerName}</p>
-              <p><strong>Amount:</strong> $${parseFloat(order.finalAmount).toFixed(2)} ${order.currency.toUpperCase()}</p>
+              <p><strong>Amount:</strong> $${parseFloat(order.finalAmount).toFixed(2)} ${(order.currency || 'USD').toUpperCase()}</p>
               <p><strong>**START FREE**:</strong> 3 jobs included, then unlimited with activation</p>
             </div>
             

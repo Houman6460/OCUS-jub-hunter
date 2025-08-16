@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { invoices, invoiceItems, invoiceSettings, orders, customers } from "@shared/schema";
+import { invoices, invoiceItems, invoiceSettings, orders, customers, type Invoice, type InvoiceSettings } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -263,7 +263,7 @@ export class InvoiceService {
   }
 
   // Get customer invoices
-  async getCustomerInvoices(customerId: string) {
+  async getCustomerInvoices(customerId: number) {
     return await db
       .select()
       .from(invoices)
@@ -473,7 +473,7 @@ export class InvoiceService {
             </tr>
         </thead>
         <tbody>
-            ${invoiceData.items.map(item => `
+            ${invoiceData.items.map((item: any) => `
                 <tr>
                     <td>
                         <strong>${item.productName}</strong>
@@ -643,7 +643,7 @@ export class InvoiceService {
     </div>
 
     <div class="items">
-        ${invoiceData.items.map(item => `
+        ${invoiceData.items.map((item: any) => `
             <div class="item">
                 <div>
                     <strong>${item.productName}</strong>
