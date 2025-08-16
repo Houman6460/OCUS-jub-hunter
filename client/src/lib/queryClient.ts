@@ -17,7 +17,16 @@ export async function apiRequest(
   // Resolve API base URL when running behind Cloudflare Pages or separate domains
   const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
   const base = apiBase ? apiBase.replace(/\/$/, "") : "";
-  const fullUrl = url.startsWith("http") ? url : `${base}${url}`;
+  let fullUrl = url;
+  if (!fullUrl.startsWith("http")) {
+    if (!base) {
+      fullUrl = url; // use as-is (relative path like /api/...)
+    } else {
+      // Avoid double-prefixing when base already includes the same leading segment (e.g., '/api')
+      const samePrefix = fullUrl.startsWith(base + "/");
+      fullUrl = samePrefix ? fullUrl : `${base}${fullUrl}`;
+    }
+  }
 
   // Handle different data types
   if (data instanceof FormData) {
@@ -55,7 +64,15 @@ export const getQueryFn: <T>(options: {
     const url = queryKey.join("/") as string;
     const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
     const base = apiBase ? apiBase.replace(/\/$/, "") : "";
-    const fullUrl = url.startsWith("http") ? url : `${base}${url}`;
+    let fullUrl = url;
+    if (!fullUrl.startsWith("http")) {
+      if (!base) {
+        fullUrl = url;
+      } else {
+        const samePrefix = fullUrl.startsWith(base + "/");
+        fullUrl = samePrefix ? fullUrl : `${base}${fullUrl}`;
+      }
+    }
     const headers: Record<string, string> = {};
 
     // Add authentication token if available

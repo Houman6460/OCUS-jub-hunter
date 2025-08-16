@@ -185,8 +185,17 @@ export default function Support() {
       }
       console.log('Fetching messages for ticket:', selectedTicket?.id, 'user:', user);
       // Server derives role/email from session; call without client-provided flags
-      const response = await apiRequest('GET', `/api/tickets/${selectedTicket!.id}/messages`);
-      const data = response.json ? await response.json() : response;
+      let data: any = [];
+      try {
+        const response = await apiRequest('GET', `/api/tickets/${selectedTicket!.id}/messages`);
+        data = response.json ? await response.json() : response;
+      } catch (err: any) {
+        // Treat 404 (no messages yet or store reset) as empty list
+        if (typeof err?.message === 'string' && err.message.startsWith('404:')) {
+          return [];
+        }
+        throw err;
+      }
       // Normalize message fields for rendering
       return Array.isArray(data)
         ? data.map((m: any) => ({
