@@ -18,10 +18,14 @@ export async function apiRequest(
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   let body: string | FormData | undefined;
-  // Resolve API base URL when running behind Cloudflare Pages or separate domains
+  // Resolve API base URL
   const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
-  // If VITE_API_BASE is not provided, default to current origin to avoid mixing backends
-  const fallbackBase = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+  const isProd = (import.meta as any)?.env?.MODE === 'production';
+  if (isProd && !apiBase) {
+    console.error('VITE_API_BASE is not set in production build. Configure it to point to the Express API to avoid using ephemeral backend.');
+  }
+  // In production, prefer apiBase strictly. In dev, allow fallback to current origin.
+  const fallbackBase = (!isProd && typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
   const base = (apiBase || fallbackBase) ? (apiBase || fallbackBase).replace(/\/$/, "") : "";
   // Ensure client-provided relative paths always start with a leading slash
   const normalizedUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
@@ -71,7 +75,11 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
     const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
-    const fallbackBase = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+    const isProd = (import.meta as any)?.env?.MODE === 'production';
+    if (isProd && !apiBase) {
+      console.error('VITE_API_BASE is not set in production build. Configure it to point to the Express API to avoid using ephemeral backend.');
+    }
+    const fallbackBase = (!isProd && typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
     const base = (apiBase || fallbackBase) ? (apiBase || fallbackBase).replace(/\/$/, "") : "";
     // Ensure relative paths used in query keys begin with a slash
     const normalizedUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
