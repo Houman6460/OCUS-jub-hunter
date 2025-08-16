@@ -477,7 +477,15 @@ function SupportSection({ customer }: { customer: any }) {
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      const msg = typeof error?.message === 'string' ? error.message : '';
+      if (msg.startsWith('404:')) {
+        // Ticket missing on server (e.g., store reset). Refresh tickets and messages quietly.
+        toast({ title: "Conversation unavailable", description: "This ticket no longer exists on the server. Reloading your tickets.", variant: "destructive" });
+        queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+        queryClient.invalidateQueries({ queryKey: [`/api/tickets/${ticketId}/messages`] });
+        return;
+      }
+      toast({ title: "Error", description: msg || 'Failed to send message', variant: "destructive" });
     }
   });
 
@@ -889,8 +897,27 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
     queryKey: [`/api/tickets/${ticketId}/messages`],
     queryFn: async () => {
       if (!ticketId) return [];
-      const response = await apiRequest('GET', `/api/tickets/${ticketId}/messages`);
-      return await response.json();
+      try {
+        const response = await apiRequest('GET', `/api/tickets/${ticketId}/messages`);
+        const data = await response.json();
+        // Normalize fields for consistent rendering
+        return Array.isArray(data)
+          ? data.map((m: any) => ({
+              id: m.id,
+              content: m.content ?? m.message ?? '',
+              isFromCustomer: typeof m.isFromCustomer === 'boolean' ? m.isFromCustomer : !m.isAdmin,
+              authorName: m.authorName ?? m.senderName ?? m.sender_name ?? 'User',
+              createdAt: m.createdAt ?? m.created_at ?? new Date().toISOString(),
+              attachments: m.attachments ?? [],
+            }))
+          : [];
+      } catch (err: any) {
+        // Treat 404 (ticket not found or store reset) as empty conversation
+        if (typeof err?.message === 'string' && err.message.startsWith('404:')) {
+          return [];
+        }
+        throw err;
+      }
     },
     enabled: !!ticketId
   });
