@@ -6,20 +6,61 @@ export const onRequest = async ({ request, env }: any) => {
     return new Response(JSON.stringify({ 
       status: 'ok', 
       timestamp: Date.now(),
-      message: 'OCUS Job Hunter is running on Cloudflare Pages'
+      message: 'OCUS Job Hunter is running on Cloudflare Pages',
+      url: url.href,
+      method: request.method
     }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
     });
   }
 
-  // Let real assets pass through
-  const last = url.pathname.split('/').pop() || '';
-  const hasExt = last.includes('.');
-  if (hasExt || url.pathname.startsWith('/assets/')) {
-    return env.ASSETS.fetch(request);
+  // Handle debug endpoint with inline HTML
+  if (url.pathname === '/debug') {
+    const debugHtml = `<!DOCTYPE html>
+<html><head><title>Debug</title><style>body{font-family:Arial;margin:20px;}</style></head>
+<body><h1>🔍 OCUS Debug</h1>
+<div>Status: Cloudflare Pages Active</div>
+<div>URL: ${url.href}</div>
+<div>Time: ${new Date().toISOString()}</div>
+<script>
+console.log('Debug page loaded');
+fetch('/health').then(r=>r.json()).then(d=>console.log('Health:', d));
+</script></body></html>`;
+    return new Response(debugHtml, {
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
 
-  // Serve SPA index.html for all other routes
-  url.pathname = '/index.html';
-  return env.ASSETS.fetch(new Request(url.toString(), request));
+  // Let real assets and files with extensions pass through first
+  const pathname = url.pathname;
+  const hasExtension = pathname.includes('.') && !pathname.endsWith('/');
+  
+  if (hasExtension || pathname.startsWith('/assets/')) {
+    try {
+      return await env.ASSETS.fetch(request);
+    } catch (error) {
+      // If asset not found, continue to SPA routing
+    }
+  }
+
+  // For root path, serve index.html directly
+  if (pathname === '/') {
+    try {
+      const indexRequest = new Request(new URL('/index.html', url.origin), request);
+      return await env.ASSETS.fetch(indexRequest);
+    } catch (error) {
+      return new Response('Index not found', { status: 404 });
+    }
+  }
+
+  // For all other routes, serve SPA index.html
+  try {
+    const indexRequest = new Request(new URL('/index.html', url.origin), request);
+    return await env.ASSETS.fetch(indexRequest);
+  } catch (error) {
+    return new Response('Application not found', { status: 404 });
+  }
 };
