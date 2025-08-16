@@ -1874,15 +1874,11 @@ function SeoSettingsTab() {
         response = await apiRequest('PUT', '/api/admin/seo-settings', formData);
       } else {
         // Use JSON for text-only updates
-        const updateData = { ...seoSettings };
-        
-        // Remove empty values
-        Object.keys(updateData).forEach(key => {
-          if (updateData[key] === undefined || updateData[key] === '') {
-            delete updateData[key];
-          }
-        });
-        
+        // Build a sanitized object without empty values to satisfy TypeScript without string indexing
+        const updateData = Object.fromEntries(
+          Object.entries(seoSettings).filter(([_, v]) => v !== undefined && v !== '')
+        );
+
         console.log('Using JSON for text-only update:', updateData);
         response = await apiRequest('PATCH', '/api/admin/seo-settings', updateData);
       }
