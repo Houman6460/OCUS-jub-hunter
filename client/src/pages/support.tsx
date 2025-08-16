@@ -60,6 +60,39 @@ export default function Support() {
   const [newMessage, setNewMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
 
+  // Robust date formatting helpers to avoid 'Invalid Date'
+  const formatDate = (value: any) => {
+    if (!value) return '';
+    // Support ISO strings, timestamps (ms or s), and Date objects
+    let d: Date | null = null;
+    if (value instanceof Date) {
+      d = value;
+    } else if (typeof value === 'number') {
+      // If seconds, convert to ms
+      d = new Date(value < 1e12 ? value * 1000 : value);
+    } else if (typeof value === 'string') {
+      const num = Number(value);
+      if (!Number.isNaN(num) && value.trim() !== '') {
+        d = new Date(num < 1e12 ? num * 1000 : num);
+      } else {
+        d = new Date(value);
+      }
+    }
+    return d && !isNaN(d.getTime()) ? d.toLocaleString() : '';
+  };
+
+  const formatDateShort = (value: any) => {
+    const s = formatDate(value);
+    if (!s) return '';
+    // Return only date part for compact list rows when possible
+    try {
+      const d = new Date(s);
+      return !isNaN(d.getTime()) ? d.toLocaleDateString() : s;
+    } catch {
+      return s;
+    }
+  };
+
   // Check authentication using localStorage like the dashboard does
   useEffect(() => {
     const token = localStorage.getItem('customer_token');
@@ -121,17 +154,23 @@ export default function Support() {
 
   // Fetch tickets
   const { data: tickets = [], isLoading } = useQuery({
-    queryKey: ['/api/tickets', user?.email, user?.isAdmin],
+    queryKey: ['/api/tickets'],
     queryFn: async () => {
       if (!user) return [];
-      const params = new URLSearchParams();
-      if (user.isAdmin) {
-        params.append('isAdmin', 'true');
-      } else {
-        params.append('customerEmail', user.email);
-      }
-      const response = await apiRequest('GET', `/api/tickets?${params.toString()}`);
-      return response.json ? await response.json() : response;
+      // Server derives identity from session; do not send client params
+      const response = await apiRequest('GET', `/api/tickets`);
+      const data = response.json ? await response.json() : response;
+      // Normalize fields to snake_case expected by this page
+      return Array.isArray(data)
+        ? data.map((t: any) => ({
+            ...t,
+            created_at: t.created_at ?? t.createdAt ?? t.created,
+            updated_at: t.updated_at ?? t.updatedAt ?? t.updated,
+            resolved_at: t.resolved_at ?? t.resolvedAt,
+            customer_name: t.customer_name ?? t.customerName ?? t.userName,
+            customer_email: t.customer_email ?? t.customerEmail ?? t.userEmail,
+          }))
+        : [];
     },
     enabled: !!user
   });
@@ -145,16 +184,19 @@ export default function Support() {
         return [];
       }
       console.log('Fetching messages for ticket:', selectedTicket?.id, 'user:', user);
-      
-      const params = new URLSearchParams();
-      if (user.isAdmin) {
-        params.append('isAdmin', 'true');
-      } else {
-        params.append('customerEmail', user.email);
-      }
-      
-      const response = await apiRequest('GET', `/api/tickets/${selectedTicket!.id}/messages?${params.toString()}`);
-      return response.json ? await response.json() : response;
+      // Server derives role/email from session; call without client-provided flags
+      const response = await apiRequest('GET', `/api/tickets/${selectedTicket!.id}/messages`);
+      const data = response.json ? await response.json() : response;
+      // Normalize message fields for rendering
+      return Array.isArray(data)
+        ? data.map((m: any) => ({
+            ...m,
+            message: m.message ?? m.content,
+            created_at: m.created_at ?? m.createdAt,
+            is_from_customer: m.is_from_customer ?? (typeof m.isAdmin === 'boolean' ? !m.isAdmin : m.is_from_customer),
+            sender_name: m.sender_name ?? m.authorName ?? m.sender,
+          }))
+        : [];
     },
     enabled: !!selectedTicket && !!user
   });
@@ -194,13 +236,8 @@ export default function Support() {
       
       console.log('Sending message with user data:', { email: user.email, name: user.name, isAdmin: user.isAdmin });
       
-      const requestData = {
-        content: data.content,
-        customerEmail: user.email,
-        customerName: user.name,
-        isAdmin: user.isAdmin
-      };
-      
+      // Send both keys to be compatible with either backend expectation
+      const requestData = { content: data.content, message: data.content };
       const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, requestData);
       return response.json ? await response.json() : response;
     },
@@ -219,9 +256,8 @@ export default function Support() {
   // Delete ticket mutation
   const deleteTicketMutation = useMutation({
     mutationFn: async (ticketId: number) => {
-      const response = await apiRequest('DELETE', `/api/tickets/${ticketId}`, {
-        customerEmail: user.email
-      });
+      // Server validates ownership by session email
+      const response = await apiRequest('DELETE', `/api/tickets/${ticketId}`);
       return response.json ? await response.json() : response;
     },
     onSuccess: () => {
@@ -401,7 +437,7 @@ export default function Support() {
                           </Badge>
                           <span>{ticket.category}</span>
                           <span>•</span>
-                          <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                          <span>{formatDateShort(ticket.created_at)}</span>
                         </div>
                       </div>
                     ))}
@@ -420,7 +456,7 @@ export default function Support() {
                     <div>
                       <CardTitle className="text-xl">{selectedTicket.title}</CardTitle>
                       <CardDescription className="mt-2">
-                        {t.createdOn}: {new Date(selectedTicket.created_at).toLocaleString()}
+                        {t.createdOn}: {formatDate(selectedTicket.created_at)}
                         {selectedTicket.assigned_to_name && (
                           <span className="ml-4">
                             {t.assignedTo}: {selectedTicket.assigned_to_name}
@@ -472,9 +508,7 @@ export default function Support() {
                             <Badge variant="outline" className="text-xs">
                               {message.is_from_customer ? 'Customer' : 'Support'}
                             </Badge>
-                            <span className="text-sm text-gray-500">
-                              {new Date(message.created_at).toLocaleString()}
-                            </span>
+                            <span className="text-sm text-gray-500">{formatDate(message.created_at)}</span>
                           </div>
                           <p className="text-gray-700">{message.message}</p>
                         </div>

@@ -132,7 +132,19 @@ function TicketManagementTab() {
     queryKey: ['/api/admin/tickets'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/tickets');
-      return await response.json();
+      const data = await response.json();
+      // Normalize to admin UI expectations (camelCase, status values)
+      return Array.isArray(data)
+        ? data.map((t: any) => ({
+            ...t,
+            createdAt: t.createdAt ?? t.created_at ?? t.created,
+            updatedAt: t.updatedAt ?? t.updated_at ?? t.updated,
+            userName: t.userName ?? t.customer_name,
+            userEmail: t.userEmail ?? t.customer_email,
+            // Convert 'in-progress' to 'in_progress' if needed
+            status: t.status === 'in-progress' ? 'in_progress' : t.status,
+          }))
+        : [];
     }
   });
 
@@ -142,17 +154,26 @@ function TicketManagementTab() {
     queryFn: async () => {
       if (!selectedTicket) return [];
       const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}/messages`);
-      return await response.json();
+      const data = await response.json();
+      // Normalize message fields for admin UI
+      return Array.isArray(data)
+        ? data.map((m: any) => ({
+            ...m,
+            content: m.content ?? m.message,
+            isAdmin: typeof m.isAdmin === 'boolean' ? m.isAdmin : (typeof m.is_from_customer === 'boolean' ? !m.is_from_customer : false),
+            authorName: m.authorName ?? m.sender_name ?? m.sender,
+            createdAt: m.createdAt ?? m.created_at,
+          }))
+        : [];
     },
     enabled: !!selectedTicket
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { ticketId: number; content: string; isAdmin: boolean; attachments?: File[] }) => {
+    mutationFn: async (data: { ticketId: number; content: string; attachments?: File[] }) => {
       const formData = new FormData();
       formData.append('content', data.content);
-      formData.append('isAdmin', data.isAdmin.toString());
       
       if (data.attachments) {
         data.attachments.forEach((file, index) => {
@@ -160,10 +181,8 @@ function TicketManagementTab() {
         });
       }
       
-      const response = await fetch(`/api/tickets/${data.ticketId}/messages`, {
-        method: 'POST',
-        body: formData
-      });
+      // Use shared apiRequest helper to include base URL and credentials
+      const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, formData);
       return response.json();
     },
     onSuccess: () => {
@@ -215,7 +234,6 @@ function TicketManagementTab() {
     sendMessageMutation.mutate({
       ticketId: selectedTicket.id,
       content: newMessage,
-      isAdmin: true,
       attachments: attachments.length > 0 ? attachments : undefined
     });
   };
@@ -730,14 +748,16 @@ function AuthenticationSettingsTab() {
                 </div>
                 
                 <div className="border-t pt-4">
-                  <Label className="text-sm font-medium">Upload Google Credentials JSON</Label>
+                  <Label className="text-sm font-medium" htmlFor="google-credentials-input">Upload Google Credentials JSON</Label>
                   <div className="mt-2">
                     <input
+                      id="google-credentials-input"
                       type="file"
                       accept=".json"
                       onChange={handleGoogleCredentialsUpload}
                       disabled={uploadGoogleCredentials.isPending}
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                      title="Upload your Google OAuth credentials JSON file"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Upload your Google OAuth credentials JSON file to auto-fill the above fields
