@@ -19,7 +19,20 @@ function mapStatus(status: string) {
   return status || 'open';
 }
 
-export const onRequestGet = async () => {
+export const onRequestGet = async ({ request, env }: any) => {
+  const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+  if (expressBase) {
+    const base = expressBase.replace(/\/$/, "");
+    const url = `${base}/api/admin/tickets`;
+    const headers: Record<string, string> = {};
+    const cookie = request.headers.get('cookie');
+    const auth = request.headers.get('authorization');
+    if (cookie) headers['cookie'] = cookie;
+    if (auth) headers['authorization'] = auth;
+    const proxied = await fetch(url, { headers, redirect: 'manual' });
+    return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+  }
+
   const store = getStore();
   const tickets = (store.tickets || []).map((t) => ({
     id: t.id,

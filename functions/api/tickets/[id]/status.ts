@@ -31,9 +31,23 @@ function toInternalStatus(input: string) {
   return input || 'open';
 }
 
-export const onRequestPut = async ({ request, params }: any) => {
+export const onRequestPut = async ({ request, params, env }: any) => {
   try {
     const ticketId = Number(params.id);
+    const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+    if (expressBase) {
+      const base = expressBase.replace(/\/$/, "");
+      const url = `${base}/api/tickets/${ticketId}/status`;
+      const headers: Record<string, string> = {};
+      const cookie = request.headers.get('cookie');
+      const ct = request.headers.get('content-type');
+      const auth = request.headers.get('authorization');
+      if (cookie) headers['cookie'] = cookie;
+      if (ct) headers['content-type'] = ct;
+      if (auth) headers['authorization'] = auth;
+      const proxied = await fetch(url, { method: 'PUT', headers, body: request.body, redirect: 'manual' });
+      return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+    }
     const body = await request.json().catch(() => ({}));
     const status = body?.status;
     if (!status) return json({ success: false, message: 'Missing status' }, 400);

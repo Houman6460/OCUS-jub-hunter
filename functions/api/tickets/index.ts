@@ -55,7 +55,22 @@ export const onRequestOptions = async () => {
   });
 };
 
-export const onRequestGet = async ({ request }: { request: Request }) => {
+export const onRequestGet = async ({ request, env }: any) => {
+  const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+  if (expressBase) {
+    const base = expressBase.replace(/\/$/, "");
+    const urlObj = new URL(request.url);
+    const qs = urlObj.search ? urlObj.search : '';
+    const url = `${base}/api/tickets${qs}`;
+    const headers: Record<string, string> = {};
+    const cookie = request.headers.get('cookie');
+    const auth = request.headers.get('authorization');
+    if (cookie) headers['cookie'] = cookie;
+    if (auth) headers['authorization'] = auth;
+    const proxied = await fetch(url, { headers, redirect: 'manual' });
+    return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+  }
+
   const url = new URL(request.url);
   const isAdmin = url.searchParams.get('isAdmin') === 'true';
   const customerEmail = url.searchParams.get('customerEmail');
@@ -67,8 +82,22 @@ export const onRequestGet = async ({ request }: { request: Request }) => {
   return json(result);
 };
 
-export const onRequestPost = async ({ request }: { request: Request }) => {
+export const onRequestPost = async ({ request, env }: any) => {
   try {
+    const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+    if (expressBase) {
+      const base = expressBase.replace(/\/$/, "");
+      const url = `${base}/api/tickets`;
+      const headers: Record<string, string> = {};
+      const cookie = request.headers.get('cookie');
+      const ct = request.headers.get('content-type');
+      const auth = request.headers.get('authorization');
+      if (cookie) headers['cookie'] = cookie;
+      if (ct) headers['content-type'] = ct;
+      if (auth) headers['authorization'] = auth;
+      const proxied = await fetch(url, { method: 'POST', headers, body: request.body, redirect: 'manual' });
+      return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+    }
     const body = await request.json();
     const { title, description, category, priority, customerEmail, customerName } = body || {};
     if (!title || !description || !customerEmail) {

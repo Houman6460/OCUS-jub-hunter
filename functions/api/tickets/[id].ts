@@ -22,9 +22,23 @@ function json(data: any, status = 200) {
   });
 }
 
-export const onRequestPatch = async ({ request, params }: any) => {
+export const onRequestPatch = async ({ request, params, env }: any) => {
   try {
     const ticketId = Number(params.id);
+    const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+    if (expressBase) {
+      const base = expressBase.replace(/\/$/, "");
+      const url = `${base}/api/tickets/${ticketId}`;
+      const headers: Record<string, string> = {};
+      const cookie = request.headers.get('cookie');
+      const ct = request.headers.get('content-type');
+      const auth = request.headers.get('authorization');
+      if (cookie) headers['cookie'] = cookie;
+      if (ct) headers['content-type'] = ct;
+      if (auth) headers['authorization'] = auth;
+      const proxied = await fetch(url, { method: 'PATCH', headers, body: request.body, redirect: 'manual' });
+      return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+    }
     const updates = await request.json();
     const store = getStore();
 
@@ -39,11 +53,26 @@ export const onRequestPatch = async ({ request, params }: any) => {
   }
 };
 
-export const onRequestPut = onRequestPatch;
+export const onRequestPut = async (ctx: any) => {
+  // Reuse proxy and fallback logic from PATCH
+  return onRequestPatch(ctx);
+};
 
-export const onRequestDelete = async ({ params }: any) => {
+export const onRequestDelete = async ({ request, params, env }: any) => {
   try {
     const ticketId = Number(params.id);
+    const expressBase: string | undefined = env?.EXPRESS_API_BASE;
+    if (expressBase) {
+      const base = expressBase.replace(/\/$/, "");
+      const url = `${base}/api/tickets/${ticketId}`;
+      const headers: Record<string, string> = {};
+      const cookie = request.headers.get('cookie');
+      const auth = request.headers.get('authorization');
+      if (cookie) headers['cookie'] = cookie;
+      if (auth) headers['authorization'] = auth;
+      const proxied = await fetch(url, { method: 'DELETE', headers, redirect: 'manual' });
+      return new Response(proxied.body, { status: proxied.status, headers: proxied.headers });
+    }
     const store = getStore();
 
     const before = store.tickets.length;

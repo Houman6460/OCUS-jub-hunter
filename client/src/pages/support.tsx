@@ -475,10 +475,10 @@ export default function Support() {
                     </div>
                     <div className="flex gap-2">
                       <Badge className={getStatusColor(selectedTicket.status)}>
-                        {(t as Record<string, string>)[selectedTicket.status] ?? selectedTicket.status}
+                        {(t as unknown as Record<string, string>)[selectedTicket.status] ?? selectedTicket.status}
                       </Badge>
                       <Badge className={getPriorityColor(selectedTicket.priority)}>
-                        {(t as Record<string, string>)[selectedTicket.priority] ?? selectedTicket.priority}
+                        {(t as unknown as Record<string, string>)[selectedTicket.priority] ?? selectedTicket.priority}
                       </Badge>
                     </div>
                   </div>
