@@ -20,7 +20,9 @@ export async function apiRequest(
   let body: string | FormData | undefined;
   // Resolve API base URL when running behind Cloudflare Pages or separate domains
   const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
-  const base = apiBase ? apiBase.replace(/\/$/, "") : "";
+  // If VITE_API_BASE is not provided, default to current origin to avoid mixing backends
+  const fallbackBase = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+  const base = (apiBase || fallbackBase) ? (apiBase || fallbackBase).replace(/\/$/, "") : "";
   // Ensure client-provided relative paths always start with a leading slash
   const normalizedUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
   let fullUrl = normalizedUrl;
@@ -69,7 +71,8 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
     const apiBase = (import.meta as any)?.env?.VITE_API_BASE as string | undefined;
-    const base = apiBase ? apiBase.replace(/\/$/, "") : "";
+    const fallbackBase = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+    const base = (apiBase || fallbackBase) ? (apiBase || fallbackBase).replace(/\/$/, "") : "";
     // Ensure relative paths used in query keys begin with a slash
     const normalizedUrl = url.startsWith('http') || url.startsWith('/') ? url : `/${url}`;
     let fullUrl = normalizedUrl;
