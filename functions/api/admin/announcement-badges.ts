@@ -37,7 +37,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     
     console.log('Retrieved announcement badges:', badges.length);
     
-    return new Response(JSON.stringify({ badges }), {
+    return new Response(JSON.stringify(badges), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

@@ -40,7 +40,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     
     console.log('Retrieved countdown banners:', banners.length);
     
-    return new Response(JSON.stringify({ banners }), {
+    return new Response(JSON.stringify(banners), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
