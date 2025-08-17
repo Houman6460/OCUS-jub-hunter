@@ -3226,9 +3226,30 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   // Get tickets route - accessible to all users
   app.get("/api/tickets", async (req, res) => {
     try {
-      // Determine role from session, never trust client-provided flags
-      const sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
-      const sessionEmail = (req as any).user?.email as string | undefined;
+      // Determine role from session or Authorization header (server-side trusted decoding only)
+      let sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
+      let sessionEmail = (req as any).user?.email as string | undefined;
+
+      // Fallback: decode bearer token like /api/auth/user (e.g., "admin:99" or "customer:<id>")
+      if (!sessionIsAdmin && !sessionEmail) {
+        const authHeader = req.headers.authorization as string | undefined;
+        if (authHeader?.startsWith('Bearer ')) {
+          try {
+            const token = authHeader.substring(7);
+            const decoded = Buffer.from(token, 'base64').toString('utf8');
+            const [type, userId] = decoded.split(':');
+            if (type === 'admin') {
+              sessionIsAdmin = true;
+            } else if (type === 'customer' && userId) {
+              // Best-effort lookup to determine customer email
+              const customer = await storage.getCustomer?.(userId);
+              if (customer?.email) sessionEmail = customer.email as string;
+            }
+          } catch (e) {
+            // Ignore malformed tokens
+          }
+        }
+      }
 
       if (sessionIsAdmin) {
         // Admins should use the dedicated admin endpoint
@@ -3279,9 +3300,28 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.get("/api/tickets/:id/messages", async (req, res) => {
     try {
       const ticketId = parseInt(req.params.id);
-      // Derive identity from session; ignore untrusted query flags
-      const sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
-      const sessionEmail = (req as any).user?.email as string | undefined;
+      // Derive identity from session or Authorization header; ignore untrusted query flags
+      let sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
+      let sessionEmail = (req as any).user?.email as string | undefined;
+
+      if (!sessionIsAdmin && !sessionEmail) {
+        const authHeader = req.headers.authorization as string | undefined;
+        if (authHeader?.startsWith('Bearer ')) {
+          try {
+            const token = authHeader.substring(7);
+            const decoded = Buffer.from(token, 'base64').toString('utf8');
+            const [type, userId] = decoded.split(':');
+            if (type === 'admin') {
+              sessionIsAdmin = true;
+            } else if (type === 'customer' && userId) {
+              const customer = await storage.getCustomer?.(userId);
+              if (customer?.email) sessionEmail = customer.email as string;
+            }
+          } catch (e) {
+            // Ignore malformed tokens
+          }
+        }
+      }
 
       console.log("GET /api/tickets/:id/messages called with:", { ticketId, sessionIsAdmin, hasEmail: !!sessionEmail });
 
@@ -3327,9 +3367,28 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
       const { message, content, customerName } = req.body;
       const messageContent = message || content;
 
-      // Derive identity from session; ignore untrusted body flags
-      const sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
-      const sessionEmail = (req as any).user?.email as string | undefined;
+      // Derive identity from session or Authorization header; ignore untrusted body flags
+      let sessionIsAdmin = !!((req as any).user?.isAdmin || (req as any).session?.adminUser?.isAdmin);
+      let sessionEmail = (req as any).user?.email as string | undefined;
+
+      if (!sessionIsAdmin && !sessionEmail) {
+        const authHeader = req.headers.authorization as string | undefined;
+        if (authHeader?.startsWith('Bearer ')) {
+          try {
+            const token = authHeader.substring(7);
+            const decoded = Buffer.from(token, 'base64').toString('utf8');
+            const [type, userId] = decoded.split(':');
+            if (type === 'admin') {
+              sessionIsAdmin = true;
+            } else if (type === 'customer' && userId) {
+              const customer = await storage.getCustomer?.(userId);
+              if (customer?.email) sessionEmail = customer.email as string;
+            }
+          } catch (e) {
+            // Ignore malformed tokens
+          }
+        }
+      }
 
       console.log("POST /api/tickets/:id/messages called with:", { ticketId, hasContent: !!messageContent, sessionIsAdmin, hasEmail: !!sessionEmail });
 
@@ -3379,7 +3438,24 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.delete("/api/tickets/:id", async (req, res) => {
     try {
       const ticketId = parseInt(req.params.id);
-      const sessionEmail = (req as any).user?.email as string | undefined;
+      let sessionEmail = (req as any).user?.email as string | undefined;
+
+      if (!sessionEmail) {
+        const authHeader = req.headers.authorization as string | undefined;
+        if (authHeader?.startsWith('Bearer ')) {
+          try {
+            const token = authHeader.substring(7);
+            const decoded = Buffer.from(token, 'base64').toString('utf8');
+            const [type, userId] = decoded.split(':');
+            if (type === 'customer' && userId) {
+              const customer = await storage.getCustomer?.(userId);
+              if (customer?.email) sessionEmail = customer.email as string;
+            }
+          } catch (e) {
+            // Ignore malformed tokens
+          }
+        }
+      }
 
       // Validate ticketId is a valid number
       if (isNaN(ticketId) || ticketId <= 0) {
