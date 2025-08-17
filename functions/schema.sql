@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS tickets (
   assigned_to_user_id INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  resolved_at TEXT
+  resolved_at TEXT,
+  archived_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS ticket_messages (

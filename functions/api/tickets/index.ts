@@ -2,6 +2,7 @@
 // Uses D1 database for persistent ticket storage
 
 import { TicketStorage, Env } from '../../lib/db';
+import { UserStorage } from '../../lib/user-storage';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -95,7 +96,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
     const body = await request.json();
-    const { title, description, category, priority, customerEmail, customerName } = body || {};
+    const { title, description, category, priority, customerEmail, customerName, customerId } = body || {};
     if (!title || !description || !customerEmail) {
       return json({ success: false, message: 'Missing required fields' }, 400);
     }
@@ -107,6 +108,22 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     }
 
     const storage = new TicketStorage(env.DB);
+    let finalCustomerName = customerName;
+    
+    // If we have customerId but no customerName, fetch from user storage
+    if (customerId && !customerName) {
+      try {
+        const userStorage = new UserStorage(env.DB);
+        await userStorage.initializeUsers();
+        const user = await userStorage.getUserById(parseInt(customerId));
+        if (user) {
+          finalCustomerName = user.name;
+        }
+      } catch (error) {
+        console.error('Failed to fetch user name:', error);
+      }
+    }
+
     const ticket = await storage.createTicket({
       title,
       description,
@@ -114,7 +131,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       priority: priority || 'medium',
       status: 'open',
       customer_email: customerEmail,
-      customer_name: customerName || customerEmail,
+      customer_name: finalCustomerName || customerEmail,
     });
 
     return json({ success: true, ticket });

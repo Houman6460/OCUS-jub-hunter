@@ -39,13 +39,14 @@ export interface Ticket {
   description: string;
   category: string;
   priority: string;
-  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  status: 'open' | 'in-progress' | 'resolved' | 'closed' | 'archived';
   customer_email: string;
   customer_name: string;
   assigned_to_user_id?: number;
   created_at: string;
   updated_at: string;
   resolved_at?: string;
+  archived_at?: string;
 }
 
 export interface TicketMessage {
@@ -56,6 +57,7 @@ export interface TicketMessage {
   sender_name: string;
   sender_email?: string;
   created_at: string;
+  attachments?: string;
 }
 
 export class TicketStorage {
@@ -122,6 +124,65 @@ export class TicketStorage {
     }
   }
 
+  async updateTicket(id: number, updates: Partial<Ticket>): Promise<Ticket | null> {
+    const now = new Date().toISOString();
+    
+    try {
+      const result = await this.db.prepare(`
+        UPDATE tickets 
+        SET title = COALESCE(?, title),
+            description = COALESCE(?, description),
+            category = COALESCE(?, category),
+            priority = COALESCE(?, priority),
+            status = COALESCE(?, status),
+            assigned_to_user_id = COALESCE(?, assigned_to_user_id),
+            updated_at = ?,
+            resolved_at = CASE WHEN ? = 'resolved' THEN ? ELSE resolved_at END,
+            archived_at = CASE WHEN ? = 'archived' THEN ? ELSE archived_at END
+        WHERE id = ?
+        RETURNING *
+      `).bind(
+        updates.title || null,
+        updates.description || null,
+        updates.category || null,
+        updates.priority || null,
+        updates.status || null,
+        updates.assigned_to_user_id || null,
+        now,
+        updates.status,
+        updates.status === 'resolved' ? now : null,
+        updates.status,
+        updates.status === 'archived' ? now : null,
+        id
+      ).first();
+      
+      return result as Ticket | null;
+    } catch (error: any) {
+      console.error('D1 updateTicket error:', error);
+      throw new Error(`Database update failed: ${error.message}`);
+    }
+  }
+
+  async archiveTicket(id: number): Promise<Ticket | null> {
+    const now = new Date().toISOString();
+    
+    try {
+      const result = await this.db.prepare(`
+        UPDATE tickets 
+        SET status = 'archived',
+            archived_at = ?,
+            updated_at = ?
+        WHERE id = ?
+        RETURNING *
+      `).bind(now, now, id).first();
+      
+      return result as Ticket | null;
+    } catch (error: any) {
+      console.error('D1 archiveTicket error:', error);
+      throw new Error(`Database archive failed: ${error.message}`);
+    }
+  }
+
   async updateTicketStatus(id: number, status: string): Promise<void> {
     const now = new Date().toISOString();
     await this.db.prepare('UPDATE tickets SET status = ?, updated_at = ? WHERE id = ?')
@@ -147,8 +208,8 @@ export class TicketStorage {
     
     // Insert message
     const result = await this.db.prepare(`
-      INSERT INTO ticket_messages (ticket_id, message, is_from_customer, sender_name, sender_email, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO ticket_messages (ticket_id, message, is_from_customer, sender_name, sender_email, created_at, attachments)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `).bind(
       message.ticket_id,
@@ -156,7 +217,8 @@ export class TicketStorage {
       message.is_from_customer ? 1 : 0,
       message.sender_name,
       message.sender_email || null,
-      now
+      now,
+      message.attachments || null
     ).first();
 
     // Update ticket timestamp

@@ -1,8 +1,46 @@
-export const onRequestPost = async ({ request }: any) => {
+import { UserStorage } from '../../lib/user-storage';
+
+export const onRequestPost = async ({ request, env }: any) => {
   try {
     const { email, password, recaptchaToken } = await request.json();
     
-    // Demo authentication - replace with real authentication logic
+    console.log('Login attempt for email:', email);
+    
+    if (!env.DB) {
+      console.error('Database not available');
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Database not available'
+      }), {
+        status: 500,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    const userStorage = new UserStorage(env.DB);
+    await userStorage.initializeUsers();
+    
+    // Try to validate user from database
+    const user = await userStorage.validateUser(email, password);
+    console.log('User validation result:', user ? 'found' : 'not found');
+    
+    if (user) {
+      return new Response(JSON.stringify({
+        success: true,
+        user,
+        token: `jwt-token-${user.id}-${Date.now()}`
+      }), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+    
+    // Fallback to demo credentials
     if (email === 'demo@example.com' && password === 'demo123') {
       return new Response(JSON.stringify({
         success: true,

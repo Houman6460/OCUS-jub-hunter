@@ -48,9 +48,9 @@ export function UserSidebar({ activeTab, onTabChange, collapsed, onToggleCollaps
 
   // Helper function to check if a feature is enabled
   const isFeatureEnabled = (featureName: string) => {
-    if (!dashboardFeatures || !Array.isArray(dashboardFeatures)) return true; // Show by default if no settings
-    const feature = dashboardFeatures.find(f => f.featureName === featureName);
-    return feature ? feature.isEnabled : true; // Show by default if feature not found
+    if (!dashboardFeatures || !Array.isArray(dashboardFeatures)) return true;
+    const feature = dashboardFeatures.find(f => f.id === featureName || f.featureName === featureName);
+    return feature ? feature.isEnabled : true;
   };
 
   const allNavigationItems = [
@@ -77,7 +77,7 @@ export function UserSidebar({ activeTab, onTabChange, collapsed, onToggleCollaps
       label: "Affiliate Program",
       icon: Users,
       description: "Earn commissions by referring customers",
-      featureCheck: "affiliate_program"
+      featureCheck: "affiliate-program"
     },
     {
       id: "invoices",

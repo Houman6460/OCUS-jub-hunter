@@ -47,14 +47,16 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  User,
   Send,
   Paperclip,
   X,
-  Image,
   FileText,
-  ToggleLeft,
+  Image,
+  File,
+  User,
+  Archive,
   ToggleRight,
+  ToggleLeft,
   Globe
 } from "lucide-react";
 
@@ -92,7 +94,7 @@ interface Ticket {
   id: number;
   title: string;
   description: string;
-  status: 'open' | 'in_progress' | 'closed';
+  status: 'open' | 'in_progress' | 'closed' | 'archived';
   priority: 'low' | 'medium' | 'high';
   userId: number;
   userName?: string;
@@ -201,7 +203,7 @@ function TicketManagementTab() {
 
       // Fall back to multipart only when attachments are present (Cloudflare-compatible)
       const formData = new FormData();
-      formData.append('content', data.content);
+      formData.append('content', data.content || '');
       formData.append('isAdmin', 'true');
       data.attachments?.forEach((file, index) => {
         formData.append(`attachment_${index}`, file);
@@ -246,6 +248,21 @@ function TicketManagementTab() {
     },
     onError: () => {
       toast({ title: "Failed to update ticket", variant: "destructive" });
+    }
+  });
+
+  // Archive ticket mutation
+  const archiveTicketMutation = useMutation({
+    mutationFn: async (ticketId: number) => {
+      const response = await apiRequest('POST', `/api/tickets/${ticketId}/archive`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
+      toast({ title: "Ticket archived successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to archive ticket", variant: "destructive" });
     }
   });
 
@@ -323,6 +340,8 @@ function TicketManagementTab() {
       case 'open': return 'bg-red-100 text-red-800';
       case 'in_progress': return 'bg-yellow-100 text-yellow-800';
       case 'closed': return 'bg-green-100 text-green-800';
+      case 'resolved': return 'bg-blue-100 text-blue-800';
+      case 'archived': return 'bg-gray-200 text-gray-600';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -368,7 +387,7 @@ function TicketManagementTab() {
                   <p className="text-xs text-slate-600 mb-2 line-clamp-2">{ticket.description}</p>
                   <div className="flex items-center justify-between">
                     <Badge className={`text-xs ${getStatusColor(ticket.status)}`}>
-                      {ticket.status.replace('_', ' ')}
+                      {ticket.status?.replace('_', ' ') || 'Unknown'}
                     </Badge>
                     <span className="text-xs text-slate-500">
                       {new Date(ticket.createdAt).toLocaleDateString()}
@@ -410,12 +429,22 @@ function TicketManagementTab() {
                     <SelectContent>
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
                   </Select>
                   <Badge className={`${getPriorityColor(selectedTicket.priority)} text-white`}>
                     {selectedTicket.priority} priority
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => archiveTicketMutation.mutate(selectedTicket.id)}
+                    disabled={archiveTicketMutation.isPending || selectedTicket.status === 'archived'}
+                  >
+                    <Archive className="h-4 w-4 mr-1" />
+                    {selectedTicket.status === 'archived' ? 'Archived' : 'Archive'}
+                  </Button>
                   <Button
                     variant="destructive"
                     size="sm"
@@ -1078,6 +1107,7 @@ function PaymentSettingsTab() {
     paypalSecret: false
   });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Load existing payment settings
   const { data: existingSettings, isLoading } = useQuery({
@@ -1680,21 +1710,35 @@ function DashboardFeaturesTab() {
   });
 
   const updateFeatureMutation = useMutation({
-    mutationFn: async ({ featureName, isEnabled, description }: { featureName: string; isEnabled: boolean; description?: string }) => {
-      const response = await apiRequest('PUT', `/api/admin/dashboard-features/${featureName}`, { isEnabled, description });
+    mutationFn: async ({ featureName, isEnabled }: { featureName: string; isEnabled: boolean }) => {
+      const response = await fetch('/api/admin/dashboard-features', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featureName, isEnabled })
+      });
+      if (!response.ok) throw new Error('Failed to update feature');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Optimistically update the UI
+      queryClient.setQueryData(['/api/admin/dashboard-features'], (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+        return oldData.map((feature: any) => 
+          (feature.id === variables.featureName || feature.featureName === variables.featureName)
+            ? { ...feature, isEnabled: variables.isEnabled }
+            : feature
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/dashboard-features'] });
       toast({
         title: "Success",
         description: "Dashboard feature updated successfully",
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to update dashboard feature: " + error.message,
+        description: "Failed to update dashboard feature",
         variant: "destructive",
       });
     },
@@ -1731,25 +1775,25 @@ function DashboardFeaturesTab() {
         <CardContent>
           <div className="space-y-6">
             {Array.isArray(features) && features.map((feature: any) => (
-              <div key={feature.featureName} className="flex items-center justify-between p-4 border rounded-lg">
+              <div key={feature.id || feature.featureName} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 bg-blue-500 rounded-full" />
                     <h3 className="font-medium text-lg capitalize">
-                      {feature.featureName.replace('_', ' ')}
+                      {feature.name || feature.featureName?.replace('_', ' ') || 'Unknown Feature'}
                     </h3>
                     <Badge variant={feature.isEnabled ? "default" : "secondary"}>
                       {feature.isEnabled ? "Enabled" : "Disabled"}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-600 mt-2 ml-6">
-                    {feature.description || `Controls visibility of ${feature.featureName.replace('_', ' ')} section`}
+                    {feature.description || `Controls visibility of ${feature.name || feature.featureName?.replace('_', ' ') || 'feature'} section`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={feature.isEnabled}
-                    onCheckedChange={(checked) => handleFeatureToggle(feature.featureName, checked)}
+                    onCheckedChange={(checked) => handleFeatureToggle(feature.id || feature.featureName, checked)}
                     disabled={updateFeatureMutation.isPending}
                   />
                   {feature.isEnabled ? (
@@ -1781,34 +1825,38 @@ function DashboardFeaturesTab() {
     </div>
   );
 }
-
-// SEO Settings Management Component
 function SeoSettingsTab() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [seoSettings, setSeoSettings] = useState({
-    siteTitle: "OCUS Job Hunter - Premium Chrome Extension",
-    siteDescription: "Boost your photography career with OCUS Job Hunter Chrome Extension. Automated mission detection, smart acceptance, and unlimited job opportunities for OCUS photographers.",
-    siteKeywords: "OCUS extension, photography jobs, Chrome extension, job hunter, photographer tools, mission automation",
-    siteAuthor: "OCUS Job Hunter",
-    ogTitle: "",
-    ogDescription: "",
-    ogImage: "/og-image.svg",
-    ogImageAlt: "OCUS Job Hunter Chrome Extension",
-    ogSiteName: "OCUS Job Hunter",
-    ogType: "website",
-    ogUrl: "https://jobhunter.one/",
-    twitterCard: "summary_large_image",
-    twitterTitle: "",
-    twitterDescription: "",
-    twitterImage: "/og-image.svg",
-    twitterSite: "",
-    twitterCreator: "",
-    metaRobots: "index, follow",
-    canonicalUrl: "",
-    themeColor: "#2563eb",
-    customLogo: "",
-    customFavicon: "",
-    customOgImage: ""
+    title: 'OCUS Job Hunter - Premium Chrome Extension',
+    description: 'Boost your photography career with OCUS Job Hunter Chrome Extension. Automated mission detection, smart acceptance, and unlimited job opportunities for OCUS photographers.',
+    keywords: 'OCUS extension, photography jobs, Chrome extension, job hunter, photographer tools, mission automation',
+    coverImage: '',
+    logo: '',
+    favicon: '',
+    siteTitle: 'OCUS Job Hunter - Premium Chrome Extension',
+    siteDescription: 'Boost your photography career with OCUS Job Hunter Chrome Extension. Automated mission detection, smart acceptance, and unlimited job opportunities for OCUS photographers.',
+    siteKeywords: 'OCUS extension, photography jobs, Chrome extension, job hunter, photographer tools, mission automation',
+    siteAuthor: 'OCUS Team',
+    ogTitle: 'OCUS Job Hunter - Premium Chrome Extension',
+    ogDescription: 'Boost your photography career with OCUS Job Hunter Chrome Extension. Automated mission detection, smart acceptance, and unlimited job opportunities for OCUS photographers.',
+    ogImage: '/og-image.svg',
+    ogImageAlt: 'OCUS Job Hunter Chrome Extension Preview',
+    ogSiteName: 'OCUS Job Hunter',
+    ogType: 'website',
+    ogUrl: 'https://jobhunter.one/',
+    twitterCard: 'summary_large_image',
+    twitterSite: '@ocus',
+    twitterCreator: '@ocus',
+    twitterTitle: 'OCUS Job Hunter - Premium Chrome Extension',
+    twitterDescription: 'Boost your photography career with OCUS Job Hunter Chrome Extension. Automated mission detection, smart acceptance, and unlimited job opportunities for OCUS photographers.',
+    twitterImage: '/og-image.svg',
+    canonicalUrl: 'https://jobhunter.one/',
+    themeColor: '#3b82f6',
+    customOgImage: '',
+    customLogo: '',
+    customFavicon: ''
   });
   const [selectedCoverImage, setSelectedCoverImage] = useState<File | null>(null);
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
@@ -1827,7 +1875,12 @@ function SeoSettingsTab() {
   // Update local state when settings are fetched
   useEffect(() => {
     if (fetchedSettings) {
+      console.log('Fetched settings from server:', fetchedSettings);
       setSeoSettings(prev => ({ ...prev, ...fetchedSettings }));
+      // Clear selected files when fresh data is loaded
+      setSelectedCoverImage(null);
+      setSelectedLogo(null);
+      setSelectedFavicon(null);
     }
   }, [fetchedSettings]);
 
@@ -1888,9 +1941,9 @@ function SeoSettingsTab() {
           formData.append(key, value || '');
         });
         
-        if (selectedCoverImage) formData.append('customOgImage', selectedCoverImage);
-        if (selectedLogo) formData.append('customLogo', selectedLogo);
-        if (selectedFavicon) formData.append('customFavicon', selectedFavicon);
+        if (selectedCoverImage) formData.append('coverImage', selectedCoverImage);
+        if (selectedLogo) formData.append('logo', selectedLogo);
+        if (selectedFavicon) formData.append('favicon', selectedFavicon);
 
         console.log('Using FormData for file upload');
         response = await apiRequest('PUT', '/api/admin/seo-settings', formData);
@@ -1909,18 +1962,11 @@ function SeoSettingsTab() {
         const updatedSettings = await response.json();
         console.log('Server response:', updatedSettings);
         
-        // Update local state with server response
-        setSeoSettings(prev => ({ ...prev, ...updatedSettings }));
-        
-        // Clear selected files only after successful server response
-        setSelectedCoverImage(null);
-        setSelectedLogo(null);
-        setSelectedFavicon(null);
-        
+        // Don't clear selected files yet - keep them for preview
         toast({ title: "SEO settings updated successfully!" });
         
-        // Force a fresh query to get updated data
-        setTimeout(() => window.location.reload(), 500);
+        // Refetch data to get updated settings from server
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/seo-settings'] });
       } else {
         const errorText = await response.text();
         console.error('Server error response:', errorText);
@@ -2157,8 +2203,8 @@ function SeoSettingsTab() {
                 src={
                   selectedCoverImage 
                     ? URL.createObjectURL(selectedCoverImage) 
-                    : seoSettings.customOgImage 
-                      ? '/api/seo/custom-image/og' 
+                    : seoSettings.coverImage 
+                      ? seoSettings.coverImage 
                       : '/og-image.svg'
                 }
                 alt="Social Media Preview"
@@ -2169,7 +2215,7 @@ function SeoSettingsTab() {
                   target.src = '/og-image.svg';
                 }}
               />
-              {!seoSettings.customOgImage && !selectedCoverImage && (
+              {!seoSettings.coverImage && !selectedCoverImage && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded mb-3 flex items-center justify-center">
                   <div className="text-white text-xs text-center px-2">
                     <p className="font-medium">Default Image</p>
@@ -2179,8 +2225,8 @@ function SeoSettingsTab() {
               )}
             </div>
 
-            <h3 className="font-semibold text-lg mb-1">{seoSettings.siteTitle || seoSettings.ogSiteName}</h3>
-            <p className="text-slate-600 text-sm mb-2 line-clamp-2">{seoSettings.siteDescription}</p>
+            <h3 className="font-semibold text-lg mb-1">{seoSettings.title || seoSettings.siteTitle || 'OCUS Job Hunter'}</h3>
+            <p className="text-slate-600 text-sm mb-2 line-clamp-2">{seoSettings.description || seoSettings.siteDescription}</p>
             <p className="text-slate-400 text-xs">{seoSettings.ogUrl || seoSettings.canonicalUrl}</p>
           </div>
           <p className="text-sm text-slate-500 mt-3">
@@ -2420,10 +2466,6 @@ export default function Admin() {
           )}
 
           {/* Tab Content based on activeTab */}
-          {activeTab === 'customers' && <CustomerManagement />}
-          
-          {activeTab === 'extension' && <CustomerManager />}
-          
           {activeTab === 'users' && <UserManagementTab />}
           
           {activeTab === 'affiliates' && <AdminAffiliates />}
@@ -2597,10 +2639,21 @@ function UserManagementTab() {
 
   // Fetch users with lifecycle data
   const usersQuery = useQuery({
-    queryKey: ['/api/admin/users'],
+    queryKey: ['/api/admin/customers'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/admin/users');
-      return await response.json();
+      const response = await apiRequest('GET', '/api/admin/customers');
+      const data = await response.json();
+      console.log('Admin customers API response:', data);
+      
+      // Handle different response structures
+      if (data.success && Array.isArray(data.customers)) {
+        return data.customers;
+      } else if (Array.isArray(data)) {
+        return data;
+      } else {
+        console.warn('Unexpected API response structure:', data);
+        return [];
+      }
     },
     refetchInterval: 10000 // Refresh every 10 seconds
   });
@@ -2610,7 +2663,7 @@ function UserManagementTab() {
   // Block user mutation
   const blockUserMutation = useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      const response = await apiRequest('POST', `/api/admin/users/${userId}/block`, { reason });
+      const response = await apiRequest('POST', `/api/admin/customers/${userId}/block`, { reason });
       return await response.json();
     },
     onSuccess: () => {
@@ -2618,7 +2671,7 @@ function UserManagementTab() {
         title: "Success",
         description: "User blocked successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/customers'] });
     },
     onError: (error: any) => {
       toast({
@@ -2632,7 +2685,7 @@ function UserManagementTab() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await apiRequest('DELETE', `/api/admin/users/${userId}`);
+      const response = await apiRequest('DELETE', `/api/admin/customers/${userId}`);
       return await response.json();
     },
     onSuccess: () => {
@@ -2640,7 +2693,7 @@ function UserManagementTab() {
         title: "Success",
         description: "User deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/customers'] });
     },
     onError: (error: any) => {
       toast({
@@ -2651,7 +2704,7 @@ function UserManagementTab() {
     }
   });
 
-  const users = usersQuery.data || [];
+  const users = Array.isArray(usersQuery.data) ? usersQuery.data : [];
 
   return (
     <div className="space-y-6">
@@ -2659,10 +2712,10 @@ function UserManagementTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            User Lifecycle Management
+            Users & Customers Management
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Manage extension users, trial usage, and activation codes
+            Manage all registered users, customer data, trial usage, and account status
           </p>
         </CardHeader>
         <CardContent>
@@ -2680,9 +2733,9 @@ function UserManagementTab() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-3 font-medium">User ID</th>
+                    <th className="text-left p-3 font-medium">Name</th>
                     <th className="text-left p-3 font-medium">Email</th>
-                    <th className="text-left p-3 font-medium">Trial Status</th>
-                    <th className="text-left p-3 font-medium">Activation Code</th>
+                    <th className="text-left p-3 font-medium">Role</th>
                     <th className="text-left p-3 font-medium">Status</th>
                     <th className="text-left p-3 font-medium">Created</th>
                     <th className="text-left p-3 font-medium">Actions</th>
@@ -2690,46 +2743,38 @@ function UserManagementTab() {
                 </thead>
                 <tbody>
                   {users.map((user: any) => (
-                    <tr key={user.user_id} className="border-b hover:bg-gray-50">
+                    <tr key={user.id} className="border-b hover:bg-gray-50">
                       <td className="p-3">
                         <div className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                          {user.user_id?.slice(0, 8)}...
+                          {user.id}
                         </div>
                       </td>
                       <td className="p-3">
-                        {user.email || user.order_email || 'Not provided'}
+                        <div className="font-medium">{user.name || 'Not provided'}</div>
                       </td>
                       <td className="p-3">
-                        <div className="text-sm">
-                          <div>Remaining: <span className="font-medium">{user.trial_uses_remaining || 0}</span></div>
-                          <div>Used: <span className="text-gray-600">{user.trial_uses_total || 0}/3</span></div>
-                        </div>
+                        {user.email || 'Not provided'}
                       </td>
                       <td className="p-3">
-                        {user.activation_code ? (
-                          <div className="font-mono text-xs bg-blue-100 px-2 py-1 rounded max-w-[120px] truncate">
-                            {user.activation_code}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">None</span>
-                        )}
+                        <Badge variant={user.role === 'premium' ? "default" : "secondary"}>
+                          {user.role === 'premium' ? 'Premium' : 'Free'}
+                        </Badge>
                       </td>
                       <td className="p-3">
-                        <Badge variant={user.is_activated ? "default" : "secondary"}>
-                          {user.is_activated ? "Activated" : "Trial"}
+                        <Badge variant="outline">
+                          Active
                         </Badge>
                       </td>
                       <td className="p-3 text-sm text-gray-600">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
-                          {/* Regenerate code button removed - activation system deprecated */}
                           <Button
                             size="sm"
                             variant="destructive"
                             onClick={() => blockUserMutation.mutate({ 
-                              userId: user.user_id, 
+                              userId: user.id, 
                               reason: "Blocked by admin" 
                             })}
                             disabled={blockUserMutation.isPending}
@@ -2741,7 +2786,7 @@ function UserManagementTab() {
                             variant="destructive"
                             onClick={() => {
                               if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-                                deleteUserMutation.mutate(user.user_id);
+                                deleteUserMutation.mutate(user.id);
                               }
                             }}
                             disabled={deleteUserMutation.isPending}
@@ -2783,7 +2828,7 @@ function UserManagementTab() {
               </div>
               <div>
                 <h3 className="text-2xl font-bold">
-                  {users.filter((u: any) => u.is_activated).length}
+                  {users.filter((u: any) => u.role === 'premium').length}
                 </h3>
                 <p className="text-gray-600">Activated Users</p>
               </div>
@@ -2799,7 +2844,7 @@ function UserManagementTab() {
               </div>
               <div>
                 <h3 className="text-2xl font-bold">
-                  {users.filter((u: any) => !u.is_activated && (u.trial_uses_remaining > 0)).length}
+                  {users.filter((u: any) => u.role === 'free').length}
                 </h3>
                 <p className="text-gray-600">Active Trials</p>
               </div>

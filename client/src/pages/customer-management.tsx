@@ -97,9 +97,16 @@ export default function CustomerManagement() {
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
 
   // Fetch all customers
-  const { data: customers = [], isLoading: customersLoading } = useQuery({
+  const { data: customersResponse, isLoading: customersLoading } = useQuery({
     queryKey: ['/api/admin/customers'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/admin/customers');
+      if (!response.ok) throw new Error('Failed to fetch customers');
+      return response.json();
+    }
   });
+
+  const customers = customersResponse?.customers || [];
 
   // Fetch dashboard analytics
   const { data: dashboardData } = useQuery<DashboardAnalytics>({

@@ -42,22 +42,10 @@ export default function AdminSidebar({
       description: "Revenue, sales & performance"
     },
     {
-      id: "customers", 
-      label: "Customers",
-      icon: Users,
-      description: "Customer management & orders"
-    },
-    {
-      id: "extension",
-      label: "Extension Manager",
-      icon: Chrome,
-      description: "Chrome extension customer management"
-    },
-    {
       id: "users",
-      label: "Users",
+      label: "Users & Customers",
       icon: Users,
-      description: "User lifecycle & trial management"
+      description: "User management, lifecycle & customer data"
     },
     {
       id: "affiliates",

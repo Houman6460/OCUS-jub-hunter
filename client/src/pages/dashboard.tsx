@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Package, Download, ShoppingCart, User, LogOut, Chrome, Key, Ticket, CreditCard, Settings, HelpCircle, Plus, MessageSquare, Send, Paperclip, X, AlertCircle, Clock, CheckCircle2, ArrowRight, Lightbulb, Zap, Shield, AlertTriangle } from "lucide-react";
+import { Package, Download, ShoppingCart, User, LogOut, Chrome, Key, Ticket, CreditCard, Settings, HelpCircle, Plus, MessageSquare, Send, Paperclip, X, AlertCircle, Clock, CheckCircle2, ArrowRight, Lightbulb, Zap, Shield, AlertTriangle, Image, FileText } from "lucide-react";
 import { UserSidebar } from "@/components/UserSidebar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import UserInvoicesPage from "./user-invoices";
@@ -48,7 +48,7 @@ export default function Dashboard() {
   // Helper function to check if a feature is enabled
   const isFeatureEnabled = (featureName: string) => {
     if (!dashboardFeatures || !Array.isArray(dashboardFeatures)) return true;
-    const feature = dashboardFeatures.find(f => f.featureName === featureName);
+    const feature = dashboardFeatures.find(f => f.id === featureName || f.featureName === featureName);
     return feature ? feature.isEnabled : true;
   };
 
@@ -56,7 +56,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (dashboardFeatures && Array.isArray(dashboardFeatures)) {
       const featureMap = {
-        'affiliate': 'affiliate_program',
+        'affiliate': 'affiliate-program',
         'analytics': 'analytics',
         'billing': 'billing'
       };
@@ -81,8 +81,30 @@ export default function Dashboard() {
     if (data) {
       try {
         const parsedData = JSON.parse(data);
-
-        setCustomerData(parsedData);
+        
+        // Fetch fresh user data from API if we have user ID
+        if (parsedData.id) {
+          fetch(`/api/customer/profile?userId=${parsedData.id}`)
+            .then(response => response.json())
+            .then(profileData => {
+              console.log('Profile API response:', profileData);
+              if (profileData && profileData.success !== false) {
+                setCustomerData(profileData);
+                // Update localStorage with fresh data
+                localStorage.setItem('customer_data', JSON.stringify(profileData));
+              } else {
+                console.log('Using stored data, API response invalid:', profileData);
+                setCustomerData(parsedData);
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching user profile:', error);
+              setCustomerData(parsedData);
+            });
+        } else {
+          console.log('No user ID found, using stored data');
+          setCustomerData(parsedData);
+        }
         
         // Check if this is the first visit
         const hasSeenGuide = localStorage.getItem('first-visit-guide-completed');
@@ -292,7 +314,7 @@ export default function Dashboard() {
           {/* Support Tab - Show tickets directly */}
           {activeTab === 'support' && (
             <div data-tutorial="support-link">
-              <SupportSection customer={customerData || { email: 'demo@example.com', name: 'Demo User' }} />
+              <SupportSection customer={customerData || { id: 1, email: 'demo@example.com', name: 'Demo User' }} />
             </div>
           )}
 
@@ -394,7 +416,7 @@ export default function Dashboard() {
 
 
           {/* Affiliate Program Tab */}
-          {activeTab === 'affiliate' && isFeatureEnabled('affiliate_program') && (
+          {activeTab === 'affiliate' && isFeatureEnabled('affiliate-program') && (
             <AffiliateProgram customer={customerData || { 
               id: 'demo-customer-123',
               email: 'demo@example.com',
@@ -466,7 +488,8 @@ function SupportSection({ customer }: { customer: any }) {
       const response = await apiRequest('POST', '/api/tickets', {
         ...ticketData,
         customerEmail: customer.email,
-        customerName: customer.name
+        customerName: customer.name,
+        customerId: customer.id
       });
       return await response.json();
     },
@@ -783,7 +806,8 @@ function SupportSection({ customer }: { customer: any }) {
                     <Badge variant={
                       ticket.status === 'open' ? 'default' :
                       ticket.status === 'in_progress' ? 'secondary' :
-                      ticket.status === 'resolved' ? 'outline' : 'destructive'
+                      ticket.status === 'resolved' ? 'outline' :
+                      ticket.status === 'archived' ? 'secondary' : 'destructive'
                     }>
                       {ticket.status}
                     </Badge>
@@ -842,7 +866,8 @@ function SupportSection({ customer }: { customer: any }) {
               <Badge variant={
                 selectedTicket?.status === 'open' ? 'default' :
                 selectedTicket?.status === 'in_progress' ? 'secondary' :
-                selectedTicket?.status === 'resolved' ? 'outline' : 'destructive'
+                selectedTicket?.status === 'resolved' ? 'outline' :
+                selectedTicket?.status === 'archived' ? 'secondary' : 'destructive'
               }>
                 {selectedTicket?.status}
               </Badge>
@@ -876,7 +901,7 @@ function SupportSection({ customer }: { customer: any }) {
               </div>
               
               {/* Messages */}
-              <TicketMessages ticketId={selectedTicket?.id} customerEmail={customer.email} />
+              <TicketMessages ticketId={selectedTicket?.id} customerEmail={customer.email} customerName={customer.name} />
             </div>
           </ScrollArea>
         </DialogContent>
@@ -886,7 +911,7 @@ function SupportSection({ customer }: { customer: any }) {
 }
 
 // Ticket Messages Component
-function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; customerEmail: string }) {
+function TicketMessages({ ticketId, customerEmail, customerName }: { ticketId?: number; customerEmail: string; customerName?: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState('');
@@ -907,7 +932,7 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
               isFromCustomer: typeof m.isFromCustomer === 'boolean' ? m.isFromCustomer : !m.isAdmin,
               senderName: m.authorName ?? m.senderName ?? m.sender_name ?? 'User',
               createdAt: m.createdAt ?? m.created_at ?? new Date().toISOString(),
-              attachments: m.attachments ?? [],
+              attachments: m.attachments,
             }))
           : [];
       } catch (err: any) {
@@ -926,7 +951,8 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
     mutationFn: async (message: string) => {
       const response = await apiRequest('POST', `/api/tickets/${ticketId}/messages`, {
         message,
-        senderEmail: customerEmail
+        customerEmail: customerEmail,
+        customerName: customerName
       });
       const json = await response.json();
       if (json && json.success === false) {
@@ -978,6 +1004,45 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
                 </span>
               </div>
               <p className="text-sm text-gray-700">{msg.content || msg.message}</p>
+              
+              {/* Attachments Display */}
+              {(() => {
+                if (!msg.attachments || typeof msg.attachments !== 'string' || !msg.attachments.trim()) {
+                  return null;
+                }
+                
+                try {
+                  const attachments = JSON.parse(msg.attachments);
+                  if (!Array.isArray(attachments) || attachments.length === 0) {
+                    return null;
+                  }
+                  
+                  return (
+                    <div className="mt-2 space-y-2">
+                      {attachments.map((attachment: any, index: number) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border">
+                          {attachment.type?.startsWith('image/') ? (
+                            <div className="flex items-center gap-2">
+                              <Image className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm font-medium">{attachment.name}</span>
+                              <span className="text-xs text-gray-500">({(attachment.size / 1024).toFixed(1)} KB)</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-medium">{attachment.name}</span>
+                              <span className="text-xs text-gray-500">({(attachment.size / 1024).toFixed(1)} KB)</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                } catch (error) {
+                  console.error('Failed to parse attachments:', msg.attachments, error);
+                  return null;
+                }
+              })()}
             </div>
           ))}
         </div>

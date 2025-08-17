@@ -124,8 +124,8 @@ export default function UnifiedLogin() {
     onSuccess: (data) => {
       toast({ title: "Success", description: "Login successful" });
       localStorage.setItem('customer_token', data.token);
-      if (data.customer) {
-        localStorage.setItem('customer_data', JSON.stringify(data.customer));
+      if (data.user) {
+        localStorage.setItem('customer_data', JSON.stringify(data.user));
       }
       // Redirect to customer dashboard
       navigate('/dashboard');

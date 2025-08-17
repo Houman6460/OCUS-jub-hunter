@@ -1,27 +1,77 @@
-export const onRequestGet = async () => {
-  // Demo customer profile
-  const profile = {
-    id: 1,
-    email: 'demo@example.com',
-    name: 'Demo User',
-    role: 'customer',
-    subscriptionStatus: 'active',
-    plan: 'premium',
-    joinedDate: '2024-01-15',
-    lastLogin: new Date().toISOString(),
-    settings: {
-      notifications: true,
-      emailUpdates: true,
-      theme: 'light'
-    }
-  };
+import { UserStorage } from '../../lib/user-storage';
 
-  return new Response(JSON.stringify(profile), {
-    headers: { 
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+export const onRequestGet = async ({ request, env }: any) => {
+  try {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get('userId');
+    
+    if (!userId) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'User ID is required'
+      }), {
+        status: 400,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
     }
-  });
+
+    const userStorage = new UserStorage(env.DB);
+    await userStorage.initializeUsers();
+    
+    const user = await userStorage.getUserById(parseInt(userId));
+    
+    if (!user) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'User not found'
+      }), {
+        status: 404,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
+    const profile = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      subscriptionStatus: 'active',
+      plan: 'premium',
+      joinedDate: user.created_at?.split('T')[0] || '2024-01-15',
+      lastLogin: new Date().toISOString(),
+      settings: {
+        notifications: true,
+        emailUpdates: true,
+        theme: 'light'
+      }
+    };
+
+    return new Response(JSON.stringify(profile), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Failed to get user profile:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      message: 'Failed to load profile'
+    }), {
+      status: 500,
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
 };
 
 export const onRequestPut = async ({ request }: any) => {

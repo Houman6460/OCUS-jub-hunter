@@ -1,51 +1,136 @@
-export const onRequestGet = async () => {
-  // Dashboard features configuration
-  const features = [
-    {
-      id: 'affiliate-program',
-      name: 'Affiliate Program',
-      description: 'Controls visibility of referral system and commission tracking',
-      isEnabled: true,
-      category: 'monetization'
-    },
-    {
-      id: 'analytics',
-      name: 'Analytics',
-      description: 'Controls visibility of usage statistics and performance metrics',
-      isEnabled: true,
-      category: 'insights'
-    },
-    {
-      id: 'billing',
-      name: 'Billing',
-      description: 'Controls visibility of payment history and subscription management',
-      isEnabled: true,
-      category: 'payments'
-    }
-  ];
+// Simple persistent storage using D1 database
+class FeatureStorage {
+  private db: D1Database;
 
-  return new Response(JSON.stringify(features), {
-    headers: { 
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+  constructor(db: D1Database) {
+    this.db = db;
+  }
+
+  async getFeatureStates(): Promise<Record<string, boolean>> {
+    try {
+      const result = await this.db.prepare(`
+        SELECT feature_name, is_enabled 
+        FROM dashboard_features
+      `).all();
+
+      const states: Record<string, boolean> = {
+        'affiliate-program': true,
+        'analytics': true,
+        'billing': true
+      };
+
+      if (result.results) {
+        result.results.forEach((row: any) => {
+          states[row.feature_name] = Boolean(row.is_enabled);
+        });
+      }
+
+      return states;
+    } catch (error) {
+      console.error('Failed to get feature states:', error);
+      return {
+        'affiliate-program': true,
+        'analytics': true,
+        'billing': true
+      };
     }
-  });
+  }
+
+  async updateFeatureState(featureName: string, isEnabled: boolean): Promise<void> {
+    try {
+      await this.db.prepare(`
+        INSERT OR REPLACE INTO dashboard_features (feature_name, is_enabled, updated_at)
+        VALUES (?, ?, datetime('now'))
+      `).bind(featureName, isEnabled ? 1 : 0).run();
+    } catch (error) {
+      console.error('Failed to update feature state:', error);
+      throw error;
+    }
+  }
+
+  async initializeFeatures(): Promise<void> {
+    try {
+      await this.db.prepare(`
+        CREATE TABLE IF NOT EXISTS dashboard_features (
+          feature_name TEXT PRIMARY KEY,
+          is_enabled INTEGER DEFAULT 1,
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run();
+
+      const defaultFeatures = ['affiliate-program', 'analytics', 'billing'];
+      for (const feature of defaultFeatures) {
+        await this.db.prepare(`
+          INSERT OR IGNORE INTO dashboard_features (feature_name, is_enabled)
+          VALUES (?, 1)
+        `).bind(feature).run();
+      }
+    } catch (error) {
+      console.error('Failed to initialize features:', error);
+    }
+  }
+}
+
+export const onRequestGet = async ({ env }: { env: any }) => {
+  try {
+    const storage = new FeatureStorage(env.DB);
+    await storage.initializeFeatures();
+    const states = await storage.getFeatureStates();
+
+    const features = [
+      {
+        id: 'affiliate-program',
+        name: 'Affiliate Program',
+        description: 'Controls visibility of referral system and commission tracking',
+        isEnabled: states['affiliate-program'],
+        category: 'monetization'
+      },
+      {
+        id: 'analytics',
+        name: 'Analytics',
+        description: 'Controls visibility of usage statistics and performance metrics',
+        isEnabled: states['analytics'],
+        category: 'insights'
+      },
+      {
+        id: 'billing',
+        name: 'Billing',
+        description: 'Controls visibility of payment history and subscription management',
+        isEnabled: states['billing'],
+        category: 'payments'
+      }
+    ];
+
+    return new Response(JSON.stringify(features), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  } catch (error) {
+    console.error('Error getting features:', error);
+    return new Response(JSON.stringify([]), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
 };
 
-export const onRequestPut = async ({ request }: any) => {
+export const onRequestPut = async ({ request, env }: { request: Request; env: any }) => {
   try {
-    const url = new URL(request.url);
-    const featureName = url.pathname.split('/').pop();
-    const { isEnabled, description } = await request.json();
+    const { featureName, isEnabled } = await request.json();
     
-    // Demo response - in real implementation, save to database
+    const storage = new FeatureStorage(env.DB);
+    await storage.updateFeatureState(featureName, isEnabled);
+    
     return new Response(JSON.stringify({
       success: true,
       message: `Feature ${featureName} updated successfully`,
       feature: {
-        name: featureName,
-        isEnabled,
-        description
+        id: featureName,
+        isEnabled
       }
     }), {
       headers: { 

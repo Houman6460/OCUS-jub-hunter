@@ -1,4 +1,5 @@
 import { TicketStorage, Env } from '../../../lib/db';
+import { UserStorage } from '../../../lib/user-storage';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -46,6 +47,7 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
     let customerEmail: string | undefined;
     let customerName: string | undefined;
     let isAdmin: boolean | undefined;
+    let attachmentData: string | undefined;
 
     const ct = request.headers.get('content-type') || '';
     try {
@@ -65,6 +67,24 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
         customerName = typeof cn === 'string' ? cn : undefined;
         const ia = form.get('isAdmin');
         isAdmin = typeof ia === 'string' ? ia === 'true' : false;
+        
+        // Process file attachments
+        const attachments: Array<{name: string; type: string; size: number}> = [];
+        for (const [key, value] of form.entries()) {
+          if (key.startsWith('attachment_') && value instanceof File) {
+            attachments.push({
+              name: value.name,
+              type: value.type,
+              size: value.size
+            });
+          }
+        }
+        
+        // Store attachment metadata as JSON string
+        if (attachments.length > 0) {
+          content = content || '[File attachment]';
+          attachmentData = JSON.stringify(attachments);
+        }
       } else {
         // Try JSON first, then text fallback
         try {
@@ -86,19 +106,46 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
     }
 
     content = typeof content === 'string' ? content.trim() : content;
-    if (!content) return json({ success: false, message: 'Missing content' }, 400);
+    
+    // Allow empty content if there are attachments (files/images)
+    const hasAttachments = request.headers.get('content-type')?.includes('multipart/form-data');
+    if (!content && !hasAttachments) {
+      return json({ success: false, message: 'Missing content' }, 400);
+    }
+    
+    // Set default content for attachment-only messages
+    if (!content && hasAttachments) {
+      content = '[File attachment]';
+    }
 
     const storage = new TicketStorage(env.DB);
     const ticket = await storage.getTicketById(ticketId);
     // Degrade to 200 to prevent client hard-failures; keep informative payload
     if (!ticket) return json({ success: false, message: 'Ticket not found' }, 200);
 
+    let finalSenderName = customerName;
+    
+    // If we don't have customerName but have customerEmail, try to fetch from user storage
+    if (!customerName && customerEmail && !isAdmin) {
+      try {
+        const userStorage = new UserStorage(env.DB);
+        await userStorage.initializeUsers();
+        const user = await userStorage.getUserByEmail(customerEmail);
+        if (user) {
+          finalSenderName = user.name;
+        }
+      } catch (error) {
+        console.error('Failed to fetch user name for message:', error);
+      }
+    }
+
     const msg = await storage.addTicketMessage({
       ticket_id: ticketId,
-      message: content,
+      message: content || '[File attachment]',
       is_from_customer: !isAdmin,
-      sender_name: customerName || (isAdmin ? 'Admin' : ticket.customer_name),
+      sender_name: finalSenderName || (isAdmin ? 'Admin' : ticket.customer_name),
       sender_email: customerEmail || (isAdmin ? undefined : ticket.customer_email),
+      attachments: attachmentData,
     });
 
     return json({ success: true, message: msg });
