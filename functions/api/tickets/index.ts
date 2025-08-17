@@ -1,39 +1,7 @@
 // Cloudflare Pages Function: /api/tickets
-// Demo in-memory store to keep tickets/messages available across requests in the same worker
-// For production, replace with a real database (e.g., D1/Postgres via API)
+// Uses D1 database for persistent ticket storage
 
-interface Ticket {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  priority: string;
-  status: 'open' | 'in-progress' | 'resolved' | 'closed';
-  customer_email: string;
-  customer_name: string;
-  created_at: string;
-  updated_at: string;
-  assigned_to_user_id?: number;
-  assigned_to_name?: string;
-}
-
-interface TicketMessage {
-  id: number;
-  ticket_id: number;
-  message: string;
-  is_from_customer: boolean;
-  sender_name: string;
-  sender_email?: string;
-  created_at: string;
-}
-
-const store = (globalThis as any).__TICKET_STORE__ || {
-  tickets: [] as Ticket[],
-  messages: new Map<number, TicketMessage[]>(),
-  seq: 1,
-  msgSeq: 1,
-};
-(globalThis as any).__TICKET_STORE__ = store;
+import { TicketStorage, Env } from '../../lib/db';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -55,7 +23,7 @@ export const onRequestOptions = async () => {
   });
 };
 
-export const onRequestGet = async ({ request, env }: any) => {
+export const onRequestGet = async ({ request, env }: { request: Request; env: Env }) => {
   const expressBase: string | undefined = env?.EXPRESS_API_BASE;
   if (expressBase) {
     const base = expressBase.replace(/\/$/, "");
@@ -82,14 +50,17 @@ export const onRequestGet = async ({ request, env }: any) => {
   const isAdmin = url.searchParams.get('isAdmin') === 'true';
   const customerEmail = url.searchParams.get('customerEmail');
 
-  let result = store.tickets;
+  const storage = new TicketStorage(env.DB);
+  let result;
   if (!isAdmin && customerEmail) {
-    result = result.filter((t) => t.customer_email === customerEmail);
+    result = await storage.getTicketsByCustomerEmail(customerEmail);
+  } else {
+    result = await storage.getAllTickets();
   }
   return json(result);
 };
 
-export const onRequestPost = async ({ request, env }: any) => {
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
     const expressBase: string | undefined = env?.EXPRESS_API_BASE;
     if (expressBase) {
@@ -118,9 +89,8 @@ export const onRequestPost = async ({ request, env }: any) => {
       return json({ success: false, message: 'Missing required fields' }, 400);
     }
 
-    const now = new Date().toISOString();
-    const ticket: Ticket = {
-      id: store.seq++,
+    const storage = new TicketStorage(env.DB);
+    const ticket = await storage.createTicket({
       title,
       description,
       category: category || 'general',
@@ -128,15 +98,11 @@ export const onRequestPost = async ({ request, env }: any) => {
       status: 'open',
       customer_email: customerEmail,
       customer_name: customerName || customerEmail,
-      created_at: now,
-      updated_at: now,
-    };
-
-    store.tickets.unshift(ticket);
-    store.messages.set(ticket.id, []);
+    });
 
     return json({ success: true, ticket });
-  } catch (e) {
+  } catch (e: any) {
+    console.error('Failed to create ticket:', e);
     return json({ success: false, message: 'Failed to create ticket' }, 500);
   }
 };

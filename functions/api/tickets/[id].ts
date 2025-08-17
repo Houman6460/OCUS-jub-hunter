@@ -1,16 +1,4 @@
-// Shared in-memory store created in index.ts
-function getStore() {
-  const s: any = (globalThis as any).__TICKET_STORE__;
-  if (!s) {
-    (globalThis as any).__TICKET_STORE__ = { tickets: [], messages: new Map(), seq: 1, msgSeq: 1 };
-  }
-  return (globalThis as any).__TICKET_STORE__ as {
-    tickets: any[];
-    messages: Map<number, any[]>;
-    seq: number;
-    msgSeq: number;
-  };
-}
+import { TicketStorage, Env } from '../../lib/db';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -22,7 +10,7 @@ function json(data: any, status = 200) {
   });
 }
 
-export const onRequestPatch = async ({ request, params, env }: any) => {
+export const onRequestPatch = async ({ request, params, env }: { request: Request; params: { id: string }; env: Env }) => {
   try {
     const ticketId = Number(params.id);
     const expressBase: string | undefined = env?.EXPRESS_API_BASE;
@@ -47,14 +35,17 @@ export const onRequestPatch = async ({ request, params, env }: any) => {
       return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
     const updates = await request.json();
-    const store = getStore();
+    const storage = new TicketStorage(env.DB);
 
-    const idx = store.tickets.findIndex((t) => t.id === ticketId);
-    if (idx === -1) return json({ success: false, message: 'Ticket not found' }, 404);
+    const ticket = await storage.getTicketById(ticketId);
+    if (!ticket) return json({ success: false, message: 'Ticket not found' }, 404);
 
-    const now = new Date().toISOString();
-    store.tickets[idx] = { ...store.tickets[idx], ...updates, updated_at: now };
-    return json({ success: true, ticket: store.tickets[idx] });
+    if (updates.status) {
+      await storage.updateTicketStatus(ticketId, updates.status);
+    }
+    
+    const updatedTicket = await storage.getTicketById(ticketId);
+    return json({ success: true, ticket: updatedTicket });
   } catch (error) {
     return json({ success: false, message: 'Failed to update ticket' }, 500);
   }
@@ -65,7 +56,7 @@ export const onRequestPut = async (ctx: any) => {
   return onRequestPatch(ctx);
 };
 
-export const onRequestDelete = async ({ request, params, env }: any) => {
+export const onRequestDelete = async ({ request, params, env }: { request: Request; params: { id: string }; env: Env }) => {
   try {
     const ticketId = Number(params.id);
     const expressBase: string | undefined = env?.EXPRESS_API_BASE;
@@ -87,13 +78,15 @@ export const onRequestDelete = async ({ request, params, env }: any) => {
       }
       return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
-    const store = getStore();
-
-    const before = store.tickets.length;
-    store.tickets = store.tickets.filter((t) => t.id !== ticketId);
-    store.messages.delete(ticketId);
-    const removed = before !== store.tickets.length;
-    return json({ success: removed, message: removed ? `Ticket ${ticketId} deleted` : 'Ticket not found' }, removed ? 200 : 404);
+    const storage = new TicketStorage(env.DB);
+    
+    const ticket = await storage.getTicketById(ticketId);
+    if (!ticket) {
+      return json({ success: false, message: 'Ticket not found' }, 404);
+    }
+    
+    await storage.deleteTicket(ticketId);
+    return json({ success: true, message: `Ticket ${ticketId} deleted` });
   } catch (error) {
     return json({ success: false, message: 'Failed to delete ticket' }, 500);
   }

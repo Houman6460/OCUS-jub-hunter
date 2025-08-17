@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import "../styles/admin-badges.css";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import CustomerManagement from "./customer-management";
@@ -3395,11 +3396,7 @@ function AnnouncementBadgeManagementTab() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div 
-                        className="px-3 py-2 rounded-md text-sm font-medium"
-                        style={{ 
-                          backgroundColor: badge.backgroundColor, 
-                          color: badge.textColor 
-                        }}
+                        className={`admin-badge ${badge.backgroundColor === 'gradient-primary' ? 'admin-badge-gradient-primary' : 'admin-badge-primary'}`}
                       >
                         {badge.textEn}
                       </div>

@@ -1,16 +1,4 @@
-// Use the shared in-memory store created in index.ts
-function getStore() {
-  const s: any = (globalThis as any).__TICKET_STORE__;
-  if (!s) {
-    (globalThis as any).__TICKET_STORE__ = { tickets: [], messages: new Map(), seq: 1, msgSeq: 1 };
-  }
-  return (globalThis as any).__TICKET_STORE__ as {
-    tickets: any[];
-    messages: Map<number, any[]>;
-    seq: number;
-    msgSeq: number;
-  };
-}
+import { TicketStorage, Env } from '../../../lib/db';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -22,7 +10,7 @@ function json(data: any, status = 200) {
   });
 }
 
-export const onRequestPost = async ({ request, params, env }: any) => {
+export const onRequestPost = async ({ request, params, env }: { request: Request; params: { id: string }; env: Env }) => {
   try {
     const ticketId = Number(params.id);
     // If EXPRESS_API_BASE is configured, proxy the request to Express (preserves persistence and auth via cookies)
@@ -100,24 +88,18 @@ export const onRequestPost = async ({ request, params, env }: any) => {
     content = typeof content === 'string' ? content.trim() : content;
     if (!content) return json({ success: false, message: 'Missing content' }, 400);
 
-    const store = getStore();
-    const ticket = store.tickets.find((t) => t.id === ticketId);
+    const storage = new TicketStorage(env.DB);
+    const ticket = await storage.getTicketById(ticketId);
     // Degrade to 200 to prevent client hard-failures; keep informative payload
     if (!ticket) return json({ success: false, message: 'Ticket not found' }, 200);
 
-    const msg = {
-      id: store.msgSeq++,
+    const msg = await storage.addTicketMessage({
       ticket_id: ticketId,
       message: content,
       is_from_customer: !isAdmin,
       sender_name: customerName || (isAdmin ? 'Admin' : ticket.customer_name),
       sender_email: customerEmail || (isAdmin ? undefined : ticket.customer_email),
-      created_at: new Date().toISOString(),
-    };
-
-    const list = store.messages.get(ticketId) || [];
-    list.push(msg);
-    store.messages.set(ticketId, list);
+    });
 
     return json({ success: true, message: msg });
   } catch (error) {
@@ -125,7 +107,7 @@ export const onRequestPost = async ({ request, params, env }: any) => {
   }
 };
 
-export const onRequestGet = async ({ request, params, env }: any) => {
+export const onRequestGet = async ({ request, params, env }: { request: Request; params: { id: string }; env: Env }) => {
   const ticketId = Number(params.id);
   // If EXPRESS_API_BASE is configured, proxy the GET to Express to read from DB
   const expressBase: string | undefined = env?.EXPRESS_API_BASE;
@@ -148,17 +130,17 @@ export const onRequestGet = async ({ request, params, env }: any) => {
     return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
   }
 
-  const store = getStore();
-  const list = store.messages.get(ticketId) || [];
+  const storage = new TicketStorage(env.DB);
+  const messages = await storage.getTicketMessages(ticketId);
   // Map to admin UI shape
-  const mapped = list.map((m: any) => ({
+  const mapped = messages.map((m) => ({
     id: m.id,
     ticketId: m.ticket_id,
     content: m.message,
     isAdmin: !m.is_from_customer,
     authorName: m.sender_name,
     createdAt: m.created_at,
-    attachments: m.attachments || [],
+    attachments: [],
   }));
   return json(mapped);
 };

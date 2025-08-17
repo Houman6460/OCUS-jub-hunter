@@ -3,3 +3,8 @@ compatibility_date = "2025-08-14"
 
 [assets]
 directory = "dist/public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ocus-tickets"
+database_id = "cc9216e4-8167-486a-b174-89087493b2ea"

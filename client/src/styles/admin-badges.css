@@ -1,0 +1,37 @@
+/* Admin badge styles */
+.admin-badge {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.admin-badge-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.admin-badge-secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.admin-badge-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.admin-badge-warning {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.admin-badge-danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.admin-badge-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
