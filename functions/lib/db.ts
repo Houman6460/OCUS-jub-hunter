@@ -62,15 +62,25 @@ export class TicketStorage {
   constructor(private db: D1Database) {}
 
   async getAllTickets(): Promise<Ticket[]> {
-    const result = await this.db.prepare('SELECT * FROM tickets ORDER BY created_at DESC').all();
-    return result.results as Ticket[];
+    try {
+      const result = await this.db.prepare('SELECT * FROM tickets ORDER BY created_at DESC').all();
+      return result.results as Ticket[];
+    } catch (error: any) {
+      console.error('D1 getAllTickets error:', error);
+      throw new Error(`Database query failed: ${error.message}`);
+    }
   }
 
   async getTicketsByCustomerEmail(email: string): Promise<Ticket[]> {
-    const result = await this.db.prepare('SELECT * FROM tickets WHERE customer_email = ? ORDER BY created_at DESC')
-      .bind(email)
-      .all();
-    return result.results as Ticket[];
+    try {
+      const result = await this.db.prepare('SELECT * FROM tickets WHERE customer_email = ? ORDER BY created_at DESC')
+        .bind(email)
+        .all();
+      return result.results as Ticket[];
+    } catch (error: any) {
+      console.error('D1 getTicketsByCustomerEmail error:', error);
+      throw new Error(`Database query failed: ${error.message}`);
+    }
   }
 
   async getTicketById(id: number): Promise<Ticket | null> {
@@ -82,24 +92,34 @@ export class TicketStorage {
 
   async createTicket(ticket: Omit<Ticket, 'id' | 'created_at' | 'updated_at'>): Promise<Ticket> {
     const now = new Date().toISOString();
-    const result = await this.db.prepare(`
-      INSERT INTO tickets (title, description, category, priority, status, customer_email, customer_name, assigned_to_user_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      RETURNING *
-    `).bind(
-      ticket.title,
-      ticket.description,
-      ticket.category,
-      ticket.priority,
-      ticket.status,
-      ticket.customer_email,
-      ticket.customer_name,
-      ticket.assigned_to_user_id || null,
-      now,
-      now
-    ).first();
     
-    return result as Ticket;
+    try {
+      const result = await this.db.prepare(`
+        INSERT INTO tickets (title, description, category, priority, status, customer_email, customer_name, assigned_to_user_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING *
+      `).bind(
+        ticket.title,
+        ticket.description,
+        ticket.category,
+        ticket.priority,
+        ticket.status,
+        ticket.customer_email,
+        ticket.customer_name,
+        ticket.assigned_to_user_id || null,
+        now,
+        now
+      ).first();
+      
+      if (!result) {
+        throw new Error('Failed to insert ticket - no result returned');
+      }
+      
+      return result as Ticket;
+    } catch (error: any) {
+      console.error('D1 createTicket error:', error);
+      throw new Error(`Database insert failed: ${error.message}`);
+    }
   }
 
   async updateTicketStatus(id: number, status: string): Promise<void> {

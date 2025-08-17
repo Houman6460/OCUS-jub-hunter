@@ -905,7 +905,7 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
               id: m.id,
               content: m.content ?? m.message ?? '',
               isFromCustomer: typeof m.isFromCustomer === 'boolean' ? m.isFromCustomer : !m.isAdmin,
-              authorName: m.authorName ?? m.senderName ?? m.sender_name ?? 'User',
+              senderName: m.authorName ?? m.senderName ?? m.sender_name ?? 'User',
               createdAt: m.createdAt ?? m.created_at ?? new Date().toISOString(),
               attachments: m.attachments ?? [],
             }))
@@ -977,7 +977,7 @@ function TicketMessages({ ticketId, customerEmail }: { ticketId?: number; custom
                   {new Date(msg.createdAt).toLocaleString()}
                 </span>
               </div>
-              <p className="text-sm text-gray-700">{msg.message}</p>
+              <p className="text-sm text-gray-700">{msg.content || msg.message}</p>
             </div>
           ))}
         </div>

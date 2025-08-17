@@ -50,14 +50,25 @@ export const onRequestGet = async ({ request, env }: { request: Request; env: En
   const isAdmin = url.searchParams.get('isAdmin') === 'true';
   const customerEmail = url.searchParams.get('customerEmail');
 
-  const storage = new TicketStorage(env.DB);
-  let result;
-  if (!isAdmin && customerEmail) {
-    result = await storage.getTicketsByCustomerEmail(customerEmail);
-  } else {
-    result = await storage.getAllTickets();
+  // Check if D1 database is available
+  if (!env.DB) {
+    console.error('D1 database not available');
+    return json({ error: 'Database not available' }, 500);
   }
-  return json(result);
+
+  try {
+    const storage = new TicketStorage(env.DB);
+    let result;
+    if (!isAdmin && customerEmail) {
+      result = await storage.getTicketsByCustomerEmail(customerEmail);
+    } else {
+      result = await storage.getAllTickets();
+    }
+    return json(result);
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return json({ error: 'Database query failed', details: error.message }, 500);
+  }
 };
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
@@ -87,6 +98,12 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const { title, description, category, priority, customerEmail, customerName } = body || {};
     if (!title || !description || !customerEmail) {
       return json({ success: false, message: 'Missing required fields' }, 400);
+    }
+
+    // Check if D1 database is available
+    if (!env.DB) {
+      console.error('D1 database not available for ticket creation');
+      return json({ success: false, message: 'Database not available' }, 500);
     }
 
     const storage = new TicketStorage(env.DB);
