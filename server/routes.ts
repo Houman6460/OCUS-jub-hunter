@@ -138,11 +138,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication middleware for admin routes
-  const requireAdmin = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated() || !req.user?.isAdmin) {
-      return res.status(401).json({ error: 'Admin access required' });
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    // If session-based admin is present, allow
+    if (req.isAuthenticated?.() && req.user?.isAdmin) {
+      return next();
     }
-    next();
+
+    // Otherwise, attempt to decode Bearer token similar to /api/auth/user
+    const authHeader = req.headers?.authorization as string | undefined;
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.substring(7);
+        const decoded = Buffer.from(token, 'base64').toString('utf8');
+        const [type] = decoded.split(':');
+        if (type === 'admin') {
+          // Treat as admin for route access
+          return next();
+        }
+      } catch (e) {
+        // fall through to 401
+      }
+    }
+
+    return res.status(401).json({ error: 'Admin access required' });
   };
 
   // Authentication middleware for user routes  

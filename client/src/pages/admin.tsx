@@ -139,8 +139,8 @@ function TicketManagementTab() {
             ...t,
             createdAt: t.createdAt ?? t.created_at ?? t.created,
             updatedAt: t.updatedAt ?? t.updated_at ?? t.updated,
-            userName: t.userName ?? t.customer_name,
-            userEmail: t.userEmail ?? t.customer_email,
+            userName: t.userName ?? t.customerName ?? t.customer_name,
+            userEmail: t.userEmail ?? t.customerEmail ?? t.customer_email,
             // Convert 'in-progress' to 'in_progress' if needed
             status: t.status === 'in-progress' ? 'in_progress' : t.status,
           }))
@@ -168,8 +168,12 @@ function TicketManagementTab() {
         ? data.map((m: any) => ({
             ...m,
             content: m.content ?? m.message,
-            isAdmin: typeof m.isAdmin === 'boolean' ? m.isAdmin : (typeof m.is_from_customer === 'boolean' ? !m.is_from_customer : false),
-            authorName: m.authorName ?? m.sender_name ?? m.sender,
+            isAdmin: typeof m.isAdmin === 'boolean'
+              ? m.isAdmin
+              : (typeof m.isFromCustomer === 'boolean'
+                ? !m.isFromCustomer
+                : (typeof m.is_from_customer === 'boolean' ? !m.is_from_customer : false)),
+            authorName: m.authorName ?? m.senderName ?? m.sender_name ?? m.sender,
             createdAt: m.createdAt ?? m.created_at,
           }))
         : [];
