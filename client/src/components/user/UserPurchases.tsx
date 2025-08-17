@@ -460,7 +460,7 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                               window.URL.revokeObjectURL(url);
                               document.body.removeChild(a);
                             }
-                          } catch (e) {}
+                          } catch (e) {
                             toast({
                               title: 'Error',
                               description: 'Failed to download trial extension',
