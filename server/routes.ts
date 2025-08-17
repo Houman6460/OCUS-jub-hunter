@@ -174,6 +174,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Lightweight system health stub (no DB dependencies)
+  // This endpoint is used by the automation UI to avoid 404s during development
+  app.get('/api/system-health', (req, res) => {
+    try {
+      res.status(200).json({
+        ok: true,
+        status: 'ok',
+        services: {
+          server: 'ok',
+          chromeRunner: 'unknown',
+          puppeteer: 'unknown'
+        },
+        timestamp: new Date().toISOString()
+      });
+    } catch (_err) {
+      res.status(200).json({ ok: false, status: 'degraded' });
+    }
+  });
+
+  // Recovery stub endpoint to simulate recovery flows in development
+  // Accepts optional query parameter: action=localhost|chrome|server
+  app.get('/api/recovery', (req, res) => {
+    const action = (req.query.action as string) || 'unknown';
+    const id = uuidv4();
+    res.status(200).json({
+      ok: true,
+      id,
+      action,
+      message: `Simulated recovery for action: ${action}`,
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // SEO Settings Management API with comprehensive image upload support
   app.get('/api/admin/seo-settings', requireAdmin, async (req, res) => {
     try {

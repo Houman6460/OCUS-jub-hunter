@@ -218,7 +218,10 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
   // Get product pricing from admin settings
   const { data: pricing } = useQuery({
     queryKey: ['/api/products/pricing'],
-    queryFn: () => fetch('/api/products/pricing').then(res => res.json()),
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/products/pricing');
+      return res.json();
+    },
   });
 
   // Get user orders
@@ -421,31 +424,19 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await fetch('/api/download-extension/premium');
+                            const response = await apiRequest('GET', '/api/download-extension/premium');
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = 'ocus-job-hunter-premium-v1.0.0.zip';
+                              a.download = 'ocus-job-hunter-premium-v2.1.8-STABLE.zip';
                               document.body.appendChild(a);
                               a.click();
                               window.URL.revokeObjectURL(url);
                               document.body.removeChild(a);
-                              toast({
-                                title: 'Premium Download Started',
-                                description: 'Premium extension with unlimited missions downloaded successfully!',
-                              });
-                            } else {
-                              throw new Error('Download failed');
                             }
-                          } catch (error) {
-                            toast({
-                              title: 'Error',
-                              description: 'Failed to download premium extension',
-                              variant: 'destructive',
-                            });
-                          }
+                          } catch (e) {}
                         }}
                         disabled={downloadMutation.isPending}
                         className="bg-green-600 hover:bg-green-700"
@@ -457,25 +448,19 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await fetch('/api/download-extension/trial');
+                            const response = await apiRequest('GET', '/api/download-extension/trial');
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = 'ocus-job-hunter-trial-v1.0.0.zip';
+                              a.download = 'ocus-job-hunter-trial-v2.1.8-STABLE.zip';
                               document.body.appendChild(a);
                               a.click();
                               window.URL.revokeObjectURL(url);
                               document.body.removeChild(a);
-                              toast({
-                                title: 'Trial Download Started',
-                                description: 'Trial extension with 3 free missions downloaded successfully!',
-                              });
-                            } else {
-                              throw new Error('Download failed');
                             }
-                          } catch (error) {
+                          } catch (e) {}
                             toast({
                               title: 'Error',
                               description: 'Failed to download trial extension',

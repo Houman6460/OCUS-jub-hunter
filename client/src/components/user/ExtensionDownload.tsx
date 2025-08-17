@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -55,26 +56,35 @@ export function ExtensionDownload({ customer }: ExtensionDownloadProps) {
   // Check extension usage status
   const { data: extensionStatus } = useQuery<ExtensionStatus>({
     queryKey: ['/api/extension/check', customer.id],
-    queryFn: () => fetch(`/api/extension/check/${customer.id}`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/extension/check/${customer.id}`);
+      return res.json();
+    },
   });
 
   // Get customer downloads
   const { data: downloads = [] } = useQuery<ExtensionDownload[]>({
     queryKey: ['/api/extension/downloads', customer.id],
-    queryFn: () => fetch(`/api/extension/downloads/${customer.id}`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/extension/downloads/${customer.id}`);
+      return res.json();
+    },
   });
 
   // Get real-time purchase status from orders
   const { data: purchaseStatus } = useQuery<PurchaseStatus>({
     queryKey: ['/api/user/purchase-status', customer.id],
-    queryFn: () => fetch(`/api/user/${customer.id}/purchase-status`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await apiRequest('GET', `/api/user/${customer.id}/purchase-status`);
+      return res.json();
+    },
   });
 
   // Direct download for trial version
   const handleTrialDownload = async () => {
     setDownloading('trial');
     try {
-      const response = await fetch('/api/download-extension/trial');
+      const response = await apiRequest('GET', '/api/download-extension/trial');
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -107,7 +117,7 @@ export function ExtensionDownload({ customer }: ExtensionDownloadProps) {
   const handlePremiumDownload = async () => {
     setDownloading('premium');
     try {
-      const response = await fetch('/api/download-extension/premium');
+      const response = await apiRequest('GET', '/api/download-extension/premium');
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

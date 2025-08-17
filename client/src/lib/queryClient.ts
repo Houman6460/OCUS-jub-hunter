@@ -52,7 +52,7 @@ export async function apiRequest(
 
   // Add authentication token if available
   const userToken = localStorage.getItem('user_token');
-  if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/'))) {
+  if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/') || url.includes('/api/tickets'))) {
     headers.Authorization = `Bearer ${userToken}`;
   }
 
@@ -96,7 +96,7 @@ export const getQueryFn: <T>(options: {
 
     // Add authentication token if available
     const userToken = localStorage.getItem('user_token');
-    if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/'))) {
+    if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/') || url.includes('/api/tickets'))) {
       headers.Authorization = `Bearer ${userToken}`;
     }
 
