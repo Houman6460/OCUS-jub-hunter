@@ -15,6 +15,7 @@
         .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
         .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
         .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap; }
+        .hidden-input { display: none; }
     </style>
 </head>
 <body>
@@ -23,7 +24,7 @@
     
     <div class="upload-area" id="uploadArea">
         <p>Drag and drop an image here or click to select</p>
-        <input type="file" id="fileInput" accept="image/*">
+        <input type="file" id="fileInput" accept="image/*" class="hidden-input" title="Select an image file to upload" aria-label="Select image file">
     </div>
     
     <button onclick="uploadImage()">Upload Test Image</button>
