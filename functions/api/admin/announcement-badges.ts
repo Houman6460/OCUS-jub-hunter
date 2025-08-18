@@ -71,20 +71,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const settingsStorage = new SettingsStorage(context.env.DB);
     const requestData = await context.request.json();
     
-    console.log('Creating new announcement badge:', requestData);
+    console.log('Creating new announcement badge:', JSON.stringify(requestData, null, 2));
     
     // Create new badge - handle different field names from frontend
     const newBadge: AnnouncementBadge = {
       id: crypto.randomUUID(),
-      title: requestData.title || requestData.text || requestData.badgeText || '',
+      title: requestData.title || requestData.text || requestData.badgeText || requestData.content || requestData.message || '',
       subtitle: requestData.subtitle || '',
-      backgroundColor: requestData.backgroundColor || requestData.bgColor || '#007cba',
-      textColor: requestData.textColor || requestData.color || '#ffffff',
+      backgroundColor: requestData.backgroundColor || requestData.bgColor || requestData.background || '#007cba',
+      textColor: requestData.textColor || requestData.color || requestData.foreground || '#ffffff',
       priority: parseInt(requestData.priority) || 1,
-      isActive: requestData.isActive !== false,
+      isActive: requestData.isActive !== undefined ? Boolean(requestData.isActive) : requestData.enabled !== undefined ? Boolean(requestData.enabled) : true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+    
+    console.log('Created badge object:', JSON.stringify(newBadge, null, 2));
     
     // Get existing badges
     const existingBadgesData = await settingsStorage.getSetting('announcement_badges');

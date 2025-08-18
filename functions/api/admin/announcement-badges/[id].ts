@@ -104,7 +104,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       });
     }
     
-    console.log('Updating announcement badge:', badgeId, requestData);
+    console.log('Updating announcement badge:', badgeId, JSON.stringify(requestData, null, 2));
     
     // Get existing badges
     const existingBadgesData = await settingsStorage.getSetting('announcement_badges');
@@ -126,14 +126,16 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     // Update badge - handle different field names from frontend
     existingBadges[badgeIndex] = {
       ...existingBadges[badgeIndex],
-      title: requestData.title || requestData.text || requestData.badgeText || existingBadges[badgeIndex].title,
+      title: requestData.title || requestData.text || requestData.badgeText || requestData.content || requestData.message || existingBadges[badgeIndex].title,
       subtitle: requestData.subtitle || existingBadges[badgeIndex].subtitle,
-      backgroundColor: requestData.backgroundColor || requestData.bgColor || existingBadges[badgeIndex].backgroundColor,
-      textColor: requestData.textColor || requestData.color || existingBadges[badgeIndex].textColor,
+      backgroundColor: requestData.backgroundColor || requestData.bgColor || requestData.background || existingBadges[badgeIndex].backgroundColor,
+      textColor: requestData.textColor || requestData.color || requestData.foreground || existingBadges[badgeIndex].textColor,
       priority: requestData.priority ? parseInt(requestData.priority) : existingBadges[badgeIndex].priority,
-      isActive: requestData.isActive !== undefined ? requestData.isActive : existingBadges[badgeIndex].isActive,
+      isActive: requestData.isActive !== undefined ? Boolean(requestData.isActive) : requestData.enabled !== undefined ? Boolean(requestData.enabled) : existingBadges[badgeIndex].isActive,
       updatedAt: new Date().toISOString(),
     };
+    
+    console.log('Updated badge object:', JSON.stringify(existingBadges[badgeIndex], null, 2));
     
     // Save updated badges
     await settingsStorage.setSetting('announcement_badges', JSON.stringify(existingBadges));
