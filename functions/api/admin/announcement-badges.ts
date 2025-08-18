@@ -4,6 +4,13 @@ interface Env {
   DB: D1Database;
 }
 
+declare global {
+  interface D1Database {}
+  interface PagesFunction<T = any> {
+    (context: { request: Request; env: T; params: any; waitUntil: (promise: Promise<any>) => void; }): Promise<Response> | Response;
+  }
+}
+
 interface AnnouncementBadge {
   id: string;
   title: string;
