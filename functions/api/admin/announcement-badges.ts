@@ -66,14 +66,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     
     console.log('Creating new announcement badge:', requestData);
     
-    // Create new badge
+    // Create new badge - handle different field names from frontend
     const newBadge: AnnouncementBadge = {
       id: crypto.randomUUID(),
-      title: requestData.title || '',
+      title: requestData.title || requestData.text || requestData.badgeText || '',
       subtitle: requestData.subtitle || '',
-      backgroundColor: requestData.backgroundColor || '#007cba',
-      textColor: requestData.textColor || '#ffffff',
-      priority: requestData.priority || 1,
+      backgroundColor: requestData.backgroundColor || requestData.bgColor || '#007cba',
+      textColor: requestData.textColor || requestData.color || '#ffffff',
+      priority: parseInt(requestData.priority) || 1,
       isActive: requestData.isActive !== false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -148,10 +148,15 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       });
     }
     
-    // Update badge
+    // Update badge - handle different field names from frontend
     existingBadges[badgeIndex] = {
       ...existingBadges[badgeIndex],
-      ...requestData,
+      title: requestData.title || requestData.text || requestData.badgeText || existingBadges[badgeIndex].title,
+      subtitle: requestData.subtitle || existingBadges[badgeIndex].subtitle,
+      backgroundColor: requestData.backgroundColor || requestData.bgColor || existingBadges[badgeIndex].backgroundColor,
+      textColor: requestData.textColor || requestData.color || existingBadges[badgeIndex].textColor,
+      priority: requestData.priority ? parseInt(requestData.priority) : existingBadges[badgeIndex].priority,
+      isActive: requestData.isActive !== undefined ? requestData.isActive : existingBadges[badgeIndex].isActive,
       updatedAt: new Date().toISOString(),
     };
     
