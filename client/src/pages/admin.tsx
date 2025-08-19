@@ -3320,9 +3320,12 @@ function AnnouncementBadgeManagementTab() {
     }
 
     const badgeData = {
-      ...newBadge,
-      isEnabled: true,
-      targetLanguages: ['de', 'fr', 'es', 'it', 'pt', 'nl', 'da', 'no', 'fi', 'tr', 'pl', 'ru'] // Auto-translate to all supported languages
+      title: newBadge.textEn,
+      subtitle: '',
+      backgroundColor: newBadge.backgroundColor,
+      textColor: newBadge.textColor,
+      priority: newBadge.priority,
+      isActive: true
     };
 
     createBadgeMutation.mutate(badgeData);
@@ -3334,9 +3337,18 @@ function AnnouncementBadgeManagementTab() {
       return;
     }
 
+    const updateData = {
+      title: editingBadge.textEn,
+      subtitle: editingBadge.subtitle || '',
+      backgroundColor: editingBadge.backgroundColor,
+      textColor: editingBadge.textColor,
+      priority: editingBadge.priority,
+      isActive: editingBadge.isEnabled !== undefined ? editingBadge.isEnabled : true
+    };
+
     updateBadgeMutation.mutate({
       id: editingBadge.id,
-      data: editingBadge
+      data: updateData
     });
   };
 
@@ -3442,18 +3454,22 @@ function AnnouncementBadgeManagementTab() {
                     <div className="flex items-center gap-4">
                       <div 
                         className={`admin-badge ${badge.backgroundColor === 'gradient-primary' ? 'admin-badge-gradient-primary' : 'admin-badge-primary'}`}
+                        style={{
+                          backgroundColor: badge.backgroundColor,
+                          color: badge.textColor
+                        }}
                       >
-                        {badge.textEn}
+                        {badge.title || badge.textEn}
                       </div>
                       <div className="text-sm text-slate-500">
-                        Priority: {badge.priority} | {badge.isEnabled ? 'Enabled' : 'Disabled'}
+                        Priority: {badge.priority} | {badge.isActive ? 'Active' : 'Inactive'}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleTranslateBadge(badge.id, badge.textEn)}
+                        onClick={() => handleTranslateBadge(badge.id, badge.title || badge.textEn)}
                         disabled={updateBadgeMutation.isPending}
                       >
                         Translate
@@ -3461,7 +3477,11 @@ function AnnouncementBadgeManagementTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setEditingBadge(badge)}
+                        onClick={() => setEditingBadge({
+                          ...badge,
+                          textEn: badge.title || badge.textEn,
+                          isEnabled: badge.isActive
+                        })}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
