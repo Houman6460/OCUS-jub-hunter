@@ -43,13 +43,27 @@ export function CountdownBanner() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Fetch active countdown banner
-  const { data: banner, isLoading } = useQuery<CountdownBannerData>({
+  const { data: banner, isLoading, error } = useQuery<CountdownBannerData>({
     queryKey: ['/api/countdown-banner/active'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/countdown-banner/active');
-      return await response.json();
+      const data = await response.json();
+      console.log('CountdownBanner API Response:', data);
+      console.log('Response status:', response.status);
+      return data;
     },
     refetchInterval: 60000, // Refresh every minute
+  });
+
+  // Debug logging
+  console.log('CountdownBanner Debug:', {
+    isLoading,
+    error,
+    banner,
+    bannerEnabled: banner?.isEnabled,
+    timeExpired: timeRemaining.isExpired,
+    isDismissed,
+    isVisible
   });
 
   // Calculate time remaining
