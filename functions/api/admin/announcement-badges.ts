@@ -88,6 +88,81 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     
     console.log('Created badge object:', JSON.stringify(newBadge, null, 2));
     
+    // Auto-translate if requested
+    if (requestData.autoTranslate !== false && newBadge.title) {
+      try {
+        // Get OpenAI API key
+        let openaiApiKey = context.env.OPENAI_API_KEY;
+        if (!openaiApiKey) {
+          const apiKeySetting = await settingsStorage.getSetting('openai_api_key');
+          openaiApiKey = apiKeySetting;
+        }
+
+        if (openaiApiKey) {
+          const supportedLanguages = ['de', 'fr', 'es', 'it', 'pt', 'nl', 'da', 'no', 'fi', 'tr', 'pl', 'ru'];
+          
+          // Call translation service
+          const translationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openaiApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: "gpt-4o",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are a professional translator specializing in marketing content. Provide accurate, culturally appropriate translations that maintain the marketing impact of the original text."
+                },
+                {
+                  role: "user", 
+                  content: `Translate the following announcement badge text into multiple languages.
+
+Original text (English): "${newBadge.title}"
+Context: Announcement badge for a Chrome extension product website
+Target languages: ${supportedLanguages.map(code => `${code}: ${({'de': 'German', 'fr': 'French', 'es': 'Spanish', 'it': 'Italian', 'pt': 'Portuguese', 'nl': 'Dutch', 'da': 'Danish', 'no': 'Norwegian', 'fi': 'Finnish', 'tr': 'Turkish', 'pl': 'Polish', 'ru': 'Russian'})[code]}`).join(', ')}
+Tone: Marketing/promotional tone
+
+Requirements:
+- Maintain the marketing/promotional tone
+- Keep the same emotional impact as the original
+- Adapt cultural nuances appropriately for each target market
+- Keep translations concise and impactful for badge display
+- Ensure translations sound natural to native speakers
+
+Respond with a JSON object where keys are language codes (${supportedLanguages.join(', ')}) and values are the translated text.
+
+Example format:
+{
+  "de": "German translation here",
+  "fr": "French translation here"
+}`
+                }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.3,
+              max_tokens: 1000
+            })
+          });
+
+          if (translationResponse.ok) {
+            const data = await translationResponse.json();
+            const translationText = data.choices[0]?.message?.content;
+            
+            if (translationText) {
+              const translations = JSON.parse(translationText);
+              // Store translations in the badge object
+              (newBadge as any).textTranslations = translations;
+              console.log('Auto-translated badge to languages:', Object.keys(translations));
+            }
+          }
+        }
+      } catch (translationError) {
+        console.warn('Auto-translation failed, continuing without translations:', translationError);
+      }
+    }
+    
     // Get existing badges
     const existingBadgesData = await settingsStorage.getSetting('announcement_badges');
     const existingBadges = existingBadgesData ? JSON.parse(existingBadgesData) : [];

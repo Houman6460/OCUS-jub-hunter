@@ -74,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       id: activeBadge.id,
       isEnabled: activeBadge.isActive,
       textEn: activeBadge.title,
-      textTranslations: {}, // TODO: Add translation support
+      textTranslations: (activeBadge as any).textTranslations || {},
       backgroundColor: activeBadge.backgroundColor,
       textColor: activeBadge.textColor,
       priority: activeBadge.priority,
