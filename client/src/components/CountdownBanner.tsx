@@ -53,7 +53,7 @@ export function CountdownBanner() {
     targetPrice: "250",
     originalPrice: "500",
     endDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-    backgroundColor: "gradient-urgent",
+    backgroundColor: "gradient-primary",
     textColor: "white",
     priority: 1,
   };
@@ -194,7 +194,7 @@ export function CountdownBanner() {
   const subtitle = getLocalizedText(displayBanner.subtitleEn, displayBanner.subtitleTranslations);
 
   const backgroundClass = displayBanner.backgroundColor === 'gradient-primary' 
-    ? 'bg-gradient-to-r from-primary to-accent'
+    ? 'bg-gradient-to-r from-primary via-blue-600 to-accent'
     : displayBanner.backgroundColor === 'gradient-urgent'
     ? 'bg-gradient-to-r from-red-600 to-red-500'
     : displayBanner.backgroundColor === 'gradient-success'
