@@ -2951,9 +2951,16 @@ function CountdownBannerManagementTab() {
     }
     
     const bannerData = {
-      ...newBanner,
-      isEnabled: true,
-      targetLanguages: ['de', 'fr', 'es', 'it', 'pt', 'nl', 'da', 'no', 'fi', 'tr', 'pl', 'ru'] // Auto-translate to all supported languages
+      title: newBanner.titleEn,
+      subtitle: newBanner.subtitleEn,
+      targetPrice: parseFloat(newBanner.targetPrice),
+      originalPrice: parseFloat(newBanner.originalPrice),
+      endDate: newBanner.endDateTime,
+      backgroundColor: newBanner.backgroundColor,
+      textColor: newBanner.textColor,
+      priority: newBanner.priority,
+      isActive: true,
+      autoTranslate: true
     };
     
     createBannerMutation.mutate(bannerData);
