@@ -258,14 +258,16 @@ export function CountdownBanner() {
                   <span className="text-sm font-bold">{formatPrice(displayBanner.targetPrice)}</span>
                 </div>
                 
-                <Link href="/checkout">
-                  <Button 
-                    size="sm"
-                    className="bg-white text-slate-900 hover:bg-white/90 font-semibold px-4 py-1 text-sm whitespace-nowrap rounded-full h-8"
-                  >
-                    Get Now!
-                  </Button>
-                </Link>
+                <Button 
+                  size="sm"
+                  className="bg-white text-slate-900 hover:bg-white/90 font-semibold px-4 py-1 text-sm whitespace-nowrap rounded-full h-8"
+                  onClick={() => {
+                    const pricingSection = document.getElementById('pricing');
+                    pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Get Now!
+                </Button>
 
                 {/* Compact Dismiss Button */}
                 <Button
@@ -328,14 +330,16 @@ export function CountdownBanner() {
 
               {/* Right Side - CTA and Close */}
               <div className="flex items-center gap-2">
-                <Link href="/checkout">
-                  <Button 
-                    size="sm" 
-                    className="bg-white text-slate-900 hover:bg-white/90 font-semibold px-6 shadow-lg transform hover:scale-105 transition-all duration-200"
-                  >
-                    Get Now!
-                  </Button>
-                </Link>
+                <Button 
+                  size="sm" 
+                  className="bg-white text-slate-900 hover:bg-white/90 font-semibold px-6 shadow-lg transform hover:scale-105 transition-all duration-200"
+                  onClick={() => {
+                    const pricingSection = document.getElementById('pricing');
+                    pricingSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Get Now!
+                </Button>
 
                 {/* Dismiss Button */}
                 <Button
