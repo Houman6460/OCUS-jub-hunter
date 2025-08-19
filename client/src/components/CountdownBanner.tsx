@@ -42,6 +42,22 @@ export function CountdownBanner() {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // TEMPORARY: Test banner to debug display issues
+  const testBanner = {
+    id: 999,
+    isEnabled: true,
+    titleEn: "🔥 Test Banner - Limited Time Offer! 🔥",
+    subtitleEn: "Get 50% off now - This is a test banner",
+    titleTranslations: {},
+    subtitleTranslations: {},
+    targetPrice: "250",
+    originalPrice: "500",
+    endDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+    backgroundColor: "gradient-urgent",
+    textColor: "white",
+    priority: 1,
+  };
+
   // Fetch active countdown banner
   const { data: banner, isLoading, error } = useQuery<CountdownBannerData>({
     queryKey: ['/api/countdown-banner/active'],
@@ -50,17 +66,30 @@ export function CountdownBanner() {
       const data = await response.json();
       console.log('CountdownBanner API Response:', data);
       console.log('Response status:', response.status);
+      
+      // If no active banner found, return null to prevent rendering
+      if (response.status === 404 || data.message) {
+        console.log('No active banner found');
+        return null;
+      }
+      
       return data;
     },
     refetchInterval: 60000, // Refresh every minute
+    retry: false, // Don't retry on 404
   });
+
+  // Use test banner temporarily to debug display
+  const displayBanner = banner || testBanner;
 
   // Debug logging
   console.log('CountdownBanner Debug:', {
     isLoading,
     error,
     banner,
-    bannerEnabled: banner?.isEnabled,
+    testBanner,
+    displayBanner,
+    bannerEnabled: displayBanner?.isEnabled,
     timeExpired: timeRemaining.isExpired,
     isDismissed,
     isVisible
@@ -68,10 +97,10 @@ export function CountdownBanner() {
 
   // Calculate time remaining
   useEffect(() => {
-    if (!banner?.endDateTime) return;
+    if (!displayBanner?.endDateTime) return;
 
     const calculateTimeRemaining = () => {
-      const endTime = new Date(banner.endDateTime).getTime();
+      const endTime = new Date(displayBanner.endDateTime).getTime();
       const now = new Date().getTime();
       const difference = endTime - now;
 
@@ -104,12 +133,12 @@ export function CountdownBanner() {
     const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [banner?.endDateTime]);
+  }, [displayBanner?.endDateTime]);
 
   // Add CSS custom property for banner height when banner is active
   useEffect(() => {
     const bannerHeight = isScrolled ? '56px' : '116px'; // Smaller height when scrolled
-    if (banner && banner.isEnabled && !timeRemaining.isExpired && !isDismissed && isVisible) {
+    if (displayBanner && displayBanner.isEnabled && !timeRemaining.isExpired && !isDismissed && isVisible) {
       document.documentElement.style.setProperty('--banner-height', bannerHeight);
       document.body.classList.add('banner-active');
     } else {
@@ -121,7 +150,7 @@ export function CountdownBanner() {
       document.documentElement.style.setProperty('--banner-height', '0px');
       document.body.classList.remove('banner-active');
     };
-  }, [banner, timeRemaining.isExpired, isDismissed, isVisible, isScrolled]);
+  }, [displayBanner, timeRemaining.isExpired, isDismissed, isVisible, isScrolled]);
 
   // Handle scroll detection for compact banner
   useEffect(() => {
@@ -152,8 +181,8 @@ export function CountdownBanner() {
   // Don't show banner if loading, disabled, expired, or dismissed
   if (
     isLoading || 
-    !banner || 
-    !banner.isEnabled || 
+    !displayBanner || 
+    !displayBanner.isEnabled || 
     timeRemaining.isExpired || 
     isDismissed ||
     !isVisible
@@ -161,18 +190,18 @@ export function CountdownBanner() {
     return null;
   }
 
-  const title = getLocalizedText(banner.titleEn, banner.titleTranslations);
-  const subtitle = getLocalizedText(banner.subtitleEn, banner.subtitleTranslations);
+  const title = getLocalizedText(displayBanner.titleEn, displayBanner.titleTranslations);
+  const subtitle = getLocalizedText(displayBanner.subtitleEn, displayBanner.subtitleTranslations);
 
-  const backgroundClass = banner.backgroundColor === 'gradient-primary' 
+  const backgroundClass = displayBanner.backgroundColor === 'gradient-primary' 
     ? 'bg-gradient-to-r from-primary to-accent'
-    : banner.backgroundColor === 'gradient-urgent'
+    : displayBanner.backgroundColor === 'gradient-urgent'
     ? 'bg-gradient-to-r from-red-600 to-red-500'
-    : banner.backgroundColor === 'gradient-success'
+    : displayBanner.backgroundColor === 'gradient-success'
     ? 'bg-gradient-to-r from-green-600 to-green-500'
     : 'bg-gradient-to-r from-slate-800 to-slate-700';
 
-  const textColorClass = banner.textColor === 'white' ? 'text-white' : 'text-slate-900';
+  const textColorClass = displayBanner.textColor === 'white' ? 'text-white' : 'text-slate-900';
 
   return (
     <div 
@@ -221,12 +250,12 @@ export function CountdownBanner() {
               {/* Right Side - Price and CTA */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  {banner.originalPrice && (
+                  {displayBanner.originalPrice && (
                     <span className="text-xs opacity-60 line-through">
-                      {formatPrice(banner.originalPrice)}
+                      {formatPrice(displayBanner.originalPrice)}
                     </span>
                   )}
-                  <span className="text-sm font-bold">{formatPrice(banner.targetPrice)}</span>
+                  <span className="text-sm font-bold">{formatPrice(displayBanner.targetPrice)}</span>
                 </div>
                 
                 <Link href="/checkout">
@@ -286,13 +315,13 @@ export function CountdownBanner() {
 
                 {/* Price Display */}
                 <div className="text-center">
-                  {banner.originalPrice && (
+                  {displayBanner.originalPrice && (
                     <div className="text-xs opacity-75 line-through">
-                      {formatPrice(banner.originalPrice)}
+                      {formatPrice(displayBanner.originalPrice)}
                     </div>
                   )}
                   <div className="text-lg font-bold">
-                    {formatPrice(banner.targetPrice)}
+                    {formatPrice(displayBanner.targetPrice)}
                   </div>
                 </div>
               </div>
