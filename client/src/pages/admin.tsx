@@ -2968,7 +2968,21 @@ function CountdownBannerManagementTab() {
 
   const handleUpdateBanner = () => {
     if (!editingBanner) return;
-    updateBannerMutation.mutate({ id: editingBanner.id, data: editingBanner });
+    
+    // Transform the data to match backend expectations
+    const bannerData = {
+      title: editingBanner.titleEn,
+      subtitle: editingBanner.subtitleEn,
+      targetPrice: parseFloat(editingBanner.targetPrice),
+      originalPrice: editingBanner.originalPrice ? parseFloat(editingBanner.originalPrice) : null,
+      endDate: editingBanner.endDateTime,
+      backgroundColor: editingBanner.backgroundColor,
+      textColor: editingBanner.textColor,
+      priority: editingBanner.priority,
+      isActive: editingBanner.isEnabled // Map isEnabled to isActive
+    };
+    
+    updateBannerMutation.mutate({ id: editingBanner.id, data: bannerData });
   };
 
   return (
@@ -3115,8 +3129,8 @@ function CountdownBannerManagementTab() {
                         <span className="text-slate-500">
                           Ends: {new Date(banner.endDateTime).toLocaleString()}
                         </span>
-                        <Badge variant={banner.isEnabled ? "default" : "secondary"}>
-                          {banner.isEnabled ? "Active" : "Disabled"}
+                        <Badge variant={banner.isActive ? "default" : "secondary"}>
+                          {banner.isActive ? "Active" : "Disabled"}
                         </Badge>
                       </div>
                     </div>
@@ -3124,7 +3138,13 @@ function CountdownBannerManagementTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setEditingBanner(banner)}
+                        onClick={() => setEditingBanner({
+                          ...banner,
+                          titleEn: banner.title,
+                          subtitleEn: banner.subtitle,
+                          endDateTime: banner.endDate,
+                          isEnabled: banner.isActive
+                        })}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
