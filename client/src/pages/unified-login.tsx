@@ -25,6 +25,10 @@ export default function UnifiedLogin() {
   const [adminPassword, setAdminPassword] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPassword, setCustomerPassword] = useState("");
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [showCustomerPassword, setShowCustomerPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("user");
   const [showRegistration, setShowRegistration] = useState(false);
@@ -289,16 +293,24 @@ export default function UnifiedLogin() {
                     <div className="mt-2 relative">
                       <Input
                         id="customer-password"
-                        type="password"
+                        type={showCustomerPassword ? "text" : "password"}
                         value={customerPassword}
                         onChange={(e) => setCustomerPassword(e.target.value)}
                         placeholder="••••••••••"
                         className="py-3 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <Eye className="h-5 w-5 text-gray-400" />
-                      </div>
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3"
+                        onClick={() => setShowCustomerPassword(!showCustomerPassword)}
+                      >
+                        {showCustomerPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -438,13 +450,24 @@ export default function UnifiedLogin() {
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="admin-password"
-                        type="password"
+                        type={showAdminPassword ? "text" : "password"}
                         value={adminPassword}
                         onChange={(e) => setAdminPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 pr-10"
                         required
                       />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        onClick={() => setShowAdminPassword(!showAdminPassword)}
+                      >
+                        {showAdminPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -510,16 +533,24 @@ export default function UnifiedLogin() {
                   <div className="mt-2 relative">
                     <Input
                       id="reg-password"
-                      type="password"
+                      type={showRegPassword ? "text" : "password"}
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       placeholder="••••••••••"
                       className="py-3 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3"
+                      onClick={() => setShowRegPassword(!showRegPassword)}
+                    >
+                      {showRegPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -528,16 +559,24 @@ export default function UnifiedLogin() {
                   <div className="mt-2 relative">
                     <Input
                       id="reg-confirm-password"
-                      type="password"
+                      type={showRegConfirmPassword ? "text" : "password"}
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
                       placeholder="••••••••••"
                       className="py-3 px-4 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    </div>
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3"
+                      onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                    >
+                      {showRegConfirmPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
                   </div>
                 </div>
 

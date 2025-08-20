@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { UserCog, Users, Shield, Info } from "lucide-react";
+import { UserCog, Users, Shield, Info, Eye, EyeOff } from "lucide-react";
 
 // Simple inline SVG target icon to show next to the header title
 function TargetIcon({ className = "w-6 h-6" }: { className?: string }) {
@@ -37,6 +37,8 @@ export default function Login() {
   const [adminPassword, setAdminPassword] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPassword, setCustomerPassword] = useState("");
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [showCustomerPassword, setShowCustomerPassword] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<"admin" | "customer" | null>(null);
   const { toast } = useToast();
@@ -226,14 +228,28 @@ export default function Login() {
                 
                 <div>
                   <Label htmlFor="customer-password">Password</Label>
-                  <Input
-                    id="customer-password"
-                    type="password"
-                    value={customerPassword}
-                    onChange={(e) => setCustomerPassword(e.target.value)}
-                    required
-                    placeholder="Enter password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="customer-password"
+                      type={showCustomerPassword ? "text" : "password"}
+                      value={customerPassword}
+                      onChange={(e) => setCustomerPassword(e.target.value)}
+                      required
+                      placeholder="Enter password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowCustomerPassword(!showCustomerPassword)}
+                    >
+                      {showCustomerPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 
                 <Button 
@@ -279,14 +295,28 @@ export default function Login() {
                 
                 <div>
                   <Label htmlFor="admin-password">Password</Label>
-                  <Input
-                    id="admin-password"
-                    type="password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    required
-                    placeholder="Enter password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="admin-password"
+                      type={showAdminPassword ? "text" : "password"}
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      required
+                      placeholder="Enter password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    >
+                      {showAdminPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 
                 <Button 
