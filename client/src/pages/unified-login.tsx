@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Users, Shield, Chrome, Github, Facebook, Mail, Lock, User, EyeOff, Eye } from "lucide-react";
+import { Users, Shield, Chrome, Github, Facebook, Lock, User, EyeOff, Eye } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -41,7 +41,7 @@ export default function UnifiedLogin() {
   
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
 
   // Store tab preference
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function UnifiedLogin() {
       }
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({ title: "Success", description: "Admin login successful" });
       localStorage.setItem('admin_authenticated', 'true');
       localStorage.setItem('admin_user', JSON.stringify({ username: adminUsername, role: 'admin' }));
@@ -196,7 +196,7 @@ export default function UnifiedLogin() {
       }
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({ title: "Success", description: "Registration successful! Please login with your credentials." });
       setShowRegistration(false);
       // Clear registration form
