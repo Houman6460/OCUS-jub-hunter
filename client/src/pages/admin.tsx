@@ -565,11 +565,14 @@ function TicketManagementTab() {
                 
                 <div className="flex gap-2">
                   <div className="flex-1">
+                    <Label htmlFor="admin-response-textarea" className="sr-only">Admin Response</Label>
                     <Textarea
+                      id="admin-response-textarea"
                       placeholder="Type your response..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       className="min-h-[80px]"
+                      title="Type your response to this ticket"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -3481,10 +3484,8 @@ function AnnouncementBadgeManagementTab() {
                     <div className="flex items-center gap-4">
                       <div 
                         className={`admin-badge ${badge.backgroundColor === 'gradient-primary' ? 'admin-badge-gradient-primary' : 'admin-badge-primary'}`}
-                        style={{
-                          backgroundColor: badge.backgroundColor,
-                          color: badge.textColor
-                        }}
+                        data-bg-color={badge.backgroundColor}
+                        data-text-color={badge.textColor}
                       >
                         {badge.title || badge.textEn}
                       </div>
