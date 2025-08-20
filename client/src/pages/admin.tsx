@@ -2328,7 +2328,7 @@ export default function Admin() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to upload file: " + error.message,
+        description: "Failed to upload file: " + (error instanceof Error ? error.message : String(error)),
         variant: "destructive",
       });
     },
