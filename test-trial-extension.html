@@ -68,8 +68,25 @@
         }
         
         .download-btn:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
             transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .version-text {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .download-header {
+            margin-top: 0;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.9;
         }
         
         .test-grid {
@@ -168,17 +185,17 @@
 <body>
     <div class="container">
         <h1>🆓 OCUS Trial Extension Test Suite</h1>
-        <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+        <p class="version-text">
             <strong>Version 2.1.8-STABLE-TRIAL</strong> - Complete Testing Environment
         </p>
         
         <div class="download-section">
-            <h2 style="margin-top: 0;">Download Trial Extension</h2>
+            <h2 class="download-header">Download Trial Extension</h2>
             <p>Test the trial version with 3-mission limit and server-side tracking</p>
             <a href="https://jobhunter.one/api/download-extension/trial" class="download-btn">
                 📥 Download Trial Version
             </a>
-            <p style="margin-top: 15px; font-size: 14px; opacity: 0.9;">
+            <p class="file-info">
                 File: ocus-job-hunter-trial-v2.1.8-STABLE-FIXED.zip
             </p>
         </div>
