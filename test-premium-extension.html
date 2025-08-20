@@ -17,6 +17,7 @@
         
         .container {
             background: rgba(255, 255, 255, 0.15);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 30px;
@@ -180,8 +181,65 @@
         .crown {
             font-size: 48px;
             text-align: center;
-            margin: 20px 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+        
+        .version-text {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .download-header {
+            margin-top: 0;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .trial-box {
+            background: rgba(156, 39, 176, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .trial-title {
+            color: #9C27B0;
+            margin-top: 0;
+        }
+        
+        .premium-box {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .premium-title {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        
+        .success-box {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .success-title {
+            color: #4CAF50;
+            margin-top: 0;
         }
     </style>
 </head>
@@ -189,17 +247,17 @@
     <div class="container">
         <div class="crown">👑</div>
         <h1>OCUS Premium Extension Test Suite</h1>
-        <p style="text-align: center; font-size: 18px; margin-bottom: 30px;">
+        <p class="version-text">
             <strong>Version 2.1.8-STABLE-PREMIUM</strong> - Unlimited Access Testing
         </p>
         
         <div class="download-section">
-            <h2 style="margin-top: 0;">Download Premium Extension</h2>
+            <h2 class="download-header">Download Premium Extension</h2>
             <p>Test the premium version with unlimited mission acceptance</p>
             <a href="https://jobhunter.one/api/download-extension/premium" class="download-btn">
                 👑 Download Premium Version
             </a>
-            <p style="margin-top: 15px; font-size: 14px; opacity: 0.9;">
+            <p class="file-info">
                 File: ocus-job-hunter-premium-v2.1.8-STABLE-FIXED.zip
             </p>
         </div>
@@ -285,10 +343,10 @@
         
         <div class="section">
             <h2>🔄 Premium vs Trial Comparison</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                <div style="background: rgba(156, 39, 176, 0.2); padding: 20px; border-radius: 10px;">
-                    <h3 style="color: #9C27B0; margin-top: 0;">🆓 Trial Version</h3>
-                    <ul style="list-style: none; padding: 0;">
+            <div class="comparison-grid">
+                <div class="trial-box">
+                    <h3 class="trial-title">🆓 Trial Version</h3>
+                    <ul class="feature-list">
                         <li>❌ 3 mission limit</li>
                         <li>❌ Server-side tracking</li>
                         <li>❌ Cross-browser restrictions</li>
@@ -296,9 +354,9 @@
                         <li>❌ Trial branding</li>
                     </ul>
                 </div>
-                <div style="background: rgba(255, 215, 0, 0.2); padding: 20px; border-radius: 10px;">
-                    <h3 style="color: #FFD700; margin-top: 0;">👑 Premium Version</h3>
-                    <ul style="list-style: none; padding: 0;">
+                <div class="premium-box">
+                    <h3 class="premium-title">👑 Premium Version</h3>
+                    <ul class="feature-list">
                         <li>✅ Unlimited missions</li>
                         <li>✅ No usage tracking</li>
                         <li>✅ Full freedom</li>
@@ -342,8 +400,8 @@ premium_usage_data = {
         
         <div class="section">
             <h2>🎯 Success Criteria</h2>
-            <div style="background: rgba(76, 175, 80, 0.2); padding: 20px; border-radius: 10px; margin-top: 20px;">
-                <h3 style="color: #4CAF50; margin-top: 0;">✅ Premium Extension Working If:</h3>
+            <div class="success-box">
+                <h3 class="success-title">✅ Premium Extension Working If:</h3>
                 <ol>
                     <li>Can accept unlimited missions without restrictions</li>
                     <li>Displays premium branding throughout</li>
