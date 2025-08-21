@@ -56,9 +56,11 @@ export default function Login() {
       return data;
     },
     staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache
+    gcTime: 0, // Don't cache (updated from cacheTime)
     refetchOnMount: true,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    retry: 3,
+    retryDelay: 1000
   });
 
   // Debug auth settings with more detail
@@ -69,6 +71,19 @@ export default function Login() {
   console.log('🔥 Facebook Enabled Check:', authSettings?.facebookEnabled);
   console.log('🔥 GitHub Enabled Check:', authSettings?.githubEnabled);
   console.log('🔥 Should Show Social Section:', (authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled));
+  
+  // Additional debugging
+  console.log('🔥 AuthSettings type:', typeof authSettings);
+  console.log('🔥 AuthSettings keys:', authSettings ? Object.keys(authSettings) : 'undefined');
+  console.log('🔥 Boolean conversion test:', {
+    google: Boolean(authSettings?.googleEnabled),
+    facebook: Boolean(authSettings?.facebookEnabled),
+    github: Boolean(authSettings?.githubEnabled)
+  });
+  
+  // Force show social login for debugging (temporary)
+  const shouldShowSocial = !authSettingsLoading && (authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled);
+  console.log('🔥 Final shouldShowSocial:', shouldShowSocial);
 
   // Check if already authenticated
   useState(() => {
@@ -313,7 +328,7 @@ export default function Login() {
                 </Button>
                 
                 {/* CONDITIONAL SOCIAL LOGIN - CONTROLLED BY ADMIN DASHBOARD */}
-                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
+                {shouldShowSocial && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
@@ -434,7 +449,7 @@ export default function Login() {
                 </Button>
                 
                 {/* Social Login Section for Admin */}
-                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
+                {shouldShowSocial && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
