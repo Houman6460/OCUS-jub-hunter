@@ -62,6 +62,36 @@ CREATE TABLE IF NOT EXISTS products (
 INSERT OR IGNORE INTO products (id, name, price, beforePrice) 
 VALUES (1, 'OCUS Job Hunter Extension', 250.00, NULL);
 
+-- Auth Settings Table
+CREATE TABLE IF NOT EXISTS auth_settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  google_enabled BOOLEAN DEFAULT 0,
+  google_client_id TEXT,
+  google_client_secret TEXT,
+  facebook_enabled BOOLEAN DEFAULT 0,
+  facebook_app_id TEXT,
+  facebook_app_secret TEXT,
+  github_enabled BOOLEAN DEFAULT 0,
+  github_client_id TEXT,
+  github_client_secret TEXT,
+  recaptcha_enabled BOOLEAN DEFAULT 0,
+  recaptcha_site_key TEXT,
+  recaptcha_secret_key TEXT,
+  recaptcha_mode TEXT DEFAULT 'v2',
+  recaptcha_customer_enabled BOOLEAN DEFAULT 0,
+  recaptcha_admin_enabled BOOLEAN DEFAULT 0,
+  jwt_secret TEXT DEFAULT 'demo-jwt-secret',
+  session_timeout INTEGER DEFAULT 3600,
+  stripe_enabled BOOLEAN DEFAULT 0,
+  stripe_public_key TEXT,
+  stripe_secret_key TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Insert default auth settings if not exists
+INSERT OR IGNORE INTO auth_settings (id) VALUES (1);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_tickets_customer_email ON tickets(customer_email);
 CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
