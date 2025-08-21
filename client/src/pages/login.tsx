@@ -46,9 +46,6 @@ export default function Login() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
-  // DEBUG: Add visible debug element to confirm React rendering
-  console.log("🚀 LOGIN PAGE RENDERING - SOCIAL BUTTONS SHOULD BE VISIBLE");
-
   // Fetch auth settings to show/hide social login buttons
   const { data: authSettings, isLoading: authSettingsLoading, error: authSettingsError } = useQuery({
     queryKey: ['auth-settings'],
@@ -188,28 +185,6 @@ export default function Login() {
     window.location.href = `/api/auth/${provider}`;
   };
 
-  // Social login button component
-  const SocialLoginButton = ({ provider, enabled, icon, label }: {
-    provider: 'google' | 'facebook' | 'github';
-    enabled: boolean | undefined;
-    icon: React.ReactNode;
-    label: string;
-  }) => {
-    if (enabled === false) return null;
-    
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => handleSocialLogin(provider)}
-      >
-        {icon}
-        {label}
-      </Button>
-    );
-  };
-
   // If already authenticated, show logout option
   if (isAuthenticated) {
     return (
@@ -263,11 +238,6 @@ export default function Login() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* DEBUG: Highly visible debug element */}
-          <div className="bg-red-500 text-white p-2 text-center font-bold mb-4 rounded">
-            🚀 REACT RENDERING CONFIRMED - SOCIAL BUTTONS BELOW
-          </div>
-          
           <Tabs defaultValue="customer" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="customer" className="flex items-center gap-2">

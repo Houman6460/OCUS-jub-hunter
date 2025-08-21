@@ -323,8 +323,7 @@ export default function UnifiedLogin() {
                   </Button>
 
                   {/* Social Login Options */}
-                  {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
-                    <>
+                  <div className="space-y-6">
                       <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                           <div className="w-full border-t border-gray-300" />
@@ -335,7 +334,6 @@ export default function UnifiedLogin() {
                       </div>
 
                       <div className="space-y-3">
-                        {authSettings?.googleEnabled && (
                           <Button
                             type="button"
                             variant="outline"
@@ -347,9 +345,7 @@ export default function UnifiedLogin() {
                             </div>
                             {t.login_with_google}
                           </Button>
-                        )}
                         
-                        {authSettings?.facebookEnabled && (
                           <Button
                             type="button"
                             variant="outline"
@@ -361,9 +357,7 @@ export default function UnifiedLogin() {
                             </div>
                             {t.login_with_facebook}
                           </Button>
-                        )}
                         
-                        {authSettings?.githubEnabled && (
                           <Button
                             type="button"
                             variant="outline"
@@ -375,10 +369,8 @@ export default function UnifiedLogin() {
                             </div>
                             {t.login_with_github}
                           </Button>
-                        )}
                       </div>
-                    </>
-                  )}
+                  </div>
 
                   {/* Remember Me */}
                   <div className="flex items-center">
@@ -606,8 +598,7 @@ export default function UnifiedLogin() {
                 </Button>
 
                 {/* Social Registration Options */}
-                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
-                  <>
+                <div className="space-y-6">
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-300" />
@@ -618,7 +609,6 @@ export default function UnifiedLogin() {
                     </div>
 
                     <div className="space-y-3">
-                      {authSettings?.googleEnabled && (
                         <Button
                           type="button"
                           variant="outline"
@@ -630,9 +620,7 @@ export default function UnifiedLogin() {
                           </div>
                           {t.login_with_google}
                         </Button>
-                      )}
                       
-                      {authSettings?.facebookEnabled && (
                         <Button
                           type="button"
                           variant="outline"
@@ -644,9 +632,7 @@ export default function UnifiedLogin() {
                           </div>
                           {t.login_with_facebook}
                         </Button>
-                      )}
                       
-                      {authSettings?.githubEnabled && (
                         <Button
                           type="button"
                           variant="outline"
@@ -658,10 +644,8 @@ export default function UnifiedLogin() {
                           </div>
                           {t.login_with_github}
                         </Button>
-                      )}
                     </div>
-                  </>
-                )}
+                </div>
 
                 {/* Demo Credentials Info */}
                 {process.env.NODE_ENV === 'development' && (
