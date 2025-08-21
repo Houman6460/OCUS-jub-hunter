@@ -1,5 +1,19 @@
+import type { D1Database } from '@cloudflare/workers-types';
+
+export interface User {
+  id: number;
+  email: string;
+  password?: string; // Optional for social logins
+  name: string;
+  role: 'customer' | 'admin';
+  provider?: 'google' | 'facebook' | 'github';
+  provider_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export class UserStorage {
-  constructor(private db: any) {}
+  constructor(private db: D1Database) {}
 
   async initializeUsers(): Promise<void> {
     try {
@@ -7,61 +21,65 @@ export class UserStorage {
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           email TEXT UNIQUE NOT NULL,
-          password TEXT NOT NULL,
+          password TEXT, -- Nullable for social logins
           name TEXT NOT NULL,
-          role TEXT DEFAULT 'customer',
-          created_at TEXT DEFAULT (datetime('now'))
+          role TEXT DEFAULT 'customer' NOT NULL,
+          provider TEXT,
+          provider_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
         )
       `).run();
     } catch (error) {
       console.error('Failed to initialize users table:', error);
+      throw new Error('Database initialization failed.');
     }
   }
 
-  async createUser(email: string, password: string, name: string): Promise<any> {
+  async createUser(email: string, password: string, name: string): Promise<User> {
+    const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
-        INSERT INTO users (email, password, name, role)
-        VALUES (?, ?, ?, 'customer')
-      `).bind(email, password, name).run();
+        INSERT INTO users (email, password, name, role, created_at, updated_at)
+        VALUES (?, ?, ?, 'customer', ?, ?)
+      `).bind(email, password, name, now, now).run();
 
-      return {
-        id: result.meta.last_row_id,
-        email,
-        name,
-        role: 'customer'
-      };
+      const userId = result.meta.last_row_id;
+      if (!userId) {
+        throw new Error('Failed to get user ID after creation.');
+      }
+
+      const newUser = await this.getUserById(userId);
+      if (!newUser) {
+        throw new Error('Could not retrieve newly created user.');
+      }
+      return newUser;
+
     } catch (error) {
       console.error('Failed to create user:', error);
-      throw error;
+      throw error; // Re-throw to be handled by the caller
     }
   }
 
-  async getUserByEmail(email: string): Promise<any | null> {
+  async getUserByEmail(email: string): Promise<User | null> {
     try {
-      const result = await this.db.prepare(`
-        SELECT id, email, password, name, role, created_at
-        FROM users
-        WHERE email = ?
-      `).bind(email).first();
-
-      return result || null;
+      const user = await this.db.prepare(
+        'SELECT * FROM users WHERE email = ?'
+      ).bind(email).first<User>();
+      return user || null;
     } catch (error) {
       console.error('Failed to get user by email:', error);
       return null;
     }
   }
 
-  async validateUser(email: string, password: string): Promise<any | null> {
+  async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
     try {
       const user = await this.getUserByEmail(email);
+      // Note: This is a simple password check. Use a hashing library like bcrypt in production.
       if (user && user.password === password) {
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        };
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
       }
       return null;
     } catch (error) {
@@ -70,31 +88,12 @@ export class UserStorage {
     }
   }
 
-  async getAllCustomers(): Promise<any[]> {
+  async getUserById(id: number): Promise<User | null> {
     try {
-      const result = await this.db.prepare(`
-        SELECT id, email, name, role, created_at
-        FROM users
-        WHERE role = 'customer'
-        ORDER BY created_at DESC
-      `).all();
-
-      return result.results || [];
-    } catch (error) {
-      console.error('Failed to get all customers:', error);
-      return [];
-    }
-  }
-
-  async getUserById(id: number): Promise<any | null> {
-    try {
-      const result = await this.db.prepare(`
-        SELECT id, email, name, role, created_at
-        FROM users
-        WHERE id = ?
-      `).bind(id).first();
-
-      return result || null;
+      const user = await this.db.prepare(
+        'SELECT * FROM users WHERE id = ?'
+      ).bind(id).first<User>();
+      return user || null;
     } catch (error) {
       console.error('Failed to get user by ID:', error);
       return null;

@@ -1,132 +1,147 @@
-import { PagesFunctionEnv } from '../../lib/context';
+import type { PagesFunction } from '@cloudflare/workers-types';
+import { Env } from '../../lib/context';
 
-export const onRequestGet: PagesFunction<PagesFunctionEnv> = async (context) => {
+// Type definitions for GitHub OAuth flow
+interface GitHubTokenResponse {
+  access_token: string;
+  error?: string;
+  error_description?: string;
+}
+
+interface GitHubUserResponse {
+  id: number;
+  login: string;
+  name: string | null;
+  email: string | null;
+}
+
+interface GitHubEmailResponse {
+    email: string;
+    primary: boolean;
+    verified: boolean;
+    visibility: string | null;
+}
+
+// Type definition for database records
+interface AuthSettings {
+  github_enabled: 0 | 1;
+  github_client_id: string;
+  github_client_secret: string;
+}
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  
+
   try {
-    // Fetch auth settings from database
-    const authQuery = `SELECT * FROM auth_settings WHERE id = 1`;
-    const authSettings = await env.DB.prepare(authQuery).first();
-    
-    if (!authSettings || !authSettings.github_enabled) {
-      return new Response('GitHub login is not enabled', { status: 400 });
+    // 1. Fetch auth settings from the database
+    const authSettings = await env.DB.prepare('SELECT github_enabled, github_client_id, github_client_secret FROM auth_settings WHERE id = 1').first<AuthSettings>();
+
+    if (!authSettings?.github_enabled) {
+      return new Response('GitHub login is not enabled.', { status: 400 });
     }
 
+    if (!authSettings.github_client_id || !authSettings.github_client_secret) {
+      return new Response('GitHub client ID or secret is not configured.', { status: 500 });
+    }
+
+    // 2. If no code is present, redirect to GitHub to authorize
     if (!code) {
-      // Redirect to GitHub OAuth
-      const clientId = authSettings.github_client_id;
-      const redirectUri = `${url.origin}/api/auth/github`;
-      const scope = 'user:email';
-      
-      const githubAuthUrl = `https://github.com/login/oauth/authorize?` +
-        `client_id=${encodeURIComponent(clientId)}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent(scope)}&` +
-        `state=${encodeURIComponent(state || 'default')}`;
-      
-      return Response.redirect(githubAuthUrl, 302);
+      const authUrl = new URL('https://github.com/login/oauth/authorize');
+      authUrl.searchParams.set('client_id', authSettings.github_client_id);
+      authUrl.searchParams.set('redirect_uri', `${url.origin}/api/auth/github`);
+      authUrl.searchParams.set('scope', 'user:email');
+      authUrl.searchParams.set('state', state || crypto.randomUUID());
+      return Response.redirect(authUrl.toString(), 302);
     }
 
-    // Exchange code for access token
+    // 3. Exchange the authorization code for an access token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
+      body: JSON.stringify({
         client_id: authSettings.github_client_id,
         client_secret: authSettings.github_client_secret,
         code: code,
       }),
     });
 
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to exchange code for token');
+    const tokenData = await tokenResponse.json() as GitHubTokenResponse;
+    if (tokenData.error || !tokenData.access_token) {
+      throw new Error(`Failed to get access token: ${tokenData.error_description || 'No token returned'}`);
     }
 
-    const tokenData = await tokenResponse.json();
-    
-    if (tokenData.error) {
-      throw new Error(`GitHub OAuth error: ${tokenData.error_description}`);
-    }
-
-    // Get user info from GitHub
+    // 4. Use the access token to fetch user details from GitHub
     const userResponse = await fetch('https://api.github.com/user', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
-        'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'OCUS-Job-Hunter',
       },
     });
+    const userData = await userResponse.json() as GitHubUserResponse;
 
-    if (!userResponse.ok) {
-      throw new Error('Failed to get user info');
+    // 5. Fetch user's primary email if not included in the main user response
+    let userEmail = userData.email;
+    if (!userEmail) {
+        const emailResponse = await fetch('https://api.github.com/user/emails', {
+            headers: {
+                'Authorization': `Bearer ${tokenData.access_token}`,
+                'User-Agent': 'OCUS-Job-Hunter',
+            },
+        });
+        const emails = await emailResponse.json() as GitHubEmailResponse[];
+        const primaryEmail = emails.find((e: GitHubEmailResponse) => e.primary && e.verified);
+        userEmail = primaryEmail?.email || null;
     }
 
-    const userData = await userResponse.json();
-
-    // Get user email if not public
-    let email = userData.email;
-    if (!email) {
-      const emailResponse = await fetch('https://api.github.com/user/emails', {
-        headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'OCUS-Job-Hunter',
-        },
-      });
-
-      if (emailResponse.ok) {
-        const emails = await emailResponse.json();
-        const primaryEmail = emails.find((e: any) => e.primary);
-        email = primaryEmail ? primaryEmail.email : emails[0]?.email;
-      }
+    if (!userEmail) {
+        return new Response('Could not retrieve a verified primary email from GitHub.', { status: 400 });
     }
 
-    if (!email) {
-      throw new Error('Email not available from GitHub');
-    }
+    // 6. Check if the user exists in the database
+    let user = await env.DB.prepare('SELECT id, name, email FROM users WHERE github_id = ?').bind(userData.id).first<User>();
 
-    // Check if user exists in database
-    const userQuery = `SELECT * FROM users WHERE email = ?`;
-    let user = await env.DB.prepare(userQuery).bind(email).first();
+    // 7. If user does not exist, create a new user record
+    if (!user) {
+        const name = userData.name || userData.login;
+        const now = new Date().toISOString();
+        await env.DB.prepare(
+            'INSERT INTO users (email, name, provider, provider_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(userEmail, name, 'github', userData.id, now, now).run();
+
+        // Retrieve the newly created user
+        user = await env.DB.prepare('SELECT id, name, email FROM users WHERE github_id = ?').bind(userData.id).first<User>();
+    }
 
     if (!user) {
-      // Create new user
-      const insertQuery = `
-        INSERT INTO users (email, name, provider, provider_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `;
-      const now = new Date().toISOString();
-      
-      await env.DB.prepare(insertQuery)
-        .bind(email, userData.name || userData.login, 'github', userData.id.toString(), now, now)
-        .run();
-      
-      // Fetch the newly created user
-      user = await env.DB.prepare(userQuery).bind(email).first();
+        return new Response('Failed to create or find user.', { status: 500 });
     }
 
-    // Generate JWT token (simplified for demo)
-    const token = btoa(JSON.stringify({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      exp: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-    }));
+    // 8. User is now authenticated. Redirect to the dashboard.
+    // (In a real app, you would create a session/JWT here)
+    const redirectUrl = new URL(`${url.origin}/dashboard`);
+    redirectUrl.searchParams.set('status', 'loggedIn');
+    redirectUrl.searchParams.set('userId', user.id.toString());
+    redirectUrl.searchParams.set('name', user.name);
+    redirectUrl.searchParams.set('email', user.email);
 
-    // Redirect to frontend with token
-    const redirectUrl = `${url.origin}/dashboard?token=${token}`;
-    return Response.redirect(redirectUrl, 302);
+    return Response.redirect(redirectUrl.toString(), 302);
 
-  } catch (error: any) {
-    console.error('GitHub OAuth error:', error);
-    const errorUrl = `${url.origin}/login?error=oauth_failed&provider=github`;
-    return Response.redirect(errorUrl, 302);
+  } catch (error) {
+    console.error('GitHub OAuth Error:', error);
+    const errorUrl = new URL(`${url.origin}/login`);
+    errorUrl.searchParams.set('error', 'github_oauth_failed');
+    return Response.redirect(errorUrl.toString(), 302);
   }
 };

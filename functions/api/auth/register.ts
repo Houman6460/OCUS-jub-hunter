@@ -1,75 +1,59 @@
 import { UserStorage } from '../../lib/user-storage';
+import { Env } from '../../lib/context';
+import { Response, type PagesFunction } from '@cloudflare/workers-types';
 
-import { PagesFunctionEnv } from '../../lib/context';
+interface RegisterBody {
+  email?: string;
+  password?: string;
+  name?: string;
+}
 
-export const onRequestPost: PagesFunction<PagesFunctionEnv> = async ({ request, env }) => {
+const jsonResponse = (body: object, status: number): Response => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+  };
+  return new Response(JSON.stringify(body), { status, headers });
+};
+
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
-    const { email, password, name, recaptchaToken } = await request.json();
-    
-    if (email && password && name) {
-      const userStorage = new UserStorage(env.DB);
-      await userStorage.initializeUsers();
-      
-      try {
-        const user = await userStorage.createUser(email, password, name);
-        return new Response(JSON.stringify({
-          success: true,
-          message: 'Registration successful',
-          user
-        }), {
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
-        });
-      } catch (error: any) {
-        if (error.message?.includes('UNIQUE constraint failed')) {
-          return new Response(JSON.stringify({
-            success: false,
-            message: 'Email already exists'
-          }), {
-            status: 400,
-            headers: { 
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*'
-            }
-          });
-        }
-        throw error;
-      }
+    const { email, password, name } = await request.json<RegisterBody>();
+
+    if (!email || !password || !name) {
+      return jsonResponse({ success: false, message: 'Missing required fields.' }, 400);
     }
-    
-    return new Response(JSON.stringify({
-      success: false,
-      message: 'Missing required fields'
-    }), {
-      status: 400,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
-    
+
+    const userStorage = new UserStorage(env.DB);
+    const existingUser = await userStorage.getUserByEmail(email);
+
+    if (existingUser) {
+      return jsonResponse({ success: false, message: 'An account with this email already exists.' }, 409);
+    }
+
+    const newUser = await userStorage.createUser(email, password, name);
+    const { password: _, ...userResponse } = newUser;
+
+    return jsonResponse({ success: true, message: 'Registration successful.', user: userResponse }, 201);
+
   } catch (error) {
-    return new Response(JSON.stringify({
-      success: false,
-      message: 'Registration failed'
-    }), {
-      status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    console.error('Registration Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    
+    if (errorMessage.includes('UNIQUE constraint failed')) {
+      return jsonResponse({ success: false, message: 'An account with this email already exists.' }, 409);
+    }
+
+    return jsonResponse({ success: false, message: 'Registration failed.' }, 500);
   }
 };
 
-export const onRequestOptions = async () => {
+export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
   });
 };
