@@ -1,4 +1,6 @@
-export const onRequestGet = async (context: any) => {
+import { PagesFunctionEnv } from '../../lib/context';
+
+export const onRequestGet: PagesFunction<PagesFunctionEnv> = async (context) => {
   const { request, env } = context;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');

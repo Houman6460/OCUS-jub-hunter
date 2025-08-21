@@ -1,6 +1,8 @@
 import { UserStorage } from '../../lib/user-storage';
 
-export const onRequestPost = async ({ request, env }: any) => {
+import { PagesFunctionEnv } from '../../lib/context';
+
+export const onRequestPost: PagesFunction<PagesFunctionEnv> = async ({ request, env }) => {
   try {
     const { email, password, name, recaptchaToken } = await request.json();
     
