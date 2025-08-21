@@ -47,13 +47,18 @@ export default function Login() {
   const queryClient = useQueryClient();
 
   // Fetch auth settings to show/hide social login buttons
-  const { data: authSettings } = useQuery({
+  const { data: authSettings, isLoading: authSettingsLoading, error: authSettingsError } = useQuery({
     queryKey: ['/api/admin/auth-settings'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/auth-settings');
       return await response.json();
     }
   });
+
+  // Debug auth settings
+  console.log('Auth Settings:', authSettings);
+  console.log('Auth Settings Loading:', authSettingsLoading);
+  console.log('Auth Settings Error:', authSettingsError);
 
   // Check if already authenticated
   useState(() => {
@@ -298,7 +303,7 @@ export default function Login() {
                 </Button>
                 
                 {/* Social Login Section */}
-                {authSettings && (authSettings.googleEnabled || authSettings.facebookEnabled || authSettings.githubEnabled) && (
+                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled || true) && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
@@ -419,7 +424,7 @@ export default function Login() {
                 </Button>
                 
                 {/* Social Login Section for Admin */}
-                {authSettings && (authSettings.googleEnabled || authSettings.facebookEnabled || authSettings.githubEnabled) && (
+                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled || true) && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
