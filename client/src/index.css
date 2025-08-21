@@ -335,6 +335,22 @@ button ::-moz-selection {
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
+  /* Banner animations */
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slideDown {
+    animation: slideDown 0.5s ease-out;
+  }
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
