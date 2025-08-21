@@ -1,6 +1,6 @@
 import { UserStorage } from '../../lib/user-storage';
 import { Env } from '../../lib/context';
-import { Response, type PagesFunction } from '@cloudflare/workers-types';
+import type { PagesFunction } from '@cloudflare/workers-types';
 
 interface RegisterBody {
   email?: string;
@@ -8,7 +8,7 @@ interface RegisterBody {
   name?: string;
 }
 
-const jsonResponse = (body: object, status: number): Response => {
+const jsonResponse = (body: object, status: number) => {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
