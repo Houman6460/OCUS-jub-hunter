@@ -167,8 +167,7 @@ export default function Login() {
     icon: React.ReactNode;
     label: string;
   }) => {
-    // Force show all buttons for now - remove this line once working
-    // if (enabled === false) return null;
+    if (enabled === false) return null;
     
     return (
       <Button
@@ -303,9 +302,8 @@ export default function Login() {
                   {customerLoginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>
                 
-                {/* Social Login Section - FORCED VISIBLE FOR TESTING */}
-                <div className="bg-yellow-100 p-2 text-xs text-center mb-2">Social Login Debug: Always showing buttons</div>
-                {(
+                {/* Social Login Section */}
+                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
@@ -425,9 +423,8 @@ export default function Login() {
                   {adminLoginMutation.isPending ? "Signing in..." : "Admin Sign In"}
                 </Button>
                 
-                {/* Social Login Section for Admin - FORCED VISIBLE FOR TESTING */}
-                <div className="bg-yellow-100 p-2 text-xs text-center mb-2">Admin Social Login Debug: Always showing buttons</div>
-                {(
+                {/* Social Login Section for Admin */}
+                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
