@@ -46,6 +46,22 @@ CREATE TABLE IF NOT EXISTS countdown_banners (
   updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Products Table
+CREATE TABLE IF NOT EXISTS products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL DEFAULT 'OCUS Job Hunter Extension',
+  price REAL NOT NULL,
+  beforePrice REAL,
+  description TEXT,
+  isActive BOOLEAN NOT NULL DEFAULT 1,
+  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+  updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Insert default product if not exists
+INSERT OR IGNORE INTO products (id, name, price, beforePrice) 
+VALUES (1, 'OCUS Job Hunter Extension', 250.00, NULL);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_tickets_customer_email ON tickets(customer_email);
 CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
@@ -54,3 +70,4 @@ CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_id ON ticket_messages(tick
 CREATE INDEX IF NOT EXISTS idx_ticket_messages_created_at ON ticket_messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_countdown_banners_active ON countdown_banners(isActive);
 CREATE INDEX IF NOT EXISTS idx_countdown_banners_priority ON countdown_banners(priority);
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(isActive);
