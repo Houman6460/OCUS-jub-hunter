@@ -323,54 +323,60 @@ export default function UnifiedLogin() {
                   </Button>
 
                   {/* Social Login Options */}
-                  <div className="space-y-6">
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t border-gray-300" />
+                  {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
+                    <div className="space-y-6">
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-300" />
+                          </div>
+                          <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-gray-500">{t.or_login_with}</span>
+                          </div>
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                          <span className="px-2 bg-white text-gray-500">{t.or_login_with}</span>
-                        </div>
-                      </div>
 
-                      <div className="space-y-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
-                            onClick={() => handleSocialLogin('google')}
-                          >
-                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">G</span>
-                            </div>
-                            {t.login_with_google}
-                          </Button>
-                        
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
-                            onClick={() => handleSocialLogin('facebook')}
-                          >
-                            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                              <Facebook className="h-3 w-3 text-white" />
-                            </div>
-                            {t.login_with_facebook}
-                          </Button>
-                        
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
-                            onClick={() => handleSocialLogin('github')}
-                          >
-                            <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
-                              <Github className="h-3 w-3 text-white" />
-                            </div>
-                            {t.login_with_github}
-                          </Button>
-                      </div>
-                  </div>
+                        <div className="space-y-3">
+                          {authSettings.googleEnabled && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
+                              onClick={() => handleSocialLogin('google')}
+                            >
+                              <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs font-bold">G</span>
+                              </div>
+                              {t.login_with_google}
+                            </Button>
+                          )}
+                          {authSettings.facebookEnabled && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
+                              onClick={() => handleSocialLogin('facebook')}
+                            >
+                              <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                                <Facebook className="h-3 w-3 text-white" />
+                              </div>
+                              {t.login_with_facebook}
+                            </Button>
+                          )}
+                          {authSettings.githubEnabled && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
+                              onClick={() => handleSocialLogin('github')}
+                            >
+                              <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
+                                <Github className="h-3 w-3 text-white" />
+                              </div>
+                              {t.login_with_github}
+                            </Button>
+                          )}
+                        </div>
+                    </div>
+                  )}
 
                   {/* Remember Me */}
                   <div className="flex items-center">
@@ -598,54 +604,60 @@ export default function UnifiedLogin() {
                 </Button>
 
                 {/* Social Registration Options */}
-                <div className="space-y-6">
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
+                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
+                  <div className="space-y-6">
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-300" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-white text-gray-500">{t.or_login_with}</span>
+                        </div>
                       </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-white text-gray-500">{t.or_login_with}</span>
-                      </div>
-                    </div>
 
-                    <div className="space-y-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
-                          onClick={() => handleSocialLogin('google')}
-                        >
-                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">G</span>
-                          </div>
-                          {t.login_with_google}
-                        </Button>
-                      
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
-                          onClick={() => handleSocialLogin('facebook')}
-                        >
-                          <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                            <Facebook className="h-3 w-3 text-white" />
-                          </div>
-                          {t.login_with_facebook}
-                        </Button>
-                      
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
-                          onClick={() => handleSocialLogin('github')}
-                        >
-                          <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
-                            <Github className="h-3 w-3 text-white" />
-                          </div>
-                          {t.login_with_github}
-                        </Button>
-                    </div>
-                </div>
+                      <div className="space-y-3">
+                        {authSettings.googleEnabled && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
+                            onClick={() => handleSocialLogin('google')}
+                          >
+                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">G</span>
+                            </div>
+                            {t.login_with_google}
+                          </Button>
+                        )}
+                        {authSettings.facebookEnabled && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
+                            onClick={() => handleSocialLogin('facebook')}
+                          >
+                            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                              <Facebook className="h-3 w-3 text-white" />
+                            </div>
+                            {t.login_with_facebook}
+                          </Button>
+                        )}
+                        {authSettings.githubEnabled && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full py-3 border-2 border-gray-200 hover:border-gray-300 rounded-lg flex items-center justify-center gap-3"
+                            onClick={() => handleSocialLogin('github')}
+                          >
+                            <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
+                              <Github className="h-3 w-3 text-white" />
+                            </div>
+                            {t.login_with_github}
+                          </Button>
+                        )}
+                      </div>
+                  </div>
+                )}
 
                 {/* Demo Credentials Info */}
                 {process.env.NODE_ENV === 'development' && (
