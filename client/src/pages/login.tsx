@@ -51,14 +51,24 @@ export default function Login() {
     queryKey: ['/api/admin/auth-settings'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/auth-settings');
-      return await response.json();
-    }
+      const data = await response.json();
+      console.log('🔥 RAW API RESPONSE:', data);
+      return data;
+    },
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
-  // Debug auth settings
-  console.log('Auth Settings:', authSettings);
-  console.log('Auth Settings Loading:', authSettingsLoading);
-  console.log('Auth Settings Error:', authSettingsError);
+  // Debug auth settings with more detail
+  console.log('🔥 Auth Settings:', authSettings);
+  console.log('🔥 Auth Settings Loading:', authSettingsLoading);
+  console.log('🔥 Auth Settings Error:', authSettingsError);
+  console.log('🔥 Google Enabled Check:', authSettings?.googleEnabled);
+  console.log('🔥 Facebook Enabled Check:', authSettings?.facebookEnabled);
+  console.log('🔥 GitHub Enabled Check:', authSettings?.githubEnabled);
+  console.log('🔥 Should Show Social Section:', (authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled));
 
   // Check if already authenticated
   useState(() => {
@@ -302,6 +312,17 @@ export default function Login() {
                   {customerLoginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>
                 
+                {/* DEBUG: Show auth settings status */}
+                <div className="bg-red-100 p-2 text-xs border rounded mb-2">
+                  <div>🔥 DEBUG INFO:</div>
+                  <div>Loading: {authSettingsLoading ? 'YES' : 'NO'}</div>
+                  <div>Error: {authSettingsError ? 'YES' : 'NO'}</div>
+                  <div>Google: {authSettings?.googleEnabled ? 'ENABLED' : 'DISABLED'}</div>
+                  <div>Facebook: {authSettings?.facebookEnabled ? 'ENABLED' : 'DISABLED'}</div>
+                  <div>GitHub: {authSettings?.githubEnabled ? 'ENABLED' : 'DISABLED'}</div>
+                  <div>Show Section: {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) ? 'YES' : 'NO'}</div>
+                </div>
+
                 {/* Social Login Section */}
                 {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled) && (
                   <>
