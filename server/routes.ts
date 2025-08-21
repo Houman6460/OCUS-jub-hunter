@@ -3949,6 +3949,11 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
   app.get("/api/countdown-banner/active", async (req, res) => {
     try {
       const activeBanner = await storage.getActiveCountdownBanner();
+      if (!activeBanner) {
+        // Return empty object instead of 404 to prevent client errors
+        res.json(null);
+        return;
+      }
       res.json(activeBanner);
     } catch (error: any) {
       console.error('Get active banner error:', error);
