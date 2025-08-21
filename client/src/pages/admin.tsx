@@ -2276,9 +2276,9 @@ export default function Admin() {
 
   // Fetch current product pricing
   const { data: currentProduct } = useQuery({
-    queryKey: ['/api/products/pricing'],
+    queryKey: ['/api/admin/pricing-get'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/products/pricing');
+      const response = await apiRequest('GET', '/api/admin/pricing');
       return await response.json();
     }
   });
