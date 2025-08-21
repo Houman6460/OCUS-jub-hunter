@@ -163,11 +163,11 @@ export default function Login() {
   // Social login button component
   const SocialLoginButton = ({ provider, enabled, icon, label }: {
     provider: 'google' | 'facebook' | 'github';
-    enabled: boolean;
+    enabled: boolean | undefined;
     icon: React.ReactNode;
     label: string;
   }) => {
-    if (!enabled) return null;
+    if (enabled === false) return null;
     
     return (
       <Button
@@ -303,7 +303,7 @@ export default function Login() {
                 </Button>
                 
                 {/* Social Login Section */}
-                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled || true) && (
+                {true && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
@@ -424,7 +424,7 @@ export default function Login() {
                 </Button>
                 
                 {/* Social Login Section for Admin */}
-                {(authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled || true) && (
+                {true && (
                   <>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
