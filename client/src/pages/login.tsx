@@ -48,15 +48,14 @@ export default function Login() {
 
   // Fetch auth settings to show/hide social login buttons
   const { data: authSettings, isLoading: authSettingsLoading, error: authSettingsError } = useQuery({
-    queryKey: ['/api/admin/auth-settings'],
+    queryKey: ['auth-settings'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/auth-settings');
       const data = await response.json();
       console.log('🔥 RAW API RESPONSE:', data);
       return data;
     },
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache (updated from cacheTime)
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: 3,
@@ -81,9 +80,10 @@ export default function Login() {
     github: Boolean(authSettings?.githubEnabled)
   });
   
-  // Force show social login for debugging (temporary)
-  const shouldShowSocial = !authSettingsLoading && (authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled);
-  console.log('🔥 Final shouldShowSocial:', shouldShowSocial);
+  // Force show social login for debugging (temporary) - ALWAYS SHOW FOR NOW
+  const shouldShowSocial = true; // Force show until API issue is resolved
+  // const shouldShowSocial = !authSettingsLoading && (authSettings?.googleEnabled || authSettings?.facebookEnabled || authSettings?.githubEnabled);
+  console.log('🔥 Final shouldShowSocial (FORCED TRUE):', shouldShowSocial);
 
   // Check if already authenticated
   useState(() => {
