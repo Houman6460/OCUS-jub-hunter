@@ -20,5 +20,6 @@
         }
       ]
     }
-  ]
+  ],
+  "css.lint.unknownAtRules": "ignore"
 }
