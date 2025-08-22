@@ -21,18 +21,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     // Fetch order details
-    let query = 'SELECT * FROM orders WHERE ';
-    let param = '';
+    const orderQuery = orderId 
+      ? `SELECT * FROM orders WHERE id = ?`
+      : `SELECT * FROM orders WHERE invoiceNumber = ?`;
     
-    if (orderId) {
-      query += 'id = ?';
-      param = orderId;
-    } else {
-      query += 'invoiceNumber = ?';
-      param = invoiceNumber;
-    }
-
-    const order = await env.DB.prepare(query).bind(param).first();
+    const order = await env.DB.prepare(orderQuery)
+      .bind(orderId || invoiceNumber)
+      .first();
 
     if (!order) {
       return new Response(JSON.stringify({ error: 'Order not found' }), {
@@ -45,9 +40,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     // Generate invoice data
-    const invoice = {
-      invoiceNumber: order.invoiceNumber,
+    const invoiceData = {
+      invoiceNumber: order.invoiceNumber || '',
       orderId: order.id,
+      customerEmail: order.customerEmail,
+      customerName: order.customerName,
       issueDate: order.completedAt || order.createdAt,
       dueDate: order.completedAt || order.createdAt,
       
@@ -88,7 +85,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     return new Response(JSON.stringify({
       success: true,
-      invoice: invoice
+      invoice: invoiceData
     }), {
       headers: {
         'Content-Type': 'application/json',

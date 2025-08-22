@@ -36,7 +36,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     // Check download limits
-    if (order.downloadCount >= order.maxDownloads) {
+    if (Number(order.downloadCount) >= Number(order.maxDownloads)) {
       return new Response(JSON.stringify({ 
         error: 'Download limit exceeded',
         maxDownloads: order.maxDownloads,
@@ -57,17 +57,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       WHERE downloadToken = ?
     `).bind(downloadToken).run();
 
-    // Return download information (in production, this would serve the actual file)
+    // Log the download
+    console.log(`Premium extension downloaded for order ${order.id}, download count: ${Number(order.downloadCount) + 1}`);
+
+    // Return the extension file (this would be the actual file in production)
+    // For now, return a success response with download info
     return new Response(JSON.stringify({
       success: true,
-      message: 'Download authorized',
-      productName: order.productName,
-      activationCode: order.activationCode,
-      downloadCount: order.downloadCount + 1,
-      maxDownloads: order.maxDownloads,
-      downloadUrl: '/premium-extension.crx', // This would be the actual file URL
-      instructions: 'Download the extension file and follow the installation guide.'
+      message: 'Premium extension download authorized',
+      orderId: order.id,
+      downloadCount: Number(order.downloadCount) + 1,
+      maxDownloads: Number(order.maxDownloads),
+      activationCode: order.activationCode
     }), {
+      status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'

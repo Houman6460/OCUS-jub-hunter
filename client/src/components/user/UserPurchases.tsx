@@ -4,9 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ShoppingCart, CheckCircle, Clock, Shield, AlertTriangle, Chrome, Key, ExternalLink, CreditCard, Download, Plus } from 'lucide-react';
+import { ShoppingCart, Shield, AlertTriangle, CreditCard, Download, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { loadStripe } from '@stripe/stripe-js';
@@ -37,7 +36,7 @@ interface UserPurchasesProps {
 }
 
 // Purchase form component
-function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSuccess: () => void; paymentIntentId?: string; onPaymentSuccess: (paymentIntentId: string) => void }) {
+function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSuccess: () => void; paymentIntentId?: string; onPaymentSuccess?: (paymentIntentId: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -70,13 +69,8 @@ function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSucc
       } else {
         // Payment succeeded - complete the order
         try {
-          if (paymentIntentId) {
-            // Complete the payment on our backend
-            await apiRequest('POST', '/api/complete-stripe-payment', {
-              paymentIntentId: paymentIntentId,
-              customerEmail: 'user@example.com',
-              customerName: 'User'
-            });
+          if (paymentIntentId && onPaymentSuccess) {
+            onPaymentSuccess(paymentIntentId);
           }
           
           toast({
@@ -135,7 +129,7 @@ function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSucc
 function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?: number }) {
   const [open, setOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
+  const [stripePublishableKey, setStripePublishableKey] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('eur');
   const { toast } = useToast();
@@ -164,7 +158,8 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
             productId: 'ocus-extension'
           });
         })
-        .then((data) => {
+        .then(async (response) => {
+          const data = await response.json();
           setClientSecret(data.clientSecret);
           setStripePublishableKey(data.publishableKey);
           
@@ -197,9 +192,11 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
 
       const result = await response.json();
       
-      if (result.paymentIntent?.status === 'succeeded') {
-        // Call the completion handler with payment intent ID
-        onPaymentSuccess(result.paymentIntent.id);
+      if (result.activationCode) {
+        toast({
+          title: "Purchase Complete!",
+          description: `Your activation code: ${result.activationCode}`,
+        });
       } 
       // Refresh purchase history
       onSuccess();

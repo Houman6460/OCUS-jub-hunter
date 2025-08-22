@@ -7,7 +7,8 @@ interface Env {
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
-    const { targetPrice } = await request.json();
+    const requestData = await request.json() as { targetPrice: number };
+    const { targetPrice } = requestData;
     
     if (!targetPrice) {
       return new Response(JSON.stringify({ error: 'targetPrice is required' }), {
@@ -31,7 +32,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         id: '1',
         title: 'Limited Time Offer!',
         subtitle: 'Get OCUS Job Hunter Extension at Special Price',
-        targetPrice: parseFloat(targetPrice),
+        targetPrice: targetPrice,
         originalPrice: 299.99,
         endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         priority: 1,
@@ -43,22 +44,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }];
     } else {
       // Update existing banner
-      banners[0].targetPrice = parseFloat(targetPrice);
+      banners[0].targetPrice = targetPrice;
       banners[0].updatedAt = new Date().toISOString();
     }
     
     await settingsStorage.setSetting('countdown_banners', JSON.stringify(banners));
     
-    // Also update countdown_banners table if record exists
-    try {
-      await env.DB.prepare(`
-        UPDATE countdown_banners 
-        SET targetPrice = ?, updatedAt = datetime('now')
-        WHERE id = 1
-      `).bind(targetPrice).run();
-    } catch (dbError) {
-      console.warn('Failed to update countdown_banners table:', dbError);
-    }
+    // Update products table
+    const updateProductResult = await env.DB.prepare(`
+      UPDATE products 
+      SET price = ? 
+      WHERE id = 1
+    `).bind(targetPrice.toString()).run();
 
     return new Response(JSON.stringify({
       success: true,
