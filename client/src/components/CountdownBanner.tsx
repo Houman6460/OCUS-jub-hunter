@@ -57,7 +57,7 @@ export function CountdownBanner() {
   };
 
   // Fetch active countdown banner
-  const { data: banner, isLoading, isError } = useQuery<CountdownBannerData>({
+  const { data: banner, isLoading } = useQuery<CountdownBannerData>({
     queryKey: ['/api/countdown-banner/active'],
     queryFn: async () => {
       try {
