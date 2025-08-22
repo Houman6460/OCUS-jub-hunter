@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { FileText, Download, Eye, CreditCard, Calendar, DollarSign } from 'lucid
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { downloadInvoicePDF } from '@/lib/invoiceGenerator';
+import { InvoicePreview } from './InvoicePreview';
 
 interface Invoice {
   id: number;
@@ -33,6 +34,8 @@ interface UserInvoicesProps {
 
 export function UserInvoices({ userId }: UserInvoicesProps) {
   const { toast } = useToast();
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Get user invoices
   const { data: invoices, isLoading, error } = useQuery<Invoice[]>({
@@ -228,14 +231,12 @@ export function UserInvoices({ userId }: UserInvoicesProps) {
                       size="sm"
                       className="flex items-center gap-2"
                       onClick={() => {
-                        toast({
-                          title: "Invoice Details",
-                          description: `Invoice ${invoice.invoice_number} - Order #${invoice.order_id}`,
-                        });
+                        setSelectedInvoice(invoice);
+                        setIsPreviewOpen(true);
                       }}
                     >
                       <Eye className="w-4 h-4" />
-                      View Details
+                      View Invoice
                     </Button>
                   </div>
                 </div>
@@ -262,6 +263,16 @@ export function UserInvoices({ userId }: UserInvoicesProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Invoice Preview Modal */}
+      <InvoicePreview
+        invoice={selectedInvoice}
+        isOpen={isPreviewOpen}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setSelectedInvoice(null);
+        }}
+      />
     </div>
   );
 }
