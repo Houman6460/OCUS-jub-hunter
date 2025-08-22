@@ -20,14 +20,39 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
 
-    // Fetch order details
-    const orderQuery = orderId 
-      ? `SELECT * FROM orders WHERE id = ?`
-      : `SELECT * FROM orders WHERE invoiceNumber = ?`;
-    
-    const order = await env.DB.prepare(orderQuery)
-      .bind(orderId || invoiceNumber)
-      .first();
+    let order = null;
+
+    try {
+      // Try to fetch from orders table first
+      const orderQuery = orderId 
+        ? `SELECT * FROM orders WHERE id = ?`
+        : `SELECT * FROM orders WHERE invoiceNumber = ?`;
+      
+      order = await env.DB.prepare(orderQuery)
+        .bind(orderId || invoiceNumber)
+        .first();
+    } catch (dbError) {
+      console.log('Orders table not found, checking fallback storage:', dbError);
+      
+      // Fallback: Get orders from settings table
+      const settingsResults = await env.DB.prepare(`
+        SELECT key, value FROM settings 
+        WHERE key LIKE 'order_%'
+      `).all();
+      
+      for (const setting of (settingsResults.results || [])) {
+        try {
+          const orderData = JSON.parse(setting.value as string);
+          if ((orderId && orderData.id == orderId) || 
+              (invoiceNumber && orderData.invoiceNumber === invoiceNumber)) {
+            order = orderData;
+            break;
+          }
+        } catch (parseError) {
+          console.log('Error parsing order data:', parseError);
+        }
+      }
+    }
 
     if (!order) {
       return new Response(JSON.stringify({ error: 'Order not found' }), {

@@ -6,31 +6,78 @@ interface Env {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   try {
-    // Fetch all orders for admin dashboard
-    const orders = await env.DB.prepare(`
-      SELECT * FROM orders 
-      ORDER BY createdAt DESC
-    `).all();
+    let orders = [];
+    let stats = {
+      totalOrders: 0,
+      totalRevenue: 0,
+      completedOrders: 0,
+      pendingOrders: 0
+    };
 
-    // Get order statistics
-    const stats = await env.DB.prepare(`
-      SELECT 
-        COUNT(*) as totalOrders,
-        SUM(CASE WHEN status = 'completed' THEN finalAmount ELSE 0 END) as totalRevenue,
-        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingOrders
-      FROM orders
-    `).first();
+    try {
+      // Try to fetch from orders table first
+      const orderResults = await env.DB.prepare(`
+        SELECT * FROM orders 
+        ORDER BY createdAt DESC
+      `).all();
+      orders = orderResults.results || [];
+
+      // Get order statistics
+      const statsResult = await env.DB.prepare(`
+        SELECT 
+          COUNT(*) as totalOrders,
+          SUM(CASE WHEN status = 'completed' THEN finalAmount ELSE 0 END) as totalRevenue,
+          COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingOrders
+        FROM orders
+      `).first();
+      if (statsResult) {
+        stats = {
+          totalOrders: Number(statsResult.totalOrders) || 0,
+          totalRevenue: Number(statsResult.totalRevenue) || 0,
+          completedOrders: Number(statsResult.completedOrders) || 0,
+          pendingOrders: Number(statsResult.pendingOrders) || 0
+        };
+      }
+    } catch (dbError) {
+      console.log('Orders table not found, checking fallback storage:', dbError);
+      
+      // Fallback: Get orders from settings table
+      const settingsResults = await env.DB.prepare(`
+        SELECT key, value FROM settings 
+        WHERE key LIKE 'order_%'
+      `).all();
+      
+      const allOrders = [];
+      for (const setting of (settingsResults.results || [])) {
+        try {
+          const orderData = JSON.parse(setting.value as string);
+          allOrders.push(orderData);
+        } catch (parseError) {
+          console.log('Error parsing order data:', parseError);
+        }
+      }
+      
+      // Sort by completedAt or createdAt
+      orders = allOrders.sort((a, b) => {
+        const dateA = new Date(a.completedAt || a.createdAt);
+        const dateB = new Date(b.completedAt || b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      // Calculate stats from fallback data
+      stats.totalOrders = orders.length;
+      stats.completedOrders = orders.filter(o => o.status === 'completed').length;
+      stats.pendingOrders = orders.filter(o => o.status === 'pending').length;
+      stats.totalRevenue = orders
+        .filter(o => o.status === 'completed')
+        .reduce((sum, o) => sum + (parseFloat(o.finalAmount) || 0), 0);
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      orders: orders.results || [],
-      stats: stats || {
-        totalOrders: 0,
-        totalRevenue: 0,
-        completedOrders: 0,
-        pendingOrders: 0
-      }
+      orders: orders,
+      stats: stats
     }), {
       headers: {
         'Content-Type': 'application/json',

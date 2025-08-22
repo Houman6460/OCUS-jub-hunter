@@ -19,16 +19,48 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
 
-    // Fetch user orders
-    const orders = await env.DB.prepare(`
-      SELECT * FROM orders 
-      WHERE customerEmail = ? 
-      ORDER BY createdAt DESC
-    `).bind(customerEmail).all();
+    let orders = [];
+
+    try {
+      // Try to fetch from orders table first
+      const orderResults = await env.DB.prepare(`
+        SELECT * FROM orders 
+        WHERE customerEmail = ? 
+        ORDER BY createdAt DESC
+      `).bind(customerEmail).all();
+      orders = orderResults.results || [];
+    } catch (dbError) {
+      console.log('Orders table not found, checking fallback storage:', dbError);
+      
+      // Fallback: Get orders from settings table
+      const settingsResults = await env.DB.prepare(`
+        SELECT key, value FROM settings 
+        WHERE key LIKE 'order_%'
+      `).all();
+      
+      const allOrders = [];
+      for (const setting of (settingsResults.results || [])) {
+        try {
+          const orderData = JSON.parse(setting.value as string);
+          if (orderData.customerEmail === customerEmail) {
+            allOrders.push(orderData);
+          }
+        } catch (parseError) {
+          console.log('Error parsing order data:', parseError);
+        }
+      }
+      
+      // Sort by completedAt or createdAt
+      orders = allOrders.sort((a, b) => {
+        const dateA = new Date(a.completedAt || a.createdAt);
+        const dateB = new Date(b.completedAt || b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+    }
 
     return new Response(JSON.stringify({
       success: true,
-      orders: orders.results || []
+      orders: orders
     }), {
       headers: {
         'Content-Type': 'application/json',
