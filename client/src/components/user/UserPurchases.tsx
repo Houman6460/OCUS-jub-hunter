@@ -148,9 +148,12 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
   React.useEffect(() => {
     if (open && !clientSecret) {
       apiRequest('POST', '/api/create-user-payment-intent', {
+        amount: 199.99, // Default price from countdown banner
+        currency: 'usd',
         userId: userId,
         customerEmail: 'user@example.com',
-        customerName: 'User'
+        customerName: 'User',
+        productId: 'ocus-extension'
       })
         .then((response) => response.json())
         .then((data) => {
