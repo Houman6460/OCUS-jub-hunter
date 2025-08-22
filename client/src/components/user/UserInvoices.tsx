@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, Download, Eye, CreditCard, Calendar, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { downloadInvoicePDF } from '@/lib/invoiceGenerator';
 
 interface Invoice {
   id: number;
@@ -22,6 +23,8 @@ interface Invoice {
   created_at: string;
   product_id?: string;
   payment_method?: string;
+  customer_name?: string;
+  customer_email?: string;
 }
 
 interface UserInvoicesProps {
@@ -60,28 +63,37 @@ export function UserInvoices({ userId }: UserInvoicesProps) {
     }
   };
 
-  const handleDownloadInvoice = async (invoiceId: number, invoiceNumber: string) => {
+  const handleDownloadInvoice = async (invoice: Invoice) => {
     try {
-      // In a real implementation, this would generate and download a PDF
-      const mockPdfContent = `Invoice ${invoiceNumber} - OCUS Job Hunter Extension Purchase`;
-      const blob = new Blob([mockPdfContent], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${invoiceNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast({
-        title: "Download Started",
-        description: `Invoice ${invoiceNumber} download has started.`,
+      const success = await downloadInvoicePDF({
+        invoiceNumber: invoice.invoice_number,
+        invoiceDate: invoice.invoice_date,
+        dueDate: invoice.due_date,
+        paidAt: invoice.paid_at,
+        customerName: invoice.customer_name || 'Customer',
+        customerEmail: invoice.customer_email || 'customer@example.com',
+        amount: invoice.amount,
+        currency: invoice.currency,
+        taxAmount: invoice.tax_amount,
+        paymentMethod: invoice.payment_method || 'Stripe',
+        productId: invoice.product_id || 'premium-extension',
+        orderId: invoice.order_id,
+        status: invoice.status
       });
+      
+      if (success) {
+        toast({
+          title: "Download Started",
+          description: `Invoice ${invoice.invoice_number} has been downloaded successfully.`,
+        });
+      } else {
+        throw new Error('PDF generation failed');
+      }
     } catch (error) {
+      console.error('Invoice download error:', error);
       toast({
         title: "Download Failed",
-        description: "Failed to download invoice.",
+        description: "Failed to generate invoice PDF. Please try again.",
         variant: "destructive",
       });
     }
@@ -204,7 +216,7 @@ export function UserInvoices({ userId }: UserInvoicesProps) {
 
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => handleDownloadInvoice(invoice.id, invoice.invoice_number)}
+                      onClick={() => handleDownloadInvoice(invoice)}
                       size="sm"
                       className="flex items-center gap-2"
                     >

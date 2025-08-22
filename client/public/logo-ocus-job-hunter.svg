@@ -1,0 +1,16 @@
+<svg width="1000" height="200" viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- OCUS Logo Circle -->
+  <g transform="translate(20, 20)">
+    <!-- Outer circle -->
+    <circle cx="80" cy="80" r="75" fill="none" stroke="#4A90E2" stroke-width="10"/>
+    <!-- Middle circle -->
+    <circle cx="80" cy="80" r="50" fill="none" stroke="#4A90E2" stroke-width="8"/>
+    <!-- Inner circle -->
+    <circle cx="80" cy="80" r="25" fill="none" stroke="#4A90E2" stroke-width="6"/>
+    <!-- Center dot -->
+    <circle cx="80" cy="80" r="8" fill="#4A90E2"/>
+  </g>
+  
+  <!-- JOB HUNTER Text -->
+  <text x="200" y="120" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#4A90E2">JOB HUNTER</text>
+</svg>

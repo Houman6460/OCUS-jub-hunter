@@ -29,7 +29,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         i.paid_at,
         i.created_at,
         o.product_id,
-        o.payment_method
+        o.payment_method,
+        o.customer_name,
+        o.customer_email
       FROM invoices i
       LEFT JOIN orders o ON i.order_id = o.id
       WHERE i.customer_id = ? 
