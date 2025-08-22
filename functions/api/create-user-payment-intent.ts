@@ -73,9 +73,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       body: new URLSearchParams({
         amount: Math.round(numericAmount * 100).toString(), // Convert to cents
         currency: currency.toLowerCase(),
-        automatic_payment_methods: JSON.stringify({ enabled: true }),
+        'automatic_payment_methods[enabled]': 'true',
         ...(customerEmail && { receipt_email: customerEmail }),
-        ...(productId && { metadata: JSON.stringify({ productId, customerName }) })
+        ...(productId && { 'metadata[productId]': productId, 'metadata[customerName]': customerName || '' })
       })
     });
 
