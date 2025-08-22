@@ -33,42 +33,41 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       LIMIT 1
     `).first();
 
-    // If no banner found in countdown_banners table, check settings table as fallback
-    if (!banner) {
-      try {
-        const settingsStorage = new (await import('../../lib/settings-storage')).SettingsStorage(env.DB);
-        const bannersData = await settingsStorage.getSetting('countdown_banners');
-        if (bannersData) {
-          const banners = JSON.parse(bannersData);
-          const activeBanner = banners.find((b: any) => b.isActive);
-          if (activeBanner) {
-            // Convert settings format to countdown_banners table format
-            return new Response(JSON.stringify({
-              id: activeBanner.id || 1,
-              isEnabled: activeBanner.isActive ? 1 : 0,
-              titleEn: activeBanner.title || 'Limited Time Offer!',
-              subtitleEn: activeBanner.subtitle || 'Get OCUS Job Hunter Extension at Special Price',
-              titleTranslations: activeBanner.titleTranslations || {},
-              subtitleTranslations: activeBanner.subtitleTranslations || {},
-              targetPrice: String(activeBanner.targetPrice || '1.00'),
-              originalPrice: String(activeBanner.originalPrice || '299.99'),
-              endDateTime: activeBanner.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              backgroundColor: activeBanner.backgroundColor || '#FF6B35',
-              textColor: activeBanner.textColor || '#FFFFFF',
-              priority: activeBanner.priority || 1
-            }), {
-              headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-              }
-            });
-          }
+    // Always check settings table for admin dashboard changes
+    try {
+      const settingsStorage = new (await import('../../lib/settings-storage')).SettingsStorage(env.DB);
+      const bannersData = await settingsStorage.getSetting('countdown_banners');
+      if (bannersData) {
+        const banners = JSON.parse(bannersData);
+        const activeBanner = banners.find((b: any) => b.isActive);
+        if (activeBanner) {
+          // Use admin dashboard price if available
+          return new Response(JSON.stringify({
+            id: activeBanner.id || 1,
+            isEnabled: activeBanner.isActive ? 1 : 0,
+            titleEn: activeBanner.title || 'Limited Time Offer!',
+            subtitleEn: activeBanner.subtitle || 'Get OCUS Job Hunter Extension at Special Price',
+            titleTranslations: activeBanner.titleTranslations || {},
+            subtitleTranslations: activeBanner.subtitleTranslations || {},
+            targetPrice: String(activeBanner.targetPrice || '1.00'),
+            originalPrice: String(activeBanner.originalPrice || '299.99'),
+            endDateTime: activeBanner.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            backgroundColor: activeBanner.backgroundColor || '#FF6B35',
+            textColor: activeBanner.textColor || '#FFFFFF',
+            priority: activeBanner.priority || 1
+          }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*'
+            }
+          });
         }
-      } catch (settingsError) {
-        console.warn('Failed to check settings table for banners:', settingsError);
       }
+    } catch (settingsError) {
+      console.warn('Failed to check settings table for banners:', settingsError);
     }
 
+    // If no banner found in countdown_banners table, return 404
     if (!banner) {
       return new Response(JSON.stringify({ message: 'No active countdown banner found' }), {
         status: 404,
