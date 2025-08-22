@@ -56,7 +56,7 @@ export function CountdownBanner() {
   };
 
   // Fetch active countdown banner
-  const { data: banner } = useQuery<CountdownBannerData>({
+  const { data: banner, isLoading, isError } = useQuery<CountdownBannerData>({
     queryKey: ['/api/countdown-banner/active'],
     queryFn: async () => {
       try {
@@ -70,9 +70,12 @@ export function CountdownBanner() {
       }
     },
     refetchInterval: 60000, // Refresh every minute
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    retry: 1, // Only retry once to avoid delays
+    initialData: testBanner, // Start with test banner immediately
   });
 
-  const displayBanner = banner || testBanner;
+  const displayBanner = banner;
 
   // Calculate time remaining
   useEffect(() => {
@@ -138,12 +141,18 @@ export function CountdownBanner() {
   };
 
   // Don't show banner if disabled, expired, or dismissed
+  // Add loading check to prevent flash of disappearing banner
   if (
-    !displayBanner || 
-    !displayBanner.isEnabled || 
-    timeRemaining.isExpired || 
-    isDismissed
+    isDismissed ||
+    timeRemaining.isExpired ||
+    (!isLoading && !displayBanner) ||
+    (!isLoading && displayBanner && !displayBanner.isEnabled)
   ) {
+    return null;
+  }
+
+  // Show loading state briefly to prevent flash
+  if (isLoading && !displayBanner) {
     return null;
   }
 
