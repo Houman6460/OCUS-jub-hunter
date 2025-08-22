@@ -14,7 +14,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // Fetch user invoices from database
+    // Fetch user invoices from database with correct user information
     const invoicesQuery = `
       SELECT 
         i.id,
@@ -30,10 +30,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         i.created_at,
         o.product_id,
         o.payment_method,
-        o.customer_name,
-        o.customer_email
+        u.name as customer_name,
+        u.email as customer_email
       FROM invoices i
       LEFT JOIN orders o ON i.order_id = o.id
+      LEFT JOIN users u ON i.customer_id = u.id
       WHERE i.customer_id = ? 
       ORDER BY i.created_at DESC
     `;
