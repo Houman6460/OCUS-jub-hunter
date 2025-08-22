@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
+import "@/styles/home.css";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -594,193 +595,71 @@ export default function Home() {
                       borderRadius: '12px 12px 0 0',
                       borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
                     }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        fontWeight: '600',
-                        fontSize: '15px' 
-                      }}>
+                      <div className="extension-title">
                         <span style={{ fontSize: '18px' }}>🎯</span>
                         <span>OCUS Hunter</span>
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button style={{ 
-                          background: 'rgba(255, 255, 255, 0.2)', 
-                          border: 'none', 
-                          color: 'white', 
-                          fontSize: '16px', 
-                          cursor: 'pointer', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px',
-                          lineHeight: '1',
-                          transition: 'all 0.2s ease'
-                        }}>−</button>
-                        <button style={{ 
-                          background: 'rgba(255, 255, 255, 0.2)', 
-                          border: 'none', 
-                          color: 'white', 
-                          fontSize: '16px', 
-                          cursor: 'pointer', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px',
-                          lineHeight: '1',
-                          transition: 'all 0.2s ease'
-                        }}>×</button>
+                        <button 
+                          aria-label="Minimize window"
+                          className="window-control-btn"
+                        >−</button>
+                        <button 
+                          aria-label="Close window"
+                          className="window-control-btn"
+                        >×</button>
                       </div>
                     </div>
                     
                     {/* Body */}
-                    <div style={{ 
-                      padding: '20px', 
-                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                      color: '#e2e8f0' 
-                    }}>
+                    <div className="extension-body">
                       {/* Timer Section */}
-                      <div style={{ marginBottom: '20px' }}>
+                      <div className="timer-section">
                         {/* Timer Display */}
-                        <div style={{ 
-                          textAlign: 'center',
-                          marginBottom: '16px',
-                          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                          padding: '16px',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(71, 85, 105, 0.3)'
-                        }}>
-                          <div style={{ 
-                            display: 'flex',
-                            alignItems: 'baseline',
-                            justifyContent: 'center',
-                            gap: '4px',
-                            fontSize: '32px',
-                            fontWeight: '700',
-                            color: '#60a5fa',
-                            lineHeight: '1'
-                          }}>
+                        <div className="timer-display">
+                          <div className="timer-value">
                             <span>4</span>
-                            <span style={{ fontSize: '16px', fontWeight: '500', color: '#94a3b8' }}>sec</span>
+                            <span className="timer-unit">sec</span>
                           </div>
-                          <div style={{ 
-                            fontSize: '12px',
-                            color: '#94a3b8',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginTop: '4px'
-                          }}>
+                          <div className="timer-label">
                             Next Refresh
                           </div>
                         </div>
                         
                         {/* Interval Quick Select */}
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ 
-                            fontSize: '12px',
-                            color: '#94a3b8',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px',
-                            textAlign: 'center'
-                          }}>
+                        <div className="interval-section">
+                          <div className="interval-title">
                             Refresh Interval
                           </div>
-                          <div style={{ 
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
-                            gap: '6px'
-                          }}>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                              color: 'white',
-                              borderColor: '#3b82f6',
-                              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>5s</button>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                              color: '#e2e8f0',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>10s</button>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                              color: '#e2e8f0',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>20s</button>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                              color: '#e2e8f0',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>30s</button>
+                          <div className="interval-grid">
+                            <button 
+                              aria-label="Set refresh interval to 5 seconds"
+                              className="interval-btn active"
+                            >5s</button>
+                            <button 
+                              aria-label="Set refresh interval to 10 seconds"
+                              className="interval-btn"
+                            >10s</button>
+                            <button 
+                              aria-label="Set refresh interval to 20 seconds"
+                              className="interval-btn"
+                            >20s</button>
+                            <button 
+                              aria-label="Set refresh interval to 30 seconds"
+                              className="interval-btn"
+                            >30s</button>
                           </div>
                         </div>
                         
                         {/* Timer Controls */}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button style={{ 
-                            flex: '1',
-                            padding: '10px 12px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                            color: 'white',
-                            boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
-                          }}>
-                            <span style={{ fontSize: '14px' }}>⏸</span>
-                            <span style={{ fontSize: '12px' }}>Pause</span>
+                        <div className="timer-controls">
+                          <button className="timer-control-btn primary">
+                            <span className="timer-control-icon">⏸</span>
+                            <span className="timer-control-text">Pause</span>
                           </button>
-                          <button style={{ 
-                            flex: '1',
-                            padding: '10px 12px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            background: 'linear-gradient(135deg, #475569 0%, #64748b 100%)',
-                            color: '#e2e8f0'
-                          }}>
-                            <span style={{ fontSize: '14px' }}>🔄</span>
-                            <span style={{ fontSize: '12px' }}>Refresh</span>
+                          <button className="timer-control-btn secondary">
+                            <span className="timer-control-icon">🔄</span>
+                            <span className="timer-control-text">Refresh</span>
                           </button>
                         </div>
                       </div>
@@ -950,11 +829,11 @@ export default function Home() {
                     style={{
                       width: '320px',
                       height: '700px',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(71, 85, 105, 0.4)'
-                  }}
+                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      border: '1px solid rgba(71, 85, 105, 0.4)'
+                    }}
                     onMouseEnter={(e) => {
                       const scrollContainer = e.currentTarget;
                       scrollContainer.dataset.userScrolled = 'false';
@@ -987,18 +866,9 @@ export default function Home() {
                       scrollContainer.dataset.userScrolled = 'true';
                     }}
                   >
-                    {/* Header - Compact */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '16px 20px',
-                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                      color: 'white',
-                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
-                    }}>
-                      <h1 style={{ 
-                        margin: '0', 
+                    <div className="extension-window">
+                      {/* Header - Compact */}
+                      <div className="extension-header" style={{
                         fontSize: '16px', 
                         fontWeight: '600',
                         display: 'flex',
@@ -1128,35 +998,21 @@ export default function Home() {
                             </div>
                           </div>
                         </div>
-                        <div style={{ padding: '12px', background: 'white', color: '#333' }}>
-                          <div style={{ marginBottom: '8px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>OCUS Username</label>
+                        <div className="login-form-container">
+                          <div className="form-field">
+                            <label className="form-label">OCUS Username</label>
                             <input 
                               type="text" 
-                              style={{
-                                width: '100%',
-                                padding: '6px 8px',
-                                border: '1px solid #e1e5e9',
-                                borderRadius: '3px',
-                                fontSize: '11px',
-                                boxSizing: 'border-box'
-                              }}
+                              className="form-input"
                               value="photographer@example.com"
                               readOnly
                             />
                           </div>
-                          <div>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>OCUS Password</label>
+                          <div className="form-field">
+                            <label className="form-label">OCUS Password</label>
                             <input 
                               type="password" 
-                              style={{
-                                width: '100%',
-                                padding: '6px 8px',
-                                border: '1px solid #e1e5e9',
-                                borderRadius: '3px',
-                                fontSize: '11px',
-                                boxSizing: 'border-box'
-                              }}
+                              className="form-input"
                               value="••••••••"
                               readOnly
                             />
