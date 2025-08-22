@@ -81,11 +81,32 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     if (!stripeResponse.ok) {
       const errorData = await stripeResponse.text();
-      console.error('Stripe API error:', errorData);
+      console.error('Stripe API error:', {
+        status: stripeResponse.status,
+        statusText: stripeResponse.statusText,
+        errorData,
+        requestData: {
+          amount: Math.round(numericAmount * 100),
+          currency: currency.toLowerCase(),
+          hasSecretKey: !!settings.stripeSecretKey,
+          secretKeyPrefix: settings.stripeSecretKey?.substring(0, 12) + '...'
+        }
+      });
+      
+      // Parse Stripe error for more details
+      let stripeError;
+      try {
+        stripeError = JSON.parse(errorData);
+      } catch {
+        stripeError = { message: errorData };
+      }
       
       return new Response(JSON.stringify({
         success: false,
-        error: 'Failed to create payment intent'
+        error: 'Failed to create payment intent',
+        details: stripeError.error?.message || stripeError.message || 'Unknown Stripe error',
+        stripeErrorType: stripeError.error?.type,
+        stripeErrorCode: stripeError.error?.code
       }), {
         status: 500,
         headers: {
