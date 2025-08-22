@@ -12,9 +12,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-// Initialize Stripe only if a publishable key exists
-const stripeKey = (import.meta as any)?.env?.VITE_STRIPE_LIVE_PUBLIC_KEY || (import.meta as any)?.env?.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+// Stripe will be initialized dynamically with the public key from API
+let stripePromise: Promise<any> | null = null;
 
 interface Order {
   id: number;
@@ -161,6 +160,11 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
           // Extract payment intent ID from client secret
           const piId = data.clientSecret.split('_secret_')[0];
           setPaymentIntentId(piId);
+          
+          // Initialize Stripe with the public key from the response
+          if (data.publishableKey && !stripePromise) {
+            stripePromise = loadStripe(data.publishableKey);
+          }
         })
         .catch((error) => {
           console.error('Error creating payment intent:', error);
