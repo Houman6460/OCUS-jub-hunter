@@ -146,14 +146,22 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
   // Fetch client secret when dialog opens
   React.useEffect(() => {
     if (open && !clientSecret) {
-      apiRequest('POST', '/api/create-user-payment-intent', {
-        amount: 199.99, // Default price from countdown banner
-        currency: 'usd',
-        userId: userId,
-        customerEmail: 'user@example.com',
-        customerName: 'User',
-        productId: 'ocus-extension'
-      })
+      // First get the active countdown banner to get the correct price
+      apiRequest('GET', '/api/countdown-banner/active')
+        .then((response) => response.json())
+        .then((bannerData) => {
+          const amount = parseFloat(bannerData.targetPrice);
+          const currency = 'eur'; // Use EUR as set in admin dashboard
+          
+          return apiRequest('POST', '/api/create-user-payment-intent', {
+            amount: amount,
+            currency: currency,
+            userId: userId,
+            customerEmail: 'user@example.com',
+            customerName: 'User',
+            productId: 'ocus-extension'
+          });
+        })
         .then((response) => response.json())
         .then((data) => {
           setClientSecret(data.clientSecret);
