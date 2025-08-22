@@ -113,7 +113,9 @@ export function UsersManagement() {
     const latestInvoice = invoices[0];
     
     try {
-      await generateInvoicePDF({
+      const { downloadInvoicePDF } = await import('@/lib/invoiceGenerator');
+      
+      const success = await downloadInvoicePDF({
         invoiceNumber: latestInvoice.invoice_number.toString(),
         customerName: userName,
         customerEmail: userEmail,
@@ -121,8 +123,16 @@ export function UsersManagement() {
         currency: latestInvoice.currency,
         invoiceDate: latestInvoice.invoice_date,
         dueDate: latestInvoice.due_date,
-        productId: latestInvoice.product_id
+        productId: latestInvoice.product_id,
+        paymentMethod: latestInvoice.payment_method || 'Credit Card',
+        orderId: latestInvoice.order_id,
+        status: latestInvoice.status,
+        paidAt: latestInvoice.paid_at
       });
+
+      if (!success) {
+        throw new Error('Failed to generate PDF');
+      }
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       alert('Failed to generate invoice PDF');
@@ -328,7 +338,7 @@ export function UsersManagement() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`/admin/user/${user.id}`, '_blank')}
+                          onClick={() => window.open(`/dashboard?userId=${user.id}`, '_blank')}
                           className="text-xs"
                         >
                           <Eye className="h-3 w-3 mr-1" />

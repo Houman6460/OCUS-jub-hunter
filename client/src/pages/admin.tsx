@@ -113,7 +113,7 @@ function TicketManagementTab() {
   const queryClient = useQueryClient();
 
   // Fetch all tickets
-  const { data: ticketData } = useQuery({
+  const { data: ticketData, isLoading: loadingTickets } = useQuery({
     queryKey: ['/api/admin/tickets'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/tickets');
