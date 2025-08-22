@@ -7,13 +7,13 @@ interface InvoiceData {
   paidAt?: string;
   customerName: string;
   customerEmail: string;
-  amount: string;
+  amount: number | string;
   currency: string;
   taxAmount?: string;
-  paymentMethod: string;
+  paymentMethod?: string;
   productId: string;
-  orderId: number;
-  status: string;
+  orderId?: number;
+  status?: string;
 }
 
 export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<Blob> => {
@@ -140,8 +140,14 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<Blob
   pdf.setTextColor(100, 100, 100);
   pdf.text(`Order ID: ${invoiceData.orderId}`, 20, itemY + 8);
   
-  // Amount
-  const amount = parseFloat(invoiceData.amount);
+  // Convert amount to number for calculations
+  const amount = typeof invoiceData.amount === 'string' 
+    ? parseFloat(invoiceData.amount) 
+    : invoiceData.amount;
+    
+  // Ensure required fields have defaults
+  const paymentMethod = invoiceData.paymentMethod || 'Credit Card';
+  
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
   pdf.setTextColor(50, 50, 50);
@@ -168,7 +174,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<Blob
   pdf.setFontSize(9);
   pdf.text('Payment Method:', 20, totalsY + 30);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(invoiceData.paymentMethod.toUpperCase(), 20, totalsY + 37);
+  pdf.text(paymentMethod.toUpperCase(), 20, totalsY + 37);
   
   // Simple footer
   pdf.setDrawColor(200, 200, 200);

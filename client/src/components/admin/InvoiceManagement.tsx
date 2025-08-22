@@ -106,10 +106,10 @@ export function InvoiceManagement() {
         return;
       }
 
-      // Import and use the invoice generator dynamically
-      const { generateInvoicePDF } = await import('@/lib/invoiceGenerator');
+      // Import and use the invoice download function
+      const { downloadInvoicePDF } = await import('@/lib/invoiceGenerator');
       
-      await generateInvoicePDF({
+      const success = await downloadInvoicePDF({
         invoiceNumber: invoice.invoice_number.toString(),
         customerName: invoice.customer_name,
         customerEmail: invoice.customer_email,
@@ -117,8 +117,16 @@ export function InvoiceManagement() {
         currency: invoice.currency,
         invoiceDate: invoice.invoice_date,
         dueDate: invoice.due_date,
-        productId: invoice.product_id
+        productId: invoice.product_id,
+        paymentMethod: invoice.payment_method || 'Credit Card',
+        orderId: invoice.order_id,
+        status: invoice.status,
+        paidAt: invoice.paid_at
       });
+
+      if (!success) {
+        throw new Error('Failed to generate PDF');
+      }
 
       toast({ title: "Invoice PDF downloaded successfully" });
     } catch (error) {
