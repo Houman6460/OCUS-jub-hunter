@@ -136,6 +136,8 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
   const [open, setOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
+  const [amount, setAmount] = useState<number>(0);
+  const [currency, setCurrency] = useState<string>('eur');
   const { toast } = useToast();
 
   const handleSuccess = () => {
@@ -150,12 +152,16 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
       apiRequest('GET', '/api/countdown-banner/active')
         .then((response) => response.json())
         .then((bannerData) => {
-          const amount = parseFloat(bannerData.targetPrice);
-          const currency = 'eur'; // Use EUR as set in admin dashboard
+          const priceAmount = parseFloat(bannerData.targetPrice);
+          const priceCurrency = 'eur'; // Use EUR as set in admin dashboard
+          
+          // Store amount and currency for display
+          setAmount(priceAmount);
+          setCurrency(priceCurrency);
           
           return apiRequest('POST', '/api/create-user-payment-intent', {
-            amount: amount,
-            currency: currency,
+            amount: priceAmount,
+            currency: priceCurrency,
             userId: userId,
             customerEmail: 'user@example.com',
             customerName: 'User',
@@ -199,6 +205,16 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
           <DialogDescription>
             Get unlimited access to the OCUS Job Hunter Chrome extension. After purchase, you'll get direct download access to the premium version.
           </DialogDescription>
+          {amount > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-900">Total Amount:</span>
+                <span className="text-lg font-bold text-blue-900">
+                  €{amount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
         </DialogHeader>
         {clientSecret && stripePromise ? (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
