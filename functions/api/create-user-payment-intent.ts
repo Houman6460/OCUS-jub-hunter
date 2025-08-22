@@ -14,10 +14,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const body = await request.json() as PaymentIntentRequest;
     const { amount, currency = 'usd', customerEmail, customerName, productId } = body;
 
-    if (!amount || amount <= 0) {
+    // Log the received data for debugging
+    console.log('Payment intent request:', { amount, currency, customerEmail, productId });
+
+    // Convert amount to number and validate
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
+    
+    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      console.error('Invalid amount received:', { amount, numericAmount, type: typeof amount });
       return new Response(JSON.stringify({
         success: false,
-        error: 'Invalid amount'
+        error: `Invalid amount: ${amount}. Must be a positive number.`
       }), {
         status: 400,
         headers: {
@@ -64,7 +71,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        amount: Math.round(amount * 100).toString(), // Convert to cents
+        amount: Math.round(numericAmount * 100).toString(), // Convert to cents
         currency: currency.toLowerCase(),
         automatic_payment_methods: JSON.stringify({ enabled: true }),
         ...(customerEmail && { receipt_email: customerEmail }),
@@ -88,7 +95,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
 
-    const paymentIntent = await stripeResponse.json();
+    const paymentIntent = await stripeResponse.json() as {
+      id: string;
+      client_secret: string;
+      amount: number;
+      currency: string;
+      status: string;
+    };
 
     // Store payment intent in database for tracking
     try {
@@ -99,7 +112,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         `payment_intent_${paymentIntent.id}`,
         JSON.stringify({
           id: paymentIntent.id,
-          amount,
+          amount: numericAmount,
           currency,
           customerEmail,
           customerName,
