@@ -28,7 +28,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     // First check if there are banners in the countdown_banners table
     const banner = await env.DB.prepare(`
       SELECT * FROM countdown_banners 
-      WHERE isEnabled = 1 
+      WHERE isActive = 1 
       ORDER BY priority DESC, id ASC 
       LIMIT 1
     `).first();
@@ -69,15 +69,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // Get the highest priority active countdown banner
-    const result = await env.DB.prepare(`
-      SELECT * FROM countdown_banners 
-      WHERE isActive = 1 
-      ORDER BY priority DESC, createdAt DESC 
-      LIMIT 1
-    `).first<CountdownBanner>();
-
-    if (!result) {
+    if (!banner) {
       return new Response(JSON.stringify({ message: 'No active countdown banner found' }), {
         status: 404,
         headers: {
@@ -94,16 +86,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     let subtitleTranslations = {};
     
     try {
-      if (result.titleTranslations) {
-        titleTranslations = JSON.parse(result.titleTranslations);
+      if (banner.titleTranslations && typeof banner.titleTranslations === 'string') {
+        titleTranslations = JSON.parse(banner.titleTranslations);
       }
     } catch (e) {
       console.warn('Failed to parse titleTranslations:', e);
     }
     
     try {
-      if (result.subtitleTranslations) {
-        subtitleTranslations = JSON.parse(result.subtitleTranslations);
+      if (banner.subtitleTranslations && typeof banner.subtitleTranslations === 'string') {
+        subtitleTranslations = JSON.parse(banner.subtitleTranslations);
       }
     } catch (e) {
       console.warn('Failed to parse subtitleTranslations:', e);
@@ -111,18 +103,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     // Transform the data to match frontend expectations
     const transformedBanner = {
-      id: parseInt(result.id) || 0,
-      isEnabled: result.isActive,
-      titleEn: result.title,
-      subtitleEn: result.subtitle,
+      id: parseInt(String(banner.id)) || 0,
+      isEnabled: banner.isActive,
+      titleEn: banner.title,
+      subtitleEn: banner.subtitle,
       titleTranslations,
       subtitleTranslations,
-      targetPrice: result.targetPrice.toString(),
-      originalPrice: result.originalPrice ? result.originalPrice.toString() : undefined,
-      endDateTime: result.endDate, // Frontend expects endDateTime
-      backgroundColor: result.backgroundColor,
-      textColor: result.textColor,
-      priority: result.priority,
+      targetPrice: String(banner.targetPrice || '1.00'),
+      originalPrice: banner.originalPrice ? String(banner.originalPrice) : undefined,
+      endDateTime: banner.endDate, // Frontend expects endDateTime
+      backgroundColor: banner.backgroundColor,
+      textColor: banner.textColor,
+      priority: banner.priority,
     };
 
     return new Response(JSON.stringify(transformedBanner), {
