@@ -1681,7 +1681,7 @@ function DashboardFeaturesTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: ticketMessages } = useQuery({
+  const { data: features, isLoading } = useQuery({
     queryKey: ['/api/admin/dashboard-features'],
     queryFn: async () => {
       const response = await fetch('/api/admin/dashboard-features');
@@ -1704,7 +1704,7 @@ function DashboardFeaturesTab() {
       if (!response.ok) throw new Error('Failed to update feature');
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Optimistically update the UI
       queryClient.setQueryData(['/api/admin/dashboard-features'], (oldData: any) => {
         if (!Array.isArray(oldData)) return oldData;

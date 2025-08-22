@@ -20,7 +20,6 @@ import {
   Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { generateInvoicePDF } from '@/lib/invoiceGenerator';
 
 interface User {
   id: number;
