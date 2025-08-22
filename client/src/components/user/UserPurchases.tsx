@@ -37,7 +37,7 @@ interface UserPurchasesProps {
 }
 
 // Purchase form component
-function PurchaseForm({ onSuccess, paymentIntentId }: { onSuccess: () => void; paymentIntentId?: string }) {
+function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSuccess: () => void; paymentIntentId?: string; onPaymentSuccess: (paymentIntentId: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -164,14 +164,10 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
             productId: 'ocus-extension'
           });
         })
-        .then((response) => response.json())
         .then((data) => {
           setClientSecret(data.clientSecret);
-          // Extract payment intent ID from client secret
-          const piId = data.clientSecret.split('_secret_')[0];
-          setPaymentIntentId(piId);
+          setStripePublishableKey(data.publishableKey);
           
-          // Initialize Stripe with the public key from the response
           if (data.publishableKey && !stripePromise) {
             stripePromise = loadStripe(data.publishableKey);
           }
@@ -186,6 +182,36 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
         });
     }
   }, [open, clientSecret, toast]);
+
+  // Handle successful payment
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    try {
+      // Complete the purchase and create order record
+      const response = await apiRequest('POST', '/api/orders/complete-purchase', {
+        paymentIntentId,
+        customerEmail: 'user@example.com', // This should come from user context
+        customerName: 'User', // This should come from user context
+        amount: amount,
+        currency: currency
+      });
+
+      const result = await response.json();
+      
+      if (result.paymentIntent?.status === 'succeeded') {
+        // Call the completion handler with payment intent ID
+        onPaymentSuccess(result.paymentIntent.id);
+      } 
+      // Refresh purchase history
+      onSuccess();
+    } catch (error) {
+      console.error('Error completing purchase:', error);
+      toast({
+        title: "Error",
+        description: "Payment succeeded but failed to complete purchase. Please contact support.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -212,9 +238,9 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
             </div>
           )}
         </DialogHeader>
-        {clientSecret && stripePromise ? (
+        {stripePublishableKey && clientSecret ? (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <PurchaseForm onSuccess={handleSuccess} paymentIntentId={paymentIntentId} />
+            <PurchaseForm onSuccess={handleSuccess} paymentIntentId={clientSecret} onPaymentSuccess={handlePaymentSuccess} />
           </Elements>
         ) : (
           <div className="text-center py-8">
