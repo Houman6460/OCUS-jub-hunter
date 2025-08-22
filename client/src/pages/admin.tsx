@@ -12,9 +12,7 @@ import "../styles/admin-badges.css";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import CustomerManagement from "./customer-management";
 import AdminSidebar from "@/components/AdminSidebar";
-import { CustomerManager } from "@/components/admin/CustomerManager";
 import AdminAffiliates from "./admin-affiliates";
 import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
 import { PurchaseManagement } from "@/components/admin/PurchaseManagement";
@@ -25,12 +23,7 @@ import {
   Users,
   Star,
   Settings,
-  Download,
-  Mail,
   Upload,
-  TrendingUp,
-  Calendar,
-  Percent,
   Plus,
   Edit,
   Trash2,
@@ -47,14 +40,12 @@ import {
   Facebook,
   Ticket,
   Clock,
-  CheckCircle,
   AlertCircle,
   Send,
   Paperclip,
   X,
   FileText,
   Image,
-  File,
   User,
   Archive,
   ToggleRight,
@@ -80,23 +71,12 @@ interface Order {
   paymentMethod: string;
 }
 
-interface Coupon {
-  id: number;
-  code: string;
-  discountType: 'percentage' | 'fixed';
-  discountValue: string;
-  isActive: boolean;
-  usageLimit: number | null;
-  usageCount: number;
-  expiresAt: string | null;
-  createdAt: string;
-}
 
 interface Ticket {
   id: number;
   title: string;
   description: string;
-  status: 'open' | 'in_progress' | 'closed' | 'archived';
+  status: 'open' | 'in_progress' | 'closed' | 'resolved' | 'archived';
   priority: 'low' | 'medium' | 'high';
   userId: number;
   userName?: string;
@@ -133,7 +113,7 @@ function TicketManagementTab() {
   const queryClient = useQueryClient();
 
   // Fetch all tickets
-  const { data: tickets, isLoading: ticketsLoading } = useQuery({
+  const { data: ticketData } = useQuery({
     queryKey: ['/api/admin/tickets'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/tickets');
@@ -364,17 +344,17 @@ function TicketManagementTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Ticket className="h-5 w-5" />
-            Support Tickets ({tickets?.length || 0})
+            Support Tickets ({ticketData?.length || 0})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="max-h-[500px] overflow-y-auto">
-            {ticketsLoading ? (
+            {loadingTickets ? (
               <div className="p-4 text-center text-slate-500">Loading tickets...</div>
-            ) : tickets?.length === 0 ? (
+            ) : ticketData?.length === 0 ? (
               <div className="p-4 text-center text-slate-500">No tickets found</div>
             ) : (
-              tickets?.map((ticket: Ticket) => (
+              ticketData?.map((ticket: Ticket) => (
                 <div
                   key={ticket.id}
                   className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -1115,7 +1095,7 @@ function PaymentSettingsTab() {
   const queryClient = useQueryClient();
 
   // Load existing payment settings
-  const { data: existingSettings, isLoading } = useQuery({
+  const { data: existingSettings } = useQuery({
     queryKey: ['/api/admin/payment-settings'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/payment-settings');
@@ -1459,9 +1439,9 @@ function AccountSettingsTab() {
           {/* Security Notice */}
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-2" />
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium text-yellow-800">Security Notice</p>
+                <p className="font-medium mb-1">Security Notice</p>
                 <p className="text-yellow-700 mt-1">
                   After updating your credentials, you will be automatically logged out and need to sign in again with your new details.
                 </p>
@@ -1701,7 +1681,7 @@ function DashboardFeaturesTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: features, isLoading, error } = useQuery({
+  const { data: ticketMessages } = useQuery({
     queryKey: ['/api/admin/dashboard-features'],
     queryFn: async () => {
       const response = await fetch('/api/admin/dashboard-features');
@@ -2634,230 +2614,6 @@ export default function Admin() {
           {/* Account Settings Tab */}
           {activeTab === 'account' && <AccountSettingsTab />}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// User Management Component for trial/activation system
-function UserManagementTab() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Fetch users with lifecycle data
-  const usersQuery = useQuery({
-    queryKey: ['/api/admin/customers'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/admin/customers');
-      const data = await response.json();
-      console.log('Admin customers API response:', data);
-      
-      // Handle different response structures
-      if (data.success && Array.isArray(data.customers)) {
-        return data.customers;
-      } else if (Array.isArray(data)) {
-        return data;
-      } else {
-        console.warn('Unexpected API response structure:', data);
-        return [];
-      }
-    },
-    refetchInterval: 10000 // Refresh every 10 seconds
-  });
-
-  // Note: Activation code system has been deprecated
-
-  // Block user mutation
-  const blockUserMutation = useMutation({
-    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      const response = await apiRequest('POST', `/api/admin/customers/${userId}/block`, { reason });
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "User blocked successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/customers'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to block user",
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Delete user mutation
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const response = await apiRequest('DELETE', `/api/admin/customers/${userId}`);
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/customers'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete user",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const users = Array.isArray(usersQuery.data) ? usersQuery.data : [];
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Users & Customers Management
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Manage all registered users, customer data, trial usage, and account status
-          </p>
-        </CardHeader>
-        <CardContent>
-          {usersQuery.isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : users.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users found
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">User ID</th>
-                    <th className="text-left p-3 font-medium">Name</th>
-                    <th className="text-left p-3 font-medium">Email</th>
-                    <th className="text-left p-3 font-medium">Role</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Created</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user: any) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">
-                        <div className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                          {user.id}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="font-medium">{user.name || 'Not provided'}</div>
-                      </td>
-                      <td className="p-3">
-                        {user.email || 'Not provided'}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant={user.role === 'premium' ? "default" : "secondary"}>
-                          {user.role === 'premium' ? 'Premium' : 'Free'}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="outline">
-                          Active
-                        </Badge>
-                      </td>
-                      <td className="p-3 text-sm text-gray-600">
-                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => blockUserMutation.mutate({ 
-                              userId: user.id, 
-                              reason: "Blocked by admin" 
-                            })}
-                            disabled={blockUserMutation.isPending}
-                          >
-                            <Shield className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => {
-                              if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-                                deleteUserMutation.mutate(user.id);
-                              }
-                            }}
-                            disabled={deleteUserMutation.isPending}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* User Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                <Users className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold">{users.length}</h3>
-                <p className="text-gray-600">Total Users</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                <CheckCircle className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold">
-                  {users.filter((u: any) => u.role === 'premium').length}
-                </h3>
-                <p className="text-gray-600">Activated Users</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                <Clock className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold">
-                  {users.filter((u: any) => u.role === 'free').length}
-                </h3>
-                <p className="text-gray-600">Active Trials</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

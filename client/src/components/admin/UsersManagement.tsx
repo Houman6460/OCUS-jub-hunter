@@ -15,9 +15,12 @@ import {
   Download,
   CreditCard,
   Mail,
-  RefreshCw
+  RefreshCw,
+  FileText,
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { generateInvoicePDF } from '@/lib/invoiceGenerator';
 
 interface User {
   id: number;
@@ -49,6 +52,11 @@ export function UsersManagement() {
   // Fetch users data
   const { data, isLoading, refetch } = useQuery<{ users: User[], stats: UserStats }>({
     queryKey: ['/api/admin/users'],
+  });
+
+  // Fetch user invoices
+  const { data: userInvoices } = useQuery({
+    queryKey: ['/api/admin/invoices'],
   });
 
   const users = data?.users || [];
@@ -85,6 +93,40 @@ export function UsersManagement() {
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  // Get user's invoices
+  const getUserInvoices = (userId: number) => {
+    if (!Array.isArray(userInvoices)) return [];
+    return userInvoices.filter((invoice: any) => invoice.customer_id === userId) || [];
+  };
+
+  // Download invoice PDF
+  const downloadInvoicePDF = async (userId: number, userName: string, userEmail: string) => {
+    const invoices = getUserInvoices(userId);
+    if (invoices.length === 0) {
+      alert('No invoices found for this user');
+      return;
+    }
+
+    // Use the most recent invoice
+    const latestInvoice = invoices[0];
+    
+    try {
+      await generateInvoicePDF({
+        invoiceNumber: latestInvoice.invoice_number.toString(),
+        customerName: userName,
+        customerEmail: userEmail,
+        amount: parseFloat(latestInvoice.amount),
+        currency: latestInvoice.currency,
+        invoiceDate: latestInvoice.invoice_date,
+        dueDate: latestInvoice.due_date,
+        productId: latestInvoice.product_id
+      });
+    } catch (error) {
+      console.error('Error generating invoice PDF:', error);
+      alert('Failed to generate invoice PDF');
+    }
   };
 
   if (isLoading) {
@@ -216,7 +258,7 @@ export function UsersManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-500" />
                       <div>
@@ -241,6 +283,13 @@ export function UsersManagement() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-xs text-gray-500">Invoices</p>
+                        <p className="text-sm font-medium">{getUserInvoices(user.id).length}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-gray-500" />
                       <div>
                         <p className="text-xs text-gray-500">Status</p>
@@ -251,13 +300,43 @@ export function UsersManagement() {
                     </div>
                   </div>
 
-                  {user.last_download && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs text-gray-500">
-                        Last activity: {format(new Date(user.last_download), 'MMM dd, yyyy HH:mm')}
-                      </p>
+                  {/* User Actions and Invoice Info */}
+                  <div className="mt-4 pt-3 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-500">
+                        {user.last_download && (
+                          <span>Last activity: {format(new Date(user.last_download), 'MMM dd, yyyy HH:mm')}</span>
+                        )}
+                        {getUserInvoices(user.id).length > 0 && (
+                          <span className="ml-4">
+                            Latest invoice: {format(new Date(getUserInvoices(user.id)[0]?.invoice_date), 'MMM dd, yyyy')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {getUserInvoices(user.id).length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadInvoicePDF(user.id, user.name, user.email)}
+                            className="text-xs"
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            Download Invoice
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`/admin/user/${user.id}`, '_blank')}
+                          className="text-xs"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View Details
+                        </Button>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
