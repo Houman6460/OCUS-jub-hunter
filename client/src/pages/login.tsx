@@ -47,7 +47,7 @@ export default function Login() {
   const queryClient = useQueryClient();
 
   // Fetch auth settings to show/hide social login buttons
-  const { data: authSettings, isLoading: authSettingsLoading, error: authSettingsError } = useQuery({
+  const { data: authSettings, isLoading: authSettingsLoading } = useQuery({
     queryKey: ['auth-settings'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/admin/auth-settings');

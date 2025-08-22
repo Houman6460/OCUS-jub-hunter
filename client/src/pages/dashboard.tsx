@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Package, Download, ShoppingCart, User, LogOut, Chrome, Key, Ticket, CreditCard, Settings, HelpCircle, Plus, MessageSquare, Send, Paperclip, X, AlertCircle, Clock, CheckCircle2, ArrowRight, Lightbulb, Zap, Shield, AlertTriangle, Image, FileText } from "lucide-react";
+import { Package, Download, ShoppingCart, User, LogOut, Chrome, Key, Ticket, CreditCard, Settings, HelpCircle, Plus, MessageSquare, Send, Paperclip, X, AlertCircle, Clock, CheckCircle2, ArrowRight, Lightbulb, Zap, Shield, AlertTriangle, Image, FileText, Star } from "lucide-react";
 import { UserSidebar } from "@/components/UserSidebar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import UserInvoicesPage from "./user-invoices";
