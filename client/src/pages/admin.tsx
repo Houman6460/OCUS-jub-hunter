@@ -1861,7 +1861,15 @@ function SeoSettingsTab() {
   useEffect(() => {
     if (fetchedSettings) {
       console.log('Fetched settings from server:', fetchedSettings);
-      setSeoSettings(prev => ({ ...prev, ...fetchedSettings }));
+      setSeoSettings(prev => ({
+        ...prev,
+        siteTitle: fetchedSettings.title || '',
+        siteDescription: fetchedSettings.description || '',
+        siteKeywords: fetchedSettings.keywords || '',
+        customOgImage: fetchedSettings.coverImage || '',
+        customLogo: fetchedSettings.logo || '',
+        customFavicon: fetchedSettings.favicon || ''
+      }));
       // Clear selected files when fresh data is loaded
       setSelectedCoverImage(null);
       setSelectedLogo(null);
@@ -1922,9 +1930,11 @@ function SeoSettingsTab() {
       if (hasFiles) {
         // Use FormData for file uploads
         const formData = new FormData();
-        Object.entries(seoSettings).forEach(([key, value]) => {
-          formData.append(key, value || '');
-        });
+        
+        // Map frontend field names to backend expected names
+        formData.append('title', seoSettings.siteTitle || '');
+        formData.append('description', seoSettings.siteDescription || '');
+        formData.append('keywords', seoSettings.siteKeywords || '');
         
         if (selectedCoverImage) formData.append('coverImage', selectedCoverImage);
         if (selectedLogo) formData.append('logo', selectedLogo);
@@ -1934,10 +1944,11 @@ function SeoSettingsTab() {
         response = await apiRequest('PUT', '/api/admin/seo-settings', formData);
       } else {
         // Use JSON for text-only updates
-        // Build a sanitized object without empty values to satisfy TypeScript without string indexing
-        const updateData = Object.fromEntries(
-          Object.entries(seoSettings).filter(([_, v]) => v !== undefined && v !== '')
-        );
+        const updateData = {
+          title: seoSettings.siteTitle,
+          description: seoSettings.siteDescription,
+          keywords: seoSettings.siteKeywords
+        };
 
         console.log('Using JSON for text-only update:', updateData);
         response = await apiRequest('PATCH', '/api/admin/seo-settings', updateData);
@@ -2046,7 +2057,7 @@ function SeoSettingsTab() {
                     {seoSettings.customOgImage && !selectedCoverImage && (
                       <div className="mb-3">
                         <img
-                          src="/api/seo/custom-image/og"
+                          src={seoSettings.customOgImage}
                           alt="Current cover"
                           className="w-full max-w-sm h-32 object-cover rounded border"
                         />

@@ -109,7 +109,7 @@ export default function Home() {
   }));
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen banner-active">
       <AnnouncementBadge />
       <CountdownBanner />
       <ChatBot />
