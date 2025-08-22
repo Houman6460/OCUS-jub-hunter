@@ -148,17 +148,13 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
   // Fetch client secret when dialog opens
   React.useEffect(() => {
     if (open && !clientSecret) {
-      // First get the active countdown banner to get the correct price
-      apiRequest('GET', '/api/countdown-banner/active')
+      apiRequest('GET', '/api/admin/pricing')
         .then((response) => response.json())
-        .then((bannerData) => {
-          const priceAmount = parseFloat(bannerData.targetPrice);
-          const priceCurrency = 'eur'; // Use EUR as set in admin dashboard
-          
-          // Store amount and currency for display
+        .then((pricingData) => {
+          const priceAmount = parseFloat(pricingData.price);
+          const priceCurrency = 'eur';
           setAmount(priceAmount);
           setCurrency(priceCurrency);
-          
           return apiRequest('POST', '/api/create-user-payment-intent', {
             amount: priceAmount,
             currency: priceCurrency,
