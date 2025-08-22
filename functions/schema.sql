@@ -92,6 +92,18 @@ CREATE TABLE IF NOT EXISTS auth_settings (
 -- Insert default auth settings if not exists
 INSERT OR IGNORE INTO auth_settings (id) VALUES (1);
 
+-- Generic Settings Table for flexible key-value storage
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,
+  value TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Index for settings lookup
+CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_tickets_customer_email ON tickets(customer_email);
 CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
