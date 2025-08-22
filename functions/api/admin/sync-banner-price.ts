@@ -60,7 +60,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return new Response(JSON.stringify({
       success: true,
       message: 'Banner price synced successfully',
-      targetPrice: parseFloat(targetPrice)
+      targetPrice: targetPrice
     }), {
       headers: {
         'Content-Type': 'application/json',
