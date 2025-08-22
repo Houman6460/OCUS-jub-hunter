@@ -877,17 +877,17 @@ export default function Home() {
                       }}>
                         <span style={{ fontSize: '18px' }}>🎯</span>
                         OCUS Unified Extension
-                      </h1>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '10px',
-                        fontWeight: '600',
-                        background: '#4CAF50',
-                        color: 'white',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>Premium</span>
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          background: '#4CAF50',
+                          color: 'white',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>Premium</span>
+                      </div>
                     </div>
                     
                     {/* Body */}
