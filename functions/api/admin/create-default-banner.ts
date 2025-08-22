@@ -27,16 +27,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ env }) => {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + 7); // 7 days from now
 
+    // First update existing banner to €1 if it exists
+    await env.DB.prepare(`
+      UPDATE countdown_banners 
+      SET targetPrice = '1.00' 
+      WHERE id = 1
+    `).run();
+
     const result = await env.DB.prepare(`
       INSERT INTO countdown_banners (
-        title, subtitle, targetPrice, originalPrice, endDate, 
-        priority, backgroundColor, textColor, isActive
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        titleEn, subtitleEn, titleTranslations, subtitleTranslations,
+        targetPrice, originalPrice, endDateTime, isEnabled, backgroundColor, textColor, priority
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       'Limited Time Offer!',
       'Get OCUS Job Hunter Extension at Special Price',
-      199.99,
-      299.99,
+      '{}',
+      '{}',
+      '1.00',
+      '299.99',
       endDate.toISOString(),
       1,
       '#FF6B35',
