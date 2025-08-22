@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileText, Plus, User, Calendar, DollarSign, Edit, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { format } from 'date-fns';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -97,21 +97,30 @@ export function InvoiceManagement() {
     }
   });
 
-  const downloadPDF = async (invoiceId: number, invoiceNumber: string) => {
+  const downloadPDF = async (invoiceId: number) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}/pdf`);
-      if (!response.ok) throw new Error('Failed to download PDF');
+      // Find the invoice data
+      const invoice = invoices.find(inv => inv.id === invoiceId);
+      if (!invoice) {
+        toast({ title: "Invoice not found", variant: "destructive" });
+        return;
+      }
+
+      // Import and use the invoice generator dynamically
+      const { generateInvoicePDF } = await import('@/lib/invoiceGenerator');
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `invoice-${invoiceNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      await generateInvoicePDF({
+        invoiceNumber: invoice.invoice_number.toString(),
+        customerName: invoice.customer_name,
+        customerEmail: invoice.customer_email,
+        amount: parseFloat(invoice.amount),
+        currency: invoice.currency,
+        invoiceDate: invoice.invoice_date,
+        dueDate: invoice.due_date,
+        productId: invoice.product_id
+      });
+
+      toast({ title: "Invoice PDF downloaded successfully" });
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast({ title: "Error downloading PDF", variant: "destructive" });
@@ -451,7 +460,7 @@ export function InvoiceManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => downloadPDF(invoice.id, invoice.invoice_number)}
+                      onClick={() => downloadPDF(invoice.id)}
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
