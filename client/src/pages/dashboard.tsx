@@ -11,6 +11,7 @@ import { AccountPreferences } from "@/components/user/AccountPreferences";
 import { ExtensionDownload } from "@/components/user/ExtensionDownload";
 import { AffiliateProgram } from "@/components/user/AffiliateProgram";
 import { UserPurchases } from "@/components/user/UserPurchases";
+import { UserInvoices } from "@/components/user/UserInvoices";
 import FirstVisitGuide from "@/components/FirstVisitGuide";
 import { DashboardTutorial } from "@/components/tutorials/DashboardTutorial";
 import NotificationSystem from "@/components/NotificationSystem";
@@ -208,16 +209,39 @@ export default function Dashboard() {
               {/* Welcome Card */}
               <Card className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-blue-900">
+                  <CardTitle className="text-2xl text-blue-900 flex items-center gap-3">
                     Welcome back, {customerData?.name || 'User'}! 👋
+                    {customerData?.isPremium && (
+                      <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 border-yellow-300">
+                        <Star className="h-3 w-3 mr-1" />
+                        Premium User
+                      </Badge>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-blue-700 mb-4">
                     Manage your OCUS Job Hunter extension and access all your resources from here. 
-                    Your extension is ready to help you find profitable delivery jobs!
+                    {customerData?.isPremium 
+                      ? 'Your premium extension is ready to help you find profitable delivery jobs!' 
+                      : 'Your extension is ready to help you find profitable delivery jobs!'
+                    }
                   </p>
-                  {customerData && !customerData?.extensionActivated && (
+                  {customerData?.isPremium && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                      <p className="text-green-800 font-medium flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        Premium Access Active
+                      </p>
+                      <p className="text-green-700 text-sm mt-1">
+                        Unlimited job monitoring • Premium support • Latest updates
+                      </p>
+                      <p className="text-green-600 text-xs mt-2">
+                        Activated: {customerData.premiumActivatedAt ? new Date(customerData.premiumActivatedAt).toLocaleDateString() : 'Recently'}
+                      </p>
+                    </div>
+                  )}
+                  {customerData && !customerData?.isPremium && !customerData?.extensionActivated && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                       <p className="text-yellow-800 font-medium">🎯 Complete your setup:</p>
                       <p className="text-yellow-700 text-sm mt-1">
@@ -241,6 +265,17 @@ export default function Dashboard() {
                       <HelpCircle className="h-4 w-4" />
                       Show Setup Guide
                     </Button>
+                    {customerData?.isPremium && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setActiveTab('downloads')}
+                        className="flex items-center gap-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download Premium Extension
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -261,7 +296,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Quick Stats */}
+              {/* Account Info */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -273,8 +308,24 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     <p className="text-sm"><strong>Name:</strong> {customerData?.name || 'User'}</p>
                     <p className="text-sm"><strong>Email:</strong> {customerData?.email || 'user@example.com'}</p>
-                    <p className="text-sm"><strong>Status:</strong> <Badge variant="outline">Active</Badge></p>
+                    <p className="text-sm flex items-center gap-2">
+                      <strong>Status:</strong> 
+                      {customerData?.isPremium ? (
+                        <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900">
+                          <Star className="h-3 w-3 mr-1" />
+                          Premium
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Free</Badge>
+                      )}
+                    </p>
                     <p className="text-sm"><strong>Joined:</strong> {customerData?.createdAt ? new Date(customerData.createdAt).toLocaleDateString() : 'Recently'}</p>
+                    {customerData?.isPremium && (
+                      <>
+                        <p className="text-sm"><strong>Total Spent:</strong> €{customerData.totalSpent?.toFixed(2) || '0.00'}</p>
+                        <p className="text-sm"><strong>Orders:</strong> {customerData.totalOrders || 0}</p>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -348,7 +399,7 @@ export default function Dashboard() {
 
 
           {/* Invoices Tab */}
-          {activeTab === 'invoices' && <UserInvoicesPage />}
+          {activeTab === 'invoices' && <UserInvoices userId={customerData?.id} />}
 
           {/* Billing Tab */}
           {activeTab === 'billing' && isFeatureEnabled('billing') && (

@@ -36,15 +36,32 @@ export const onRequestGet = async ({ request, env }: any) => {
       });
     }
 
+    // Get premium status and purchase info from database
+    const userQuery = `
+      SELECT 
+        id, email, name, role, created_at,
+        is_premium, premium_activated_at, total_spent, 
+        total_orders, extension_activated
+      FROM users 
+      WHERE id = ?
+    `;
+    const userResult = await env.DB.prepare(userQuery).bind(user.id).first();
+    
     const profile = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      subscriptionStatus: 'active',
-      plan: 'premium',
+      isPremium: Boolean(userResult?.is_premium),
+      premiumActivatedAt: userResult?.premium_activated_at,
+      totalSpent: parseFloat(userResult?.total_spent || '0'),
+      totalOrders: parseInt(userResult?.total_orders || '0'),
+      extensionActivated: Boolean(userResult?.extension_activated),
+      subscriptionStatus: userResult?.is_premium ? 'premium' : 'free',
+      plan: userResult?.is_premium ? 'premium' : 'free',
       joinedDate: user.created_at?.split('T')[0] || '2024-01-15',
       lastLogin: new Date().toISOString(),
+      createdAt: user.created_at,
       settings: {
         notifications: true,
         emailUpdates: true,

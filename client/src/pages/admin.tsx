@@ -17,6 +17,7 @@ import AdminSidebar from "@/components/AdminSidebar";
 import { CustomerManager } from "@/components/admin/CustomerManager";
 import AdminAffiliates from "./admin-affiliates";
 import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
+import { PurchaseManagement } from "@/components/admin/PurchaseManagement";
 import {
   DollarSign,
   ShoppingCart,
@@ -2474,6 +2475,8 @@ export default function Admin() {
           {activeTab === 'affiliates' && <AdminAffiliates />}
           
           {activeTab === 'invoices' && <InvoiceManagement />}
+          
+          {activeTab === 'purchases' && <PurchaseManagement />}
           
           {activeTab === 'banners' && <CountdownBannerManagementTab />}
           

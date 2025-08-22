@@ -17,8 +17,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     try {
       // Try to fetch from orders table first
       const orderResults = await env.DB.prepare(`
-        SELECT * FROM orders 
-        ORDER BY createdAt DESC
+        SELECT 
+          id, customer_id, customer_email, customer_name, product_id,
+          original_amount, final_amount, currency, status, payment_method,
+          download_token, download_count, max_downloads, activation_code,
+          created_at, completed_at
+        FROM orders 
+        ORDER BY created_at DESC
       `).all();
       orders = orderResults.results || [];
 
@@ -26,7 +31,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       const statsResult = await env.DB.prepare(`
         SELECT 
           COUNT(*) as totalOrders,
-          SUM(CASE WHEN status = 'completed' THEN finalAmount ELSE 0 END) as totalRevenue,
+          SUM(CASE WHEN status = 'completed' THEN final_amount ELSE 0 END) as totalRevenue,
           COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingOrders
         FROM orders

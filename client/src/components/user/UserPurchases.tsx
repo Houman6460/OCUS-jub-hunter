@@ -280,6 +280,9 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
     queryFn: async () => {
       if (!userId) return [];
       const response = await apiRequest('GET', `/api/user/${userId}/orders`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
       return response.json();
     },
     enabled: !!userId
@@ -474,19 +477,29 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('GET', '/api/download-extension/premium');
+                            const response = await apiRequest('GET', `/api/download-extension/premium?userId=${userId}`);
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = 'ocus-job-hunter-premium-v2.1.8-STABLE.zip';
+                              a.download = 'ocus-job-hunter-premium-v2.1.9-STABLE.zip';
                               document.body.appendChild(a);
                               a.click();
                               window.URL.revokeObjectURL(url);
                               document.body.removeChild(a);
+                              toast({
+                                title: 'Download Started',
+                                description: 'Premium extension download has started.',
+                              });
                             }
-                          } catch (e) {}
+                          } catch (e) {
+                            toast({
+                              title: 'Download Failed',
+                              description: 'Failed to download premium extension.',
+                              variant: 'destructive',
+                            });
+                          }
                         }}
                         disabled={downloadMutation.isPending}
                         className="bg-green-600 hover:bg-green-700"
@@ -498,13 +511,13 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('GET', '/api/download-extension/trial');
+                            const response = await apiRequest('GET', `/api/download-extension/trial?userId=${userId}`);
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = 'ocus-job-hunter-trial-v2.1.8-STABLE.zip';
+                              a.download = 'ocus-job-hunter-trial-v2.1.9-STABLE.zip';
                               document.body.appendChild(a);
                               a.click();
                               window.URL.revokeObjectURL(url);

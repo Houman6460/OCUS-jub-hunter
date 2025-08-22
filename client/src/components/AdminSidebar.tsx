@@ -14,9 +14,9 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  Chrome,
   Globe,
-  FileText
+  FileText,
+  ShoppingCart
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -58,6 +58,12 @@ export default function AdminSidebar({
       label: "Invoices",
       icon: FileText,
       description: "Invoice & receipt management"
+    },
+    {
+      id: "purchases",
+      label: "Purchase Management",
+      icon: ShoppingCart,
+      description: "Order tracking & premium activations"
     },
     {
       id: "tickets",
