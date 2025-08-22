@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminAffiliates from "./admin-affiliates";
-import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
 import { PurchaseManagement } from "@/components/admin/PurchaseManagement";
 import { UsersManagement } from "@/components/admin/UsersManagement";
 import {
@@ -2466,7 +2465,6 @@ export default function Admin() {
           
           {activeTab === 'affiliates' && <AdminAffiliates />}
           
-          {activeTab === 'invoices' && <InvoiceManagement />}
           
           {activeTab === 'purchases' && <PurchaseManagement />}
           
@@ -2604,23 +2602,6 @@ export default function Admin() {
           {/* Chat Assistant Tab */}
           {activeTab === 'chatbot' && <ChatAssistantTab />}
 
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  General Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-slate-500">
-                  <Settings className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>General settings configuration coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Account Settings Tab */}
           {activeTab === 'account' && <AccountSettingsTab />}

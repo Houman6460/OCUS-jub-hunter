@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  FileText,
   ShoppingCart
 } from "lucide-react";
 
@@ -52,12 +51,6 @@ export default function AdminSidebar({
       label: "Affiliates",
       icon: Users,
       description: "Affiliate program management"
-    },
-    {
-      id: "invoices",
-      label: "Invoices",
-      icon: FileText,
-      description: "Invoice & receipt management"
     },
     {
       id: "purchases",
@@ -119,12 +112,6 @@ export default function AdminSidebar({
       icon: Globe,
       description: "Social media preview & SEO settings"
     },
-    {
-      id: "settings",
-      label: t.settings,
-      icon: Settings,
-      description: "General application settings"
-    }
   ];
 
   return (
