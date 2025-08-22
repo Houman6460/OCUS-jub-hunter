@@ -1,0 +1,269 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Users, 
+  UserCheck, 
+  Clock, 
+  Star,
+  Search,
+  Calendar,
+  Download,
+  CreditCard,
+  Mail,
+  RefreshCw
+} from 'lucide-react';
+import { format } from 'date-fns';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  created_at: string;
+  is_premium: boolean;
+  premium_activated_at?: string;
+  total_spent: number;
+  total_orders: number;
+  extension_activated: boolean;
+  trial_downloads: number;
+  purchase_count: number;
+  last_download?: string;
+  last_purchase?: string;
+}
+
+interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  premiumUsers: number;
+}
+
+export function UsersManagement() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  // Fetch users data
+  const { data, isLoading, refetch } = useQuery<{ users: User[], stats: UserStats }>({
+    queryKey: ['/api/admin/users'],
+  });
+
+  const users = data?.users || [];
+  const stats = data?.stats || { totalUsers: 0, activeUsers: 0, premiumUsers: 0 };
+
+  // Filter users based on search and status
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    switch (statusFilter) {
+      case 'premium':
+        return user.is_premium;
+      case 'trial':
+        return user.trial_downloads > 0 && !user.is_premium;
+      case 'inactive':
+        return user.trial_downloads === 0 && !user.is_premium;
+      default:
+        return true;
+    }
+  });
+
+  const getUserStatusBadge = (user: User) => {
+    if (user.is_premium) {
+      return <Badge className="bg-yellow-100 text-yellow-800">Premium</Badge>;
+    } else if (user.trial_downloads > 0) {
+      return <Badge className="bg-blue-100 text-blue-800">Trial User</Badge>;
+    } else {
+      return <Badge className="bg-gray-100 text-gray-800">Registered</Badge>;
+    }
+  };
+
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Users & Customers Management</h2>
+          <p className="text-gray-600 dark:text-gray-400">Manage all registered users, customer data, trial usage, and account status</p>
+        </div>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              Registered accounts
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Activated Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              Downloaded trial or purchased
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Trials</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeUsers - stats.premiumUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              Trial users (non-premium)
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Users Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>
+            View and manage registered users, their trial usage, and purchase history
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Filters */}
+          <div className="flex gap-4 mb-6">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="premium">Premium Users</SelectItem>
+                <SelectItem value="trial">Trial Users</SelectItem>
+                <SelectItem value="inactive">Inactive Users</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Users List */}
+          {filteredUsers.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-600">
+                {searchTerm || statusFilter !== 'all' ? 'No users match your filters' : 'No users found'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold">{user.name}</h3>
+                      <p className="text-sm text-gray-600 flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {user.email}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {getUserStatusBadge(user)}
+                      {user.is_premium && (
+                        <p className="text-sm font-bold text-green-600 mt-1">
+                          €{user.total_spent?.toFixed(2) || '0.00'} spent
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-xs text-gray-500">Registered</p>
+                        <p className="text-sm font-medium">
+                          {format(new Date(user.created_at), 'MMM dd, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Download className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-xs text-gray-500">Trial Downloads</p>
+                        <p className="text-sm font-medium">{user.trial_downloads}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-xs text-gray-500">Purchases</p>
+                        <p className="text-sm font-medium">{user.purchase_count}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <p className="text-xs text-gray-500">Status</p>
+                        <p className="text-sm font-medium">
+                          {user.extension_activated ? 'Activated' : 'Not Activated'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {user.last_download && (
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-xs text-gray-500">
+                        Last activity: {format(new Date(user.last_download), 'MMM dd, yyyy HH:mm')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

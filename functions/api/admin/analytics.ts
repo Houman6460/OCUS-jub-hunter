@@ -1,40 +1,35 @@
-import { UserStorage } from '../../lib/user-storage';
+interface Env {
+  DB: D1Database;
+}
 
-export const onRequestGet = async ({ env }: any) => {
+export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
-    if (!env.DB) {
-      return new Response(JSON.stringify({
-        success: false,
-        message: 'Database not available'
-      }), {
-        status: 500,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-    }
+    // Get real analytics data from database
+    const ordersStatsQuery = `
+      SELECT 
+        COUNT(*) as totalOrders,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
+        SUM(CASE WHEN status = 'completed' THEN CAST(final_amount as REAL) ELSE 0 END) as totalRevenue
+      FROM orders
+    `;
 
-    const userStorage = new UserStorage(env.DB);
-    await userStorage.initializeUsers();
-    
-    // Get all customers for analytics
-    const customers = await userStorage.getAllCustomers();
-    
-    // Calculate analytics
-    const totalCustomers = customers.length;
-    const premiumCustomers = customers.filter((c: any) => c.role === 'premium').length;
-    const freeCustomers = customers.filter((c: any) => c.role === 'free').length;
-    
-    // Mock revenue calculation (would be based on actual payment data)
-    const avgRevenuePerPremium = 500; // €500 per premium customer
-    const totalRevenue = premiumCustomers * avgRevenuePerPremium;
-    
+    const usersStatsQuery = `
+      SELECT 
+        COUNT(*) as totalUsers,
+        COUNT(CASE WHEN is_premium = 1 THEN 1 END) as premiumUsers
+      FROM users
+    `;
+
+    const [ordersStats, usersStats] = await Promise.all([
+      context.env.DB.prepare(ordersStatsQuery).first(),
+      context.env.DB.prepare(usersStatsQuery).first()
+    ]);
+
     const analytics = {
-      totalRevenue,
-      totalSales: premiumCustomers, // Premium subscriptions as sales
-      activeCustomers: totalCustomers,
-      avgRating: 4.9 // Static for now, would come from reviews
+      totalRevenue: Number(ordersStats?.totalRevenue) || 0,
+      totalSales: Number(ordersStats?.completedOrders) || 0,
+      activeCustomers: Number(usersStats?.totalUsers) || 0,
+      avgRating: 4.9 // Static rating
     };
     
     return new Response(JSON.stringify({
@@ -43,7 +38,9 @@ export const onRequestGet = async ({ env }: any) => {
     }), {
       headers: { 
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
       }
     });
     
@@ -51,7 +48,11 @@ export const onRequestGet = async ({ env }: any) => {
     console.error('Failed to get analytics:', error);
     return new Response(JSON.stringify({
       success: false,
-      message: 'Failed to load analytics'
+      message: 'Failed to load analytics',
+      totalRevenue: 0,
+      totalSales: 0,
+      activeCustomers: 0,
+      avgRating: 4.9
     }), {
       status: 500,
       headers: { 
@@ -60,4 +61,15 @@ export const onRequestGet = async ({ env }: any) => {
       }
     });
   }
+};
+
+export const onRequestOptions: PagesFunction = async () => {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
 };

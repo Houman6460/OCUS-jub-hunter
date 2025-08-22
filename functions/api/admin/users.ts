@@ -14,13 +14,28 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     };
 
     try {
-      // Try to fetch from users table first
+      // Fetch users with download and purchase information
       const userResults = await env.DB.prepare(`
         SELECT 
-          id, email, name, isActive, isPremium, 
-          registrationDate, lastLoginAt, createdAt
-        FROM users 
-        ORDER BY createdAt DESC
+          u.id, 
+          u.email, 
+          u.name, 
+          u.role,
+          u.created_at,
+          u.is_premium,
+          u.premium_activated_at,
+          u.total_spent,
+          u.total_orders,
+          u.extension_activated,
+          COUNT(DISTINCT d.id) as trial_downloads,
+          COUNT(DISTINCT o.id) as purchase_count,
+          MAX(d.created_at) as last_download,
+          MAX(o.created_at) as last_purchase
+        FROM users u
+        LEFT JOIN user_downloads d ON u.id = d.user_id
+        LEFT JOIN orders o ON u.id = o.customer_id AND o.status = 'completed'
+        GROUP BY u.id
+        ORDER BY u.created_at DESC
       `).all();
       users = userResults.results || [];
 
@@ -28,15 +43,16 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       const statsResult = await env.DB.prepare(`
         SELECT 
           COUNT(*) as totalUsers,
-          COUNT(CASE WHEN isActive = 1 THEN 1 END) as activeUsers,
-          COUNT(CASE WHEN isPremium = 1 THEN 1 END) as premiumUsers
-        FROM users
+          COUNT(CASE WHEN is_premium = 1 THEN 1 END) as premiumUsers,
+          COUNT(DISTINCT d.user_id) as trialUsers
+        FROM users u
+        LEFT JOIN user_downloads d ON u.id = d.user_id
       `).first();
       
       if (statsResult) {
         stats = {
           totalUsers: Number(statsResult.totalUsers) || 0,
-          activeUsers: Number(statsResult.activeUsers) || 0,
+          activeUsers: Number(statsResult.trialUsers) || 0,
           premiumUsers: Number(statsResult.premiumUsers) || 0
         };
       }

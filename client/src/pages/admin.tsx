@@ -18,6 +18,7 @@ import { CustomerManager } from "@/components/admin/CustomerManager";
 import AdminAffiliates from "./admin-affiliates";
 import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
 import { PurchaseManagement } from "@/components/admin/PurchaseManagement";
+import { UsersManagement } from "@/components/admin/UsersManagement";
 import {
   DollarSign,
   ShoppingCart,
@@ -2470,7 +2471,7 @@ export default function Admin() {
           )}
 
           {/* Tab Content based on activeTab */}
-          {activeTab === 'users' && <UserManagementTab />}
+          {activeTab === 'users' && <UsersManagement />}
           
           {activeTab === 'affiliates' && <AdminAffiliates />}
           

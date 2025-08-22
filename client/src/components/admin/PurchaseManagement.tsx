@@ -300,13 +300,12 @@ export function PurchaseManagement() {
                     </div>
                   </div>
 
-                  {order.activation_code && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-800">
-                        <strong>Activation Code:</strong> {order.activation_code}
-                      </p>
-                    </div>
-                  )}
+                  {/* Show version type instead of activation code */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-gray-700">
+                      <strong>Version:</strong> {order.product_id === 'trial' ? 'Trial Version' : 'Premium Version'}
+                    </p>
+                  </div>
 
                   <div className="flex gap-2">
                     <Dialog>

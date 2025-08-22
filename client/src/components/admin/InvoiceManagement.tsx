@@ -16,18 +16,21 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Invoice {
   id: number;
-  invoiceNumber: string;
-  customerId: string;
-  customerName: string;
-  customerEmail: string;
-  invoiceDate: string;
-  dueDate: string;
-  subtotal: string;
-  totalAmount: string;
+  invoice_number: string;
+  order_id: number;
+  customer_id: number;
+  customer_name: string;
+  customer_email: string;
+  amount: string;
   currency: string;
+  tax_amount?: string;
   status: string;
-  paidAt?: string;
-  notes?: string;
+  invoice_date: string;
+  due_date?: string;
+  paid_at?: string;
+  created_at: string;
+  product_id: string;
+  payment_method: string;
 }
 
 interface InvoiceSettings {
@@ -54,9 +57,9 @@ export function InvoiceManagement() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
-  // Fetch all invoices
+  // Fetch all invoices for admin
   const { data: invoices = [], isLoading: loadingInvoices } = useQuery<Invoice[]>({
-    queryKey: ['/api/invoices'],
+    queryKey: ['/api/admin/invoices'],
   });
 
   // Fetch invoice settings
@@ -399,20 +402,20 @@ export function InvoiceManagement() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg font-semibold">
-                      Invoice #{invoice.invoiceNumber}
+                      Invoice #{invoice.invoice_number}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-4 mt-2">
                       <span className="flex items-center gap-1">
                         <User className="h-4 w-4" />
-                        {invoice.customerName}
+                        {invoice.customer_name}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(invoice.invoiceDate), 'MMM dd, yyyy')}
+                        {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4" />
-                        {invoice.currency.toUpperCase()} {parseFloat(invoice.totalAmount).toFixed(2)}
+                        {invoice.currency.toUpperCase()} {parseFloat(invoice.amount).toFixed(2)}
                       </span>
                     </CardDescription>
                   </div>
@@ -425,14 +428,22 @@ export function InvoiceManagement() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Email:</span> {invoice.customerEmail}
+                      <span className="font-medium">Email:</span> {invoice.customer_email}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Due Date:</span> {format(new Date(invoice.dueDate), 'MMM dd, yyyy')}
+                      <span className="font-medium">Product:</span> {invoice.product_id === 'trial' ? 'Trial Version' : 'Premium Extension'}
                     </p>
-                    {invoice.paidAt && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Payment:</span> {invoice.payment_method}
+                    </p>
+                    {invoice.due_date && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Due Date:</span> {format(new Date(invoice.due_date), 'MMM dd, yyyy')}
+                      </p>
+                    )}
+                    {invoice.paid_at && (
                       <p className="text-sm text-green-600 dark:text-green-400">
-                        <span className="font-medium">Paid on:</span> {format(new Date(invoice.paidAt), 'MMM dd, yyyy')}
+                        <span className="font-medium">Paid on:</span> {format(new Date(invoice.paid_at), 'MMM dd, yyyy')}
                       </p>
                     )}
                   </div>
@@ -440,7 +451,7 @@ export function InvoiceManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => downloadPDF(invoice.id, invoice.invoiceNumber)}
+                      onClick={() => downloadPDF(invoice.id, invoice.invoice_number)}
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
