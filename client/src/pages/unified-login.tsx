@@ -188,7 +188,7 @@ export default function UnifiedLogin() {
 
   // Registration mutation
   const registrationMutation = useMutation({
-    mutationFn: async (userData: { email: string; password: string; name: string; captchaId: string; captchaAnswer: string }) => {
+    mutationFn: async (userData: { email: string; password: string; name: string; recaptchaToken?: string | null }) => {
       const response = await apiRequest("POST", "/api/auth/register", userData);
       if (!response.ok) {
         const error = await response.json();
@@ -238,8 +238,7 @@ export default function UnifiedLogin() {
       email: regEmail,
       password: regPassword,
       name: regName,
-      captchaId: "", // Skip CAPTCHA for now
-      captchaAnswer: ""
+      recaptchaToken
     });
   };
 
