@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ChatBot } from "@/components/ChatBot";
-import { HeroPrice, CardPrice } from "@/components/PriceDisplay";
+import { CardPrice } from "@/components/PriceDisplay";
 import { CountdownBanner } from "@/components/CountdownBanner";
 import { AnnouncementBadge } from "@/components/AnnouncementBadge";
 import { 
@@ -19,11 +19,9 @@ import {
   Star, 
   Globe, 
   Play, 
-  List,
   Check,
   ShoppingCart,
   Mail,
-  Phone,
   MessageCircle,
   ChevronDown,
   ChevronUp,
@@ -1133,30 +1131,22 @@ export default function Home() {
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>OCUS Username</label>
                             <input 
                               type="text" 
-                              style={{
-                                width: '100%',
-                                padding: '6px 8px',
-                                border: '1px solid #e1e5e9',
-                                borderRadius: '3px',
-                                fontSize: '11px',
-                                boxSizing: 'border-box'
-                              }}
+                              className="extension-input"
                               value="photographer@example.com"
                               readOnly
+                              title="OCUS Username"
+                              placeholder="Enter your OCUS username"
+                              aria-label="OCUS Username"
                             />
                           </div>
                           <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>OCUS Password</label>
                             <input 
                               type="password" 
-                              style={{
-                                width: '100%',
-                                padding: '6px 8px',
-                                border: '1px solid #e1e5e9',
-                                borderRadius: '3px',
-                                fontSize: '11px',
-                                boxSizing: 'border-box'
-                              }}
+                              className="extension-input"
+                              title="OCUS Password"
+                              placeholder="Enter your OCUS password"
+                              aria-label="OCUS Password"
                               value="••••••••"
                               readOnly
                             />
@@ -1213,52 +1203,24 @@ export default function Home() {
                             </div>
                           </div>
                         </div>
-                        <div style={{ padding: '12px', background: 'white', color: '#333' }}>
-                          <div style={{ marginBottom: '8px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>Refresh Interval (sec)</label>
+                        <div className="extension-panel-settings">
+                          <div className="extension-input-group">
+                            <label className="extension-input-label">Refresh Interval (sec)</label>
                             <input 
                               type="number" 
-                              style={{
-                                width: '100%',
-                                padding: '6px 8px',
-                                border: '1px solid #e1e5e9',
-                                borderRadius: '3px',
-                                fontSize: '11px',
-                                boxSizing: 'border-box'
-                              }}
+                              className="extension-input"
                               value="30"
                               readOnly
+                              title="Refresh Interval (seconds)"
+                              placeholder="Enter refresh interval"
+                              aria-label="Refresh Interval in seconds"
                             />
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '500', color: '#666' }}>Show Notifications</label>
-                            <div style={{
-                              position: 'relative',
-                              display: 'inline-block',
-                              width: '40px',
-                              height: '22px'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                cursor: 'pointer',
-                                top: '0',
-                                left: '0',
-                                right: '0',
-                                bottom: '0',
-                                background: '#2196F3',
-                                borderRadius: '22px',
-                                transition: 'all 0.3s ease'
-                              }}>
-                                <div style={{
-                                  position: 'absolute',
-                                  height: '16px',
-                                  width: '16px',
-                                  right: '3px',
-                                  bottom: '3px',
-                                  background: 'white',
-                                  borderRadius: '50%',
-                                  transition: 'all 0.3s ease'
-                                }}></div>
+                          <div className="extension-settings-row">
+                            <label className="extension-label">Show Notifications</label>
+                            <div className="extension-toggle-container">
+                              <div className="extension-toggle-background">
+                                <div className="extension-toggle-slider"></div>
                               </div>
                             </div>
                           </div>

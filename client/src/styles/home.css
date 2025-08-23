@@ -1,0 +1,591 @@
+/* Extension Input Styles */
+.extension-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e1e5e9;
+  border-radius: 3px;
+  font-size: 11px;
+  box-sizing: border-box;
+}
+
+/* Extension Panel Styles */
+.extension-panel-container {
+  padding: 12px;
+  background: white;
+  color: #333;
+}
+
+.extension-panel-section {
+  margin-bottom: 8px;
+}
+
+.extension-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+}
+
+.extension-settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.extension-toggle-container {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.extension-toggle-background {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #2196F3;
+  border-radius: 22px;
+  transition: 0.4s;
+}
+
+.extension-toggle-slider {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 20px;
+  bottom: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.4s;
+}
+
+/* Mission Monitor Styles */
+.mission-monitor-header {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mission-monitor-content {
+  padding: 12px;
+  background: white;
+  color: #333;
+  border-radius: 0 0 4px 4px;
+}
+
+.mission-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mission-stat-item {
+  text-align: center;
+  padding: 6px;
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.mission-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+  margin-bottom: 2px;
+}
+
+.mission-stat-label {
+  font-size: 9px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mission-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.mission-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #28a745, #20c997);
+  width: 68%;
+  transition: width 0.3s ease;
+}
+
+.mission-status-text {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+}
+
+/* Floating Panel Styles */
+.floating-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 280px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+}
+
+.floating-panel.visible {
+  transform: translateX(0);
+}
+
+.floating-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.floating-panel-title {
+  color: #4fc3f7;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.floating-panel-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.floating-panel-stat {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.floating-panel-stat-number {
+  display: block;
+  color: #4fc3f7;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.floating-panel-stat-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.floating-panel-timer {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.floating-panel-timer-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.floating-panel-timer-countdown {
+  color: #4fc3f7;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.floating-panel-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.floating-panel-button {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.floating-panel-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Extension Popup Styles */
+.extension-popup-container {
+  width: 320px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.extension-popup-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px;
+  text-align: center;
+}
+
+.extension-popup-title {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.extension-popup-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  margin: 0;
+}
+
+.extension-popup-content {
+  padding: 16px;
+}
+
+.extension-popup-section {
+  margin-bottom: 16px;
+}
+
+.extension-popup-section-title {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.extension-popup-input-group {
+  margin-bottom: 12px;
+}
+
+.extension-popup-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.extension-popup-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.extension-popup-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.extension-popup-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.extension-popup-toggle-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+}
+
+.extension-popup-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.extension-popup-stat {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.extension-popup-stat-number {
+  display: block;
+  color: #4fc3f7;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.extension-popup-stat-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+}
+
+.extension-popup-footer {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.extension-popup-status {
+  color: #4fc3f7;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Video Modal Styles */
+.video-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.video-modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 800px;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.video-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.8);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  transition: all 0.3s ease;
+}
+
+.video-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.video-modal-video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Mobile Menu Styles */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background: white;
+  z-index: 10000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu.open {
+  transform: translateX(0);
+}
+
+.mobile-menu-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobile-menu-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.mobile-menu-content {
+  padding: 20px;
+}
+
+/* Form validation styles */
+.form-error {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.form-success {
+  color: #28a745;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.input-error {
+  border-color: #dc3545;
+}
+
+.input-success {
+  border-color: #28a745;
+}
+
+/* Scroll to Top Button */
+.scroll-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.scroll-to-top:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+
+/* Extension settings styles */
+.extension-settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.extension-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+}
+
+.extension-toggle-container {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.extension-toggle-background {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #2196F3;
+  border-radius: 22px;
+  transition: 0.4s;
+}
+
+.extension-toggle-slider {
+  position: absolute;
+  content: '';
+  height: 18px;
+  width: 18px;
+  left: 20px;
+  bottom: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.4s;
+}
+
+/* Extension panel styles */
+.extension-panel-settings {
+  padding: 12px;
+  background: white;
+  color: #333;
+}
+
+.extension-input-group {
+  margin-bottom: 8px;
+}
+
+.extension-input-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .floating-panel-container {
+    width: 260px;
+    right: 10px;
+    top: 10px;
+  }
+  
+  .extension-popup-container {
+    width: 300px;
+  }
+  
+  .mission-monitor-container {
+    margin: 0 8px 8px 8px;
+    padding: 8px;
+  }
+  
+  .mission-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
