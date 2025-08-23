@@ -1313,16 +1313,12 @@ export default function Home() {
                             <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>Close Delay (sec)</label>
                             <input 
                               type="number" 
-                              style={{
-                                width: '100%',
-                                padding: '6px 8px',
-                                border: '1px solid #e1e5e9',
-                                borderRadius: '3px',
-                                fontSize: '11px',
-                                boxSizing: 'border-box'
-                              }}
+                              className="extension-input"
                               value="2"
                               readOnly
+                              title="Close Delay (seconds)"
+                              placeholder="Enter close delay"
+                              aria-label="Close Delay in seconds"
                             />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1421,17 +1417,12 @@ export default function Home() {
                             <div style={{ display: 'flex', marginBottom: '6px' }}>
                               <input 
                                 type="number" 
-                                style={{
-                                  flex: '1',
-                                  padding: '4px 6px',
-                                  border: '1px solid #e1e5e9',
-                                  borderRadius: '3px',
-                                  fontSize: '10px',
-                                  boxSizing: 'border-box',
-                                  marginRight: '6px'
-                                }}
+                                className="extension-input-small"
                                 value="5"
                                 readOnly
+                                title="Custom refresh interval"
+                                placeholder="Enter seconds"
+                                aria-label="Custom refresh interval in seconds"
                               />
                               <button style={{ 
                                 padding: '4px 8px', 
@@ -2500,6 +2491,8 @@ export default function Home() {
               <button 
                 onClick={() => setShowVideoPopup(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 group"
+                title="Close video popup"
+                aria-label="Close video popup"
               >
                 <div className="w-6 h-6 relative">
                   <div className="absolute inset-0 w-6 h-6 opacity-60 group-hover:opacity-100 transition-opacity">
