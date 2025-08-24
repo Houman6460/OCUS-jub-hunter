@@ -253,8 +253,9 @@ export function UserPurchases() {
   const queryClient = useQueryClient();
 
   const handlePurchaseSuccess = () => {
-    // Refresh orders list after successful purchase
+    // Refresh orders and invoices list after successful purchase
     queryClient.invalidateQueries({ queryKey: ['/api/me/orders'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/me/invoices'] });
     toast({
       title: "Purchase Complete",
       description: "Your order has been processed. Premium extension download is now available!",
