@@ -5,7 +5,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  hashedPassword?: string;
+  password?: string;
 }
 
 export class UserStorage {
@@ -37,9 +37,9 @@ export class UserStorage {
     const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
-        INSERT INTO users (email, name)
-        VALUES (?, ?)
-      `).bind(email, name).run();
+        INSERT INTO users (email, name, password)
+        VALUES (?, ?, ?)
+      `).bind(email, name, hashedPassword).run();
 
       const userId = result.meta.last_row_id;
       if (!userId) {
@@ -70,11 +70,11 @@ export class UserStorage {
     }
   }
 
-    async validateUser(email: string, password: string): Promise<Omit<User, 'hashedPassword'> | null> {
+    async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
     try {
       const user = await this.getUserByEmail(email);
-      if (user) {
-        const { hashedPassword, ...userWithoutPassword } = user;
+      if (user && user.password && bcrypt.compareSync(password, user.password)) {
+        const { password: _, ...userWithoutPassword } = user;
         return userWithoutPassword;
       }
       return null;
