@@ -4,13 +4,14 @@ import bcrypt from 'bcryptjs';
 export interface User {
   id: number;
   email: string;
-  password?: string; // Optional for social logins
+  hashedPassword?: string; // Optional for social logins
   name: string;
-  role: 'customer' | 'admin';
-  provider?: 'google' | 'facebook' | 'github';
-  provider_id?: string;
-  created_at: string;
-  updated_at: string;
+  isActive?: boolean;
+  isPremium?: boolean;
+  registrationDate: string;
+  lastLoginAt?: string;
+  activationToken?: string;
+  passwordResetToken?: string;
 }
 
 export class UserStorage {
@@ -42,9 +43,9 @@ export class UserStorage {
     const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
-        INSERT INTO users (email, password, name, role, created_at, updated_at)
-        VALUES (?, ?, ?, 'customer', ?, ?)
-      `).bind(email, hashedPassword, name, now, now).run();
+        INSERT INTO users (email, name, hashedPassword, registrationDate)
+        VALUES (?, ?, ?, ?)
+      `).bind(email, name, hashedPassword, now).run();
 
       const userId = result.meta.last_row_id;
       if (!userId) {
@@ -78,8 +79,8 @@ export class UserStorage {
     async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
     try {
       const user = await this.getUserByEmail(email);
-      if (user && user.password && bcrypt.compareSync(password, user.password)) {
-        const { password, ...userWithoutPassword } = user;
+      if (user && user.hashedPassword && bcrypt.compareSync(password, user.hashedPassword)) {
+        const { hashedPassword, ...userWithoutPassword } = user;
         return userWithoutPassword;
       }
       return null;
