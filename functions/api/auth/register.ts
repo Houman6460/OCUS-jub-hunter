@@ -25,6 +25,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     const userStorage = new UserStorage(env.DB);
+    await userStorage.initializeUsers();
     const existingUser = await userStorage.getUserByEmail(email);
 
     if (existingUser) {
