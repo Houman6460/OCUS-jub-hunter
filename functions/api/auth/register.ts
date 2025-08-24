@@ -45,7 +45,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return jsonResponse({ success: false, message: 'An account with this email already exists.' }, 409);
     }
 
-    return jsonResponse({ success: false, message: 'Registration failed.' }, 500);
+    return jsonResponse({ success: false, message: 'Registration failed.', error: errorMessage }, 500);
   }
 };
 
