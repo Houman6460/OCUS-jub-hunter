@@ -535,103 +535,34 @@ export default function Home() {
               {/* Floating OCUS Hunter Panel - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
-                <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                  {/* Exact Panel Design from Extension Code */}
-                  <div className="transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 overflow-y-auto" style={{
-                    width: '320px',
-                    height: '700px',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    border: '1px solid rgba(71, 85, 105, 0.4)',
-                    borderRadius: '12px',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(16px)',
-                    overflow: 'auto',
-                    margin: '0 auto'
-                  }}>
+                <div className="flex justify-center flex-1 hunter-panel-font">
+                  <div className="hunter-panel-container transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300">
                     {/* Header */}
-                    <div style={{
-                      cursor: 'move',
-                      userSelect: 'none',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '16px 20px',
-                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                      color: 'white',
-                      borderRadius: '12px 12px 0 0',
-                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
-                    }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        fontWeight: '600',
-                        fontSize: '15px' 
-                      }}>
-                        <span style={{ fontSize: '18px' }}>🎯</span>
+                    <div className="hunter-panel-header">
+                      <div className="hunter-panel-title">
+                        <span aria-label="Target icon" role="img">🎯</span>
                         <span>OCUS Hunter</span>
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button style={{ 
-                          background: 'rgba(255, 255, 255, 0.2)', 
-                          border: 'none', 
-                          color: 'white', 
-                          fontSize: '16px', 
-                          cursor: 'pointer', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px',
-                          lineHeight: '1',
-                          transition: 'all 0.2s ease'
-                        }}>−</button>
-                        <button style={{ 
-                          background: 'rgba(255, 255, 255, 0.2)', 
-                          border: 'none', 
-                          color: 'white', 
-                          fontSize: '16px', 
-                          cursor: 'pointer', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px',
-                          lineHeight: '1',
-                          transition: 'all 0.2s ease'
-                        }}>×</button>
+                      <div className="hunter-panel-controls">
+                        <button aria-label="Minimize panel">−</button>
+                        <button aria-label="Close panel">×</button>
                       </div>
                     </div>
                     
                     {/* Body */}
-                    <div style={{ 
-                      padding: '20px', 
-                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                      color: '#e2e8f0' 
-                    }}>
+                    <div className="hunter-panel-body">
                       {/* Timer Section */}
-                      <div style={{ marginBottom: '20px' }}>
-                        {/* Timer Display */}
-                        <div style={{ 
-                          textAlign: 'center',
-                          marginBottom: '16px',
-                          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                          padding: '16px',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(71, 85, 105, 0.3)'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-                            <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#60a5fa', lineHeight: '1' }}>95</span>
-                            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Logins</span>
+                      <div className="hunter-timer-section">
+                        <div className="hunter-timer-display">
+                          <div className="hunter-timer-value">
+                            <span>95</span>
+                            <span className="hunter-timer-label">Logins</span>
                           </div>
                         </div>
                       </div>
                       
                       {/* Status Message */}
-                      <div style={{ 
-                        textAlign: 'center',
-                        fontSize: '14px',
-                        color: '#94a3b8',
-                        background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(71, 85, 105, 0.3)',
-                        padding: '12px',
-                        marginTop: '16px'
-                      }}>
+                      <div className="hunter-status-message">
                         Ready
                       </div>
                     </div>
@@ -651,268 +582,89 @@ export default function Home() {
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
                 <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                   {/* Exact Popup Design from popup.html - Same Height as Floating Panel */}
-                  <div 
-                    className="transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 overflow-y-auto" 
-                    style={{
-                      width: '320px',
-                      height: '700px',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(71, 85, 105, 0.4)'
-                  }}
-                    onMouseEnter={(e) => {
-                      const scrollContainer = e.currentTarget;
-                      scrollContainer.dataset.userScrolled = 'false';
-                      const scrollToBottom = () => {
-                        if (scrollContainer.dataset.userScrolled === 'false') {
-                          scrollContainer.scrollTo({
-                            top: scrollContainer.scrollHeight,
-                            behavior: 'smooth'
-                          });
-                        }
-                      };
-                      setTimeout(scrollToBottom, 100);
-                    }}
-                    onMouseLeave={(e) => {
-                      const scrollContainer = e.currentTarget;
-                      scrollContainer.dataset.userScrolled = 'false';
-                      const scrollToTop = () => {
-                        if (scrollContainer.dataset.userScrolled === 'false') {
-                          scrollContainer.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                          });
-                        }
-                      };
-                      setTimeout(scrollToTop, 100);
-                    }}
-                    onScroll={(e) => {
-                      // Mark as user-scrolled to interrupt automatic scrolling
-                      const scrollContainer = e.currentTarget;
-                      scrollContainer.dataset.userScrolled = 'true';
-                    }}
-                  >
-                    {/* Header - Compact */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '16px 20px',
-                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                      color: 'white',
-                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
-                    }}>
-                      <h1 style={{ 
-                        margin: '0', 
-                        fontSize: '16px', 
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        <span style={{ fontSize: '18px' }}>🎯</span>
-                        OCUS Unified Extension
-                      </h1>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '10px',
-                        fontWeight: '600',
-                        background: '#4CAF50',
-                        color: 'white',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>Premium</span>
-                    </div>
-                    
-                    {/* Body */}
-                    <div style={{ color: '#e2e8f0' }}>
-                      {/* Premium Status Section - Compact */}
-                      <div style={{ 
-                        margin: '16px',
-                        border: '1px solid rgba(71, 85, 105, 0.3)',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
-                      }}>
-                        <div style={{
-                          padding: '12px 16px',
-                          fontWeight: '600',
-                          fontSize: '13px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
-                          color: 'white'
-                        }}>
-                          <span>Premium Status</span>
-                          <span style={{
-                            padding: '4px 10px',
-                            borderRadius: '12px',
-                            fontSize: '10px',
-                            fontWeight: 'bold',
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            color: 'white',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)'
-                          }}>Active</span>
-                        </div>
-                        <div style={{ padding: '16px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
-                          <div style={{ 
-                            background: 'rgba(16, 185, 129, 0.1)', 
-                            padding: '12px', 
-                            borderRadius: '6px', 
-                            marginBottom: '12px', 
-                            borderLeft: '3px solid #10b981'
-                          }}>
-                            <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: '#6ee7b7', fontSize: '13px' }}>✓ Premium Version Active</p>
-                            <p style={{ margin: '0', color: '#a7f3d0', fontSize: '12px' }}>Enjoy unlimited mission acceptance!</p>
-                          </div>
-                          <div style={{
-                            fontSize: '12px',
-                            color: '#e2e8f0',
-                            display: 'grid',
-                            gap: '6px'
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Status:</span>
-                              <span style={{ color: '#6ee7b7', fontWeight: 'bold' }}>✓ Premium</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Usage:</span>
-                              <span style={{ fontWeight: 'bold' }}>Unlimited</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Version:</span>
-                              <span>2.1.0-PREMIUM</span>
-                            </div>
-                          </div>
-                        </div>
+                  <div className="extension-popup-container-showcase">
+                    {/* Header */}
+                    <div className="extension-popup-header-showcase">
+                      <div className="extension-popup-title-container-showcase">
+                        <span role="img" aria-label="Target Icon" className="extension-popup-icon-showcase">🎯</span>
+                        <h1 className="extension-popup-title-showcase">OCUS Unified Extension</h1>
                       </div>
-                      
-                      {/* Auto Login Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid rgba(71, 85, 105, 0.3)',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
-                      }}>
-                        <div style={{
-                          padding: '12px 16px',
-                          fontWeight: '600',
-                          fontSize: '13px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
-                          color: 'white'
-                        }}>
-                          <span>Auto Login</span>
-                          <div className="toggle-switch">
-                            <input type="checkbox" id="auto-login-toggle-showcase" className="toggle-switch-checkbox" defaultChecked />
-                            <label htmlFor="auto-login-toggle-showcase" className="toggle-switch-label">
-                              <span className="toggle-switch-slider"></span>
-                              <span className="toggle-switch-knob"></span>
-                            </label>
-                          </div>
+                      <span className="extension-popup-premium-badge-showcase">PREMIUM</span>
+                    </div>
+
+                    {/* Body */}
+                    <div className="extension-popup-body-showcase">
+                      {/* Premium Status Section */}
+                      <div className="extension-popup-section-showcase">
+                        <div className="extension-popup-section-header-showcase">
+                          <h2 className="extension-popup-section-title-showcase">Premium Status</h2>
+                          <span className="extension-popup-status-badge-showcase">PREMIUM</span>
                         </div>
-                        <div style={{ padding: '16px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#e2e8f0' }}>
-                          <div style={{ marginBottom: '10px' }}>
-                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>OCUS Username</label>
-                            <input 
-                              type="text" 
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid rgba(71, 85, 105, 0.3)',
-                                borderRadius: '6px',
-                                fontSize: '13px',
-                                boxSizing: 'border-box',
-                                background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                                color: 'white'
-                              }}
-                              value="photographer@example.com"
-                              readOnly
-                            />
+                        <div className="extension-popup-section-content-showcase">
+                          <div className="premium-active-banner-showcase">
+                            <span role="img" aria-label="Checkmark Icon" className="premium-active-icon-showcase">✓</span>
+                            <div>
+                              <p className="premium-active-title-showcase">Premium Version Active</p>
+                              <p className="premium-active-subtitle-showcase">Enjoy unlimited mission acceptance!</p>
+                            </div>
                           </div>
-                          <div>
-                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>OCUS Password</label>
-                            <input 
-                              type="password" 
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid rgba(71, 85, 105, 0.3)',
-                                borderRadius: '6px',
-                                fontSize: '13px',
-                                boxSizing: 'border-box',
-                                background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                                color: 'white'
-                              }}
-                              value="••••••••"
-                              readOnly
-                            />
+                          <div className="premium-details-grid-showcase">
+                            <div className="premium-detail-item-showcase">
+                              <span>Status:</span>
+                              <span className="premium-detail-value-showcase premium-active-text-showcase">✓ Premium</span>
+                            </div>
+                            <div className="premium-detail-item-showcase">
+                              <span>Usage:</span>
+                              <span className="premium-detail-value-showcase">Unlimited</span>
+                            </div>
+                            <div className="premium-detail-item-showcase">
+                              <span>Version:</span>
+                              <span className="premium-detail-value-showcase">2.1.0-PREMIUM</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Mission Monitor Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid rgba(71, 85, 105, 0.3)',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
-                      }}>
-                        <div style={{
-                          padding: '12px 16px',
-                          fontWeight: '600',
-                          fontSize: '13px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
-                          color: 'white'
-                        }}>
-                          <span>Mission Monitor</span>
-                          <div className="toggle-switch">
-                            <input type="checkbox" id="mission-monitor-toggle-showcase" className="toggle-switch-checkbox" defaultChecked />
-                            <label htmlFor="mission-monitor-toggle-showcase" className="toggle-switch-label">
-                              <span className="toggle-switch-slider"></span>
-                              <span className="toggle-switch-knob"></span>
-                            </label>
+                      {/* Auto Login Configuration Section */}
+                      <div className="extension-popup-section-showcase">
+                        <div className="extension-popup-section-header-showcase">
+                          <h2 className="extension-popup-section-title-showcase">Auto Login Configuration</h2>
+                          <div className="toggle-switch-showcase">
+                            <input type="checkbox" id="auto-login-toggle-showcase" className="toggle-switch-checkbox-showcase" defaultChecked />
+                            <label htmlFor="auto-login-toggle-showcase" className="toggle-switch-label-showcase"></label>
                           </div>
                         </div>
-                        <div style={{ padding: '16px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#e2e8f0' }}>
-                          <div style={{ marginBottom: '10px' }}>
-                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>Refresh Interval (sec)</label>
-                            <input 
-                              type="number" 
-                              style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid rgba(71, 85, 105, 0.3)',
-                                borderRadius: '6px',
-                                fontSize: '13px',
-                                boxSizing: 'border-box',
-                                background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                                color: 'white'
-                              }}
-                              value="30"
-                              readOnly
-                            />
+                        <div className="extension-popup-section-content-showcase">
+                          <div className="input-group-showcase">
+                            <label htmlFor="ocus-username-showcase" className="input-label-showcase">OCUS Username</label>
+                            <input type="text" id="ocus-username-showcase" className="input-field-showcase" value="houman.ghavamzadeh@gmail.com" readOnly />
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label style={{ fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>Show Notifications</label>
-                            <div className="toggle-switch">
-                              <input type="checkbox" id="notifications-toggle-showcase" className="toggle-switch-checkbox" defaultChecked />
-                              <label htmlFor="notifications-toggle-showcase" className="toggle-switch-label">
-                                <span className="toggle-switch-slider"></span>
-                                <span className="toggle-switch-knob"></span>
-                              </label>
+                          <div className="input-group-showcase">
+                            <label htmlFor="ocus-password-showcase" className="input-label-showcase">OCUS Password</label>
+                            <input type="password" id="ocus-password-showcase" className="input-field-showcase" value="••••••••" readOnly />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mission Monitor Configuration Section */}
+                      <div className="extension-popup-section-showcase">
+                        <div className="extension-popup-section-header-showcase">
+                          <h2 className="extension-popup-section-title-showcase">Mission Monitor Configuration</h2>
+                          <div className="toggle-switch-showcase">
+                            <input type="checkbox" id="mission-monitor-toggle-showcase" className="toggle-switch-checkbox-showcase" defaultChecked />
+                            <label htmlFor="mission-monitor-toggle-showcase" className="toggle-switch-label-showcase"></label>
+                          </div>
+                        </div>
+                        <div className="extension-popup-section-content-showcase">
+                          <div className="input-group-showcase">
+                            <label htmlFor="refresh-interval-showcase" className="input-label-showcase">Refresh Interval (sec)</label>
+                            <input type="text" id="refresh-interval-showcase" className="input-field-showcase" value="30" readOnly />
+                          </div>
+                          <div className="toggle-row-showcase">
+                            <label htmlFor="show-notifications-toggle-showcase" className="input-label-showcase">Show Notifications</label>
+                            <div className="toggle-switch-showcase">
+                              <input type="checkbox" id="show-notifications-toggle-showcase" className="toggle-switch-checkbox-showcase" defaultChecked />
+                              <label htmlFor="show-notifications-toggle-showcase" className="toggle-switch-label-showcase"></label>
                             </div>
                           </div>
                         </div>
