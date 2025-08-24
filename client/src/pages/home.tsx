@@ -59,25 +59,6 @@ export default function Home() {
   // Animation for hero section and scroll detection
   useEffect(() => {
     setIsVisible(true);
-    
-    // Animate counter stats
-    const interval = setInterval(() => {
-      setCurrentStat(prev => ({
-        jobs: prev.jobs < 239 ? prev.jobs + 3 : 239,
-        earnings: prev.earnings < 8500 ? prev.earnings + 150 : 8500
-      }));
-    }, 50);
-
-    // Scroll detection for floating button
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('scroll', handleScroll);
-    };
   }, []);
 
   // Keyboard support for video modal
@@ -532,20 +513,37 @@ export default function Home() {
           </div>
 
           <div className="mb-16">
-            <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto items-start">
-              
-              {/* Floating OCUS Hunter Panel - Exact Match */}
-              <div className="flex flex-col h-full">
-                <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
-                <div className="flex justify-center flex-1">
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              <h3 className="text-xl font-bold text-slate-900 text-center md:col-span-1">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
+              <h3 className="text-xl font-bold text-slate-900 text-center md:col-span-1">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 items-start mt-4">
+              {/* Left Image Panel */}
+              <div className="flex justify-center items-start max-w-xs mx-auto">
+                <img 
+                  src={ocusHunterNew} 
+                  alt="OCUS Hunter Panel Preview" 
+                  className="rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+
+              {/* Right Image Panel */}
+              <div className="flex justify-center items-start max-w-xs mx-auto overflow-hidden rounded-lg">
+                <div className="image-scroll-container rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
                   <img 
-                    src={ocusHunterNew} 
-                    alt="OCUS Hunter Panel Preview" 
-                    className="rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
+                    src={ocusUnifiedExtensionNew} 
+                    alt="OCUS Unified Extension Panel Preview" 
+                    className="image-scroll-content"
                   />
                 </div>
-                
-                <div className="bg-blue-50 rounded-lg p-4 mt-4">
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 items-start mt-4">
+              {/* Left Text Box */}
+              <div className="max-w-xs mx-auto w-full">
+                <div className="bg-blue-50 rounded-lg p-4">
                   <h4 className="font-semibold text-blue-900 mb-2 text-sm">Floating Control Panel</h4>
                   <p className="text-blue-800 text-xs leading-relaxed">
                     {t?.floatingPanelDescription || 'The floating panel gives you at-a-glance status updates. It shows login counts, mission status, and a countdown timer for the next refresh, ensuring you are always informed without interrupting your workflow.'}
@@ -553,22 +551,12 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Extension Popup - Exact Match */}
-              <div className="flex flex-col h-full">
-                <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
-                <div className="flex justify-center flex-1">
-                  <div className="image-scroll-container rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
-                    <img 
-                      src={ocusUnifiedExtensionNew} 
-                      alt="OCUS Unified Extension Panel Preview" 
-                      className="image-scroll-content"
-                    />
-                  </div>
-                </div>
-                <div className="bg-green-50 rounded-lg p-4 mt-4">
+              {/* Right Text Box */}
+              <div className="max-w-xs mx-auto w-full">
+                <div className="bg-green-50 rounded-lg p-4">
                   <h4 className="font-semibold text-green-900 mb-2 text-sm">Advanced Popup Interface</h4>
                   <p className="text-green-800 text-xs leading-relaxed">
-                    {t?.extensionPopupDescription || 'The extension popup provides full control. It shows your premium license status, version, and allows you to configure auto-login credentials (securely stored) and mission monitoring settings. The UI is designed for clarity and ease of use, ensuring you can manage your job hunting automation effortlessly.'}
+                    {t?.extensionPopupDescription || 'The extension popup is your command center. It provides detailed information about your missions, auto-login credentials, and configuration settings for refresh intervals and notifications.'}
                   </p>
                 </div>
               </div>

@@ -1030,16 +1030,16 @@
 }
 
 .image-scroll-container {
-  height: 560px; /* Match the height of the other panel image */
   overflow: hidden;
   position: relative;
   cursor: pointer;
   border-radius: 0.5rem; /* from rounded-lg */
+  height: 520px; /* Fixed height to match left panel image */
 }
 
 .image-scroll-content {
   width: 100%;
-  height: auto;
+  display: block;
   transition: transform 2s ease-in-out;
 }
 
