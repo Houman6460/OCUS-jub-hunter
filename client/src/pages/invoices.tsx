@@ -39,7 +39,7 @@ export default function Invoices() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error downloading PDF:', error instanceof Error ? error.message : error);
     }
   };
 

@@ -62,7 +62,7 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoicePreviewProps
         throw new Error('PDF generation failed');
       }
     } catch (error) {
-      console.error('Invoice download error:', error);
+      console.error('Invoice download error:', error instanceof Error ? error.message : error);
       toast({
         title: "Download Failed",
         description: "Failed to generate invoice PDF. Please try again.",

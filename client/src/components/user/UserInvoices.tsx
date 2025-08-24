@@ -93,7 +93,7 @@ export function UserInvoices({ userId }: UserInvoicesProps) {
         throw new Error('PDF generation failed');
       }
     } catch (error) {
-      console.error('Invoice download error:', error);
+      console.error('Error generating PDF:', error instanceof Error ? error.message : error);
       toast({
         title: "Download Failed",
         description: "Failed to generate invoice PDF. Please try again.",

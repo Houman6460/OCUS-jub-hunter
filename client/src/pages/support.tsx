@@ -122,7 +122,7 @@ export default function Support() {
         });
         return;
       } catch (error) {
-        console.error('Error parsing admin data:', error);
+        console.error('Error parsing admin data:', error instanceof Error ? error.message : error);
       }
     }
     
@@ -138,7 +138,7 @@ export default function Support() {
           isAdmin: customerData.isAdmin || false
         });
       } catch (error) {
-        console.error('Error parsing customer data:', error);
+        console.error('Error parsing customer data:', error instanceof Error ? error.message : error);
         setUser(null);
       }
     } else {

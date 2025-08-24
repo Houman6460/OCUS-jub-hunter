@@ -101,7 +101,7 @@ export default function PayPalButton({
           await initPayPal();
         }
       } catch (e) {
-        console.error("Failed to load PayPal SDK", e);
+        console.error("Failed to load PayPal SDK", e instanceof Error ? e.message : e);
       }
     };
 
@@ -134,7 +134,7 @@ export default function PayPalButton({
             checkoutOptionsPromise,
           );
         } catch (e) {
-          console.error("PayPal checkout error:", e);
+          console.error("PayPal checkout error:", e instanceof Error ? e.message : e);
         }
       };
 
@@ -150,7 +150,7 @@ export default function PayPalButton({
         }
       };
     } catch (e) {
-      console.error("PayPal initialization error:", e);
+      console.error("PayPal initialization error:", e instanceof Error ? e.message : e);
     }
   };
 

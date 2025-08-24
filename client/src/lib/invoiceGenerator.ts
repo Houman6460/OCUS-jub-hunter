@@ -206,7 +206,7 @@ export const downloadInvoicePDF = async (invoiceData: InvoiceData) => {
     document.body.removeChild(a);
     return true;
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error('Error generating PDF:', error instanceof Error ? error.message : error);
     return false;
   }
 };

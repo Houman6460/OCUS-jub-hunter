@@ -99,7 +99,7 @@ export default function Dashboard() {
               }
             })
             .catch(error => {
-              console.error('Error fetching user profile:', error);
+              console.error('Error fetching user profile:', error instanceof Error ? error.message : error);
               setCustomerData(parsedData);
             });
         } else {
@@ -113,7 +113,7 @@ export default function Dashboard() {
           setShowFirstVisitGuide(true);
         }
       } catch (error) {
-        console.error('Error parsing customer data:', error);
+        console.error('Error parsing customer data:', error instanceof Error ? error.message : error);
         // Clear invalid data
         localStorage.removeItem('customer_data');
         // Create default customer data for testing
@@ -1090,7 +1090,7 @@ function TicketMessages({ ticketId, customerEmail, customerName }: { ticketId?: 
                     </div>
                   );
                 } catch (error) {
-                  console.error('Failed to parse attachments:', msg.attachments, error);
+                  console.error('Failed to parse attachments:', msg.attachments, error instanceof Error ? error.message : error);
                   return null;
                 }
               })()}

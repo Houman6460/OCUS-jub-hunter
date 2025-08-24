@@ -27,14 +27,13 @@ export default function DownloadExtension() {
         alert('Download failed. Please try again.');
       }
     } catch (error) {
-      console.error('Download error:', error);
+      console.error('Download error:', error instanceof Error ? error.message : error);
       alert('Download failed. Please try again.');
     }
     
     setTimeout(() => setDownloadStarted(false), 3000);
   };
 
-  const handleDownload = () => handleVersionDownload("ocus-extension-v2.3.0-VISUAL-PREMIUM-UI.zip");
 
   return (
     <div className="min-h-screen bg-slate-50 py-12">

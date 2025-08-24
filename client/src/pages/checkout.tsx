@@ -23,7 +23,6 @@ import {
   Mail,
   User,
   Loader2,
-  Download,
   Bot,
   Percent
 } from "lucide-react";
@@ -70,7 +69,7 @@ const StripeCheckoutForm = ({ customerData, finalPrice, onSuccess }: { customerD
     setIsProcessing(false);
 
     if (error) {
-      console.error('Payment error:', error);
+      console.error('Payment error:', error.message);
       toast({
         title: "Payment Failed",
         description: error.message,
@@ -103,7 +102,7 @@ const StripeCheckoutForm = ({ customerData, finalPrice, onSuccess }: { customerD
           console.error('Failed to complete order - response not ok:', completeResponse.status);
         }
       } catch (error) {
-        console.error('Failed to complete order:', error);
+        console.error('Failed to complete order:', error instanceof Error ? error.message : error);
       }
       
       toast({
@@ -337,7 +336,7 @@ export default function Checkout() {
           setIsLoading(false);
         })
         .catch((error) => {
-          console.error('Failed to create payment intent:', error);
+          console.error('Failed to create payment intent:', error instanceof Error ? error.message : error);
           setIsLoading(false);
           toast({
             title: "Error",

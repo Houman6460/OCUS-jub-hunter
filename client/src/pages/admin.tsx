@@ -21,7 +21,6 @@ import {
   ShoppingCart,
   Users,
   Star,
-  Settings,
   Upload,
   Plus,
   Edit,
@@ -670,7 +669,7 @@ function AuthenticationSettingsTab() {
       toast({ title: "Success", description: "Authentication settings saved successfully" });
     },
     onError: (error: any) => {
-      console.error('Save auth settings error:', error);
+      console.error('Save auth settings error:', error instanceof Error ? error.message : error);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
@@ -1969,7 +1968,7 @@ function SeoSettingsTab() {
       }
     } catch (error) {
       toast({ title: "Failed to update SEO settings", variant: "destructive" });
-      console.error('SEO settings error:', error);
+      console.error('SEO settings error:', error instanceof Error ? error.message : error);
     } finally {
       setIsUploading(false);
     }

@@ -26,7 +26,7 @@ export default function ExtensionDownloads() {
         throw new Error('Download failed');
       }
     } catch (error) {
-      console.error('Download error:', error);
+      console.error('Download error:', error instanceof Error ? error.message : error);
       alert('Download failed. Please try again.');
     } finally {
       setDownloading(null);

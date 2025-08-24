@@ -88,7 +88,7 @@ export default function UnifiedLogin() {
       const token = await window.grecaptcha.execute(authSettings.recaptchaSiteKey, { action });
       return token;
     } catch (error) {
-      console.error('reCAPTCHA error:', error);
+      console.error('reCAPTCHA error:', error instanceof Error ? error.message : error);
       return null;
     }
   };

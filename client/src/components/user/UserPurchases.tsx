@@ -79,7 +79,7 @@ function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSucc
           });
           onSuccess();
         } catch (completionError) {
-          console.error('Payment completion error:', completionError);
+          console.error('Payment completion error:', completionError instanceof Error ? completionError.message : completionError);
           toast({
             title: "Payment Completed",
             description: "Payment was successful. Your order will be processed shortly.",
@@ -88,7 +88,7 @@ function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSucc
         }
       }
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Payment error:', error instanceof Error ? error.message : error);
       toast({
         title: "Payment Error",
         description: "An unexpected error occurred. Please try again.",
@@ -168,7 +168,7 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
           }
         })
         .catch((error) => {
-          console.error('Error creating payment intent:', error);
+          console.error('Error creating payment intent:', error instanceof Error ? error.message : error);
           toast({
             title: "Error",
             description: "Failed to initialize payment. Please try again.",
@@ -201,7 +201,7 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
       // Refresh purchase history
       onSuccess();
     } catch (error) {
-      console.error('Error completing purchase:', error);
+      console.error('Error completing purchase:', error instanceof Error ? error.message : error);
       toast({
         title: "Error",
         description: "Payment succeeded but failed to complete purchase. Please contact support.",
