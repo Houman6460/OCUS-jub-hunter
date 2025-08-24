@@ -259,31 +259,35 @@ export interface Translations {
   }>;
   
   // Authentication
-  welcome_back: string;
-  sign_in_account: string;
-  user_login: string;
-  admin_login: string;
-  your_email: string;
-  your_password: string;
-  login_btn: string;
-  admin_login_btn: string;
-  remember_me: string;
-  forgot_password: string;
-  no_account: string;
-  sign_up: string;
-  create_account: string;
-  full_name: string;
-  password_min_length: string;
-  confirm_password: string;
-  accept_terms: string;
-  terms_conditions: string;
-  create_account_btn: string;
-  have_account: string;
-  sign_in: string;
-  or_login_with: string;
-  login_with_google: string;
-  login_with_facebook: string;
-  login_with_github: string;
+  unifiedLogin: {
+    welcome_back: string;
+    sign_in_account: string;
+    user_login: string;
+    admin_login: string;
+    your_email: string;
+    your_password: string;
+    login_btn: string;
+    admin_login_btn: string;
+    remember_me: string;
+    forgot_password: string;
+    no_account: string;
+    sign_up: string;
+    create_account: string;
+    full_name: string;
+    password_min_length: string;
+    confirm_password: string;
+    accept_terms: string;
+    terms_conditions: string;
+    create_account_btn: string;
+    have_account: string;
+    sign_in: string;
+    or_login_with: string;
+    login_with_google: string;
+    login_with_facebook: string;
+    login_with_github: string;
+    signing_in: string;
+    creating_account: string;
+  };
   
   // Navigation
   home: string;
@@ -1136,30 +1140,35 @@ export const translations: Record<string, Translations> = {
       }
     },
     
-    // Authentication
-    welcome_back: "Welcome back!",
-    sign_in_account: "Sign in to your account",
-    user_login: "User Login",
-    admin_login: "Admin Login",
-    your_email: "Your Email",
-    your_password: "Your Password",
-    login_btn: "Login",
-    admin_login_btn: "Admin Login",
-    remember_me: "Remember me",
-    forgot_password: "Forgot password?",
-    no_account: "Don't have an account?",
-    sign_up: "Sign up",
-    create_account: "Create Account",
-    full_name: "Full Name",
-    password_min_length: "Minimum 6 characters",
-    confirm_password: "Confirm Password",
-    accept_terms: "I accept the",
-    terms_conditions: "Terms & Conditions",
-    create_account_btn: "Create Account",
-    have_account: "Already have an account?",
-    sign_in: "Sign in",
-    or_login_with: "Or continue with",
-
+    unifiedLogin: {
+      welcome_back: "Welcome Back!",
+      sign_in_account: "Sign in to your account",
+      user_login: "User Login",
+      admin_login: "Admin Login",
+      your_email: "Your email",
+      your_password: "Your password",
+      login_btn: "Login",
+      admin_login_btn: "Admin Login",
+      remember_me: "Remember me",
+      forgot_password: "Forgot password?",
+      no_account: "Don't have an account?",
+      sign_up: "Sign up",
+      create_account: "Create an Account",
+      full_name: "Full Name",
+      password_min_length: "Password must be at least 8 characters",
+      confirm_password: "Confirm Password",
+      accept_terms: "I accept the",
+      terms_conditions: "Terms and Conditions",
+      create_account_btn: "Create Account",
+      have_account: "Already have an account?",
+      sign_in: "Sign in",
+      or_login_with: "Or login with",
+      login_with_google: "Login with Google",
+      login_with_facebook: "Login with Facebook",
+      login_with_github: "Login with Github",
+      signing_in: "Signing in...",
+      creating_account: "Creating account...",
+    },
     // Affiliate Page
     affiliate: {
       title: "Affiliate Program",
@@ -1998,32 +2007,36 @@ export const translations: Record<string, Translations> = {
       }
     },
     
-    // Authentication (Portuguese)
-    welcome_back: "Olá, seja bem vindo(a)!",
-    sign_in_account: "Faça login em sua conta OCUS Job Hunter",
-    user_login: "Login de Usuário",
-    admin_login: "Login de Admin",
-    your_email: "Seu E-mail",
-    your_password: "Sua Senha",
-    login_btn: "Login",
-    admin_login_btn: "Login Admin",
-    remember_me: "Lembrar",
-    forgot_password: "Esqueceu a senha?",
-    no_account: "Não tem uma conta?",
-    sign_up: "Inscreva-se",
-    create_account: "Criar Conta",
-    full_name: "Nome Completo",
-    password_min_length: "Mínimo 6 caracteres",
-    confirm_password: "Confirmar Senha",
-    accept_terms: "Eu aceito os",
-    terms_conditions: "Termos e Condições",
-    create_account_btn: "Quero me Inscrever",
-    have_account: "Já tem uma conta?",
-    sign_in: "Fazer login",
-    or_login_with: "Ou continue com",
-    login_with_google: "Login com Google",
-    login_with_facebook: "Login com Facebook",
-    login_with_github: "Login com GitHub",
+    // Autenticação
+    unifiedLogin: {
+      welcome_back: "Olá, seja bem vindo(a)!",
+      sign_in_account: "Faça login em sua conta OCUS Job Hunter",
+      user_login: "Login de Usuário",
+      admin_login: "Login de Admin",
+      your_email: "Seu E-mail",
+      your_password: "Sua Senha",
+      login_btn: "Login",
+      admin_login_btn: "Login Admin",
+      remember_me: "Lembrar",
+      forgot_password: "Esqueceu a senha?",
+      no_account: "Não tem uma conta?",
+      sign_up: "Inscreva-se",
+      create_account: "Criar Conta",
+      full_name: "Nome Completo",
+      password_min_length: "Mínimo 6 caracteres",
+      confirm_password: "Confirmar Senha",
+      accept_terms: "Eu aceito os",
+      terms_conditions: "Termos e Condições",
+      create_account_btn: "Quero me Inscrever",
+      have_account: "Já tem uma conta?",
+      sign_in: "Fazer login",
+      or_login_with: "Ou continue com",
+      login_with_google: "Login com Google",
+      login_with_facebook: "Login com Facebook",
+      login_with_github: "Login com GitHub",
+      signing_in: "A entrar...",
+      creating_account: "A criar conta..."
+    },
     
     // Navigation (Portuguese)
     home: "Início",
@@ -2912,20 +2925,47 @@ export const translations: Record<string, Translations> = {
       gdprNotice: "Nous respectons votre vie privée et nous nous conformons au RGPD"
     },
     
-    // Auth & Dashboard (missing translations)
+    unifiedLogin: {
+      welcome_back: "Bon retour !",
+      sign_in_account: "Connectez-vous à votre compte OCUS Job Hunter",
+      user_login: "Connexion utilisateur",
+      admin_login: "Connexion administrateur",
+      your_email: "Votre e-mail",
+      your_password: "Votre mot de passe",
+      login_btn: "Connexion",
+      admin_login_btn: "Connexion Admin",
+      remember_me: "Se souvenir de moi",
+      forgot_password: "Mot de passe oublié ?",
+      no_account: "Vous n'avez pas de compte ?",
+      sign_up: "S'inscrire",
+      create_account: "Créer un compte",
+      full_name: "Nom complet",
+      password_min_length: "6 caractères minimum",
+      confirm_password: "Confirmer le mot de passe",
+      accept_terms: "J'accepte les",
+      terms_conditions: "Termes et Conditions",
+      create_account_btn: "Créer un compte",
+      have_account: "Vous avez déjà un compte ?",
+      sign_in: "Se connecter",
+      or_login_with: "Ou continuer avec",
+      login_with_google: "Connexion avec Google",
+      login_with_facebook: "Connexion avec Facebook",
+      login_with_github: "Connexion avec GitHub",
+      signing_in: "Connexion en cours...",
+      creating_account: "Création du compte..."
+    },
+
+    // Navigation (French)
+    home: "Accueil",
+    about: "À propos",
+    contact: "Contact",
     login: "Connexion",
-    register: "S'inscrire", 
-    email: "Email",
-    password: "Mot de passe",
-    name: "Nom",
     dashboard: "Tableau de bord",
-    profile: "Profil", 
+    profile: "Profil",
     orders: "Commandes",
     downloads: "Téléchargements",
     logout: "Déconnexion",
-    customerLogin: "Connexion client",
-    adminLogin: "Connexion admin",
-    userLogin: "Connexion utilisateur",
+    welcomeBack: "Bon retour",
     
     // Customer Dashboard
     customerDashboard: "Tableau de bord client",
@@ -3080,6 +3120,35 @@ export const translations: Record<string, Translations> = {
 
   // Spanish translations
   es: {
+    unifiedLogin: {
+      welcome_back: "¡Bienvenido de nuevo!",
+      sign_in_account: "Inicia sesión en tu cuenta",
+      user_login: "Inicio de sesión de usuario",
+      admin_login: "Inicio de sesión de administrador",
+      your_email: "Tu correo electrónico",
+      your_password: "Tu contraseña",
+      login_btn: "Iniciar sesión",
+      admin_login_btn: "Inicio de sesión de administrador",
+      remember_me: "Recuérdame",
+      forgot_password: "¿Olvidaste tu contraseña?",
+      no_account: "¿No tienes una cuenta?",
+      sign_up: "Regístrate",
+      create_account: "Crear una cuenta",
+      full_name: "Nombre completo",
+      password_min_length: "La contraseña debe tener al menos 8 caracteres",
+      confirm_password: "Confirmar contraseña",
+      accept_terms: "Acepto los",
+      terms_conditions: "Términos y Condiciones",
+      create_account_btn: "Crear cuenta",
+      have_account: "¿Ya tienes una cuenta?",
+      sign_in: "Iniciar sesión",
+      or_login_with: "O inicia sesión con",
+      login_with_google: "Iniciar sesión con Google",
+      login_with_facebook: "Iniciar sesión con Facebook",
+      login_with_github: "Iniciar sesión con Github",
+      signing_in: "Iniciando sesión...",
+      creating_account: "Creando cuenta..."
+    },
     announcement: "🎯 Oferta limitada: ¡Obtén OCUS Job Hunter con 70% de descuento!",
     buyNow: "Comprar ahora",
     watchDemo: "Ver demo",
@@ -3189,41 +3258,6 @@ export const translations: Record<string, Translations> = {
     about: "Acerca de",
     contact: "Contacto",
     login: "Iniciar sesión",
-    dashboard: "Panel",
-    profile: "Perfil",
-    orders: "Pedidos",
-    downloads: "Descargas",
-    logout: "Cerrar sesión",
-    welcomeBack: "Bienvenido de vuelta",
-    welcome_back: "¡Bienvenido de vuelta!",
-    sign_in_account: "Inicia sesión en tu cuenta",
-    user_login: "Inicio de sesión de usuario",
-    admin_login: "Inicio de sesión de admin",
-    your_email: "Tu email",
-    your_password: "Tu contraseña",
-    login_btn: "Iniciar sesión",
-    admin_login_btn: "Inicio de sesión de admin",
-    remember_me: "Recordarme",
-    forgot_password: "¿Olvidaste tu contraseña?",
-    no_account: "¿No tienes cuenta?",
-    sign_up: "Registrarse",
-    create_account: "Crear cuenta",
-    full_name: "Nombre completo",
-    password_min_length: "Mínimo 6 caracteres",
-    confirm_password: "Confirmar contraseña",
-    accept_terms: "Acepto los",
-    terms_conditions: "Términos y condiciones",
-    support: "Soporte",
-    submitTicket: "Enviar ticket",
-    viewTickets: "Ver tickets",
-    ticketSubject: "Asunto",
-    ticketCategory: "Categoría",
-    ticketPriority: "Prioridad",
-    ticketDescription: "Descripción",
-    ticketStatus: "Estado",
-    createTicket: "Crear ticket",
-    technical: "Técnico",
-    billing: "Facturación",
     featureRequest: "Solicitud de característica",
     bugReport: "Reporte de error",
     general: "General",
@@ -3239,6 +3273,35 @@ export const translations: Record<string, Translations> = {
 
   // German translations
   de: {
+    unifiedLogin: {
+      welcome_back: "Willkommen zurück!",
+      sign_in_account: "Melden Sie sich bei Ihrem OCUS Job Hunter-Konto an",
+      user_login: "Benutzer-Login",
+      admin_login: "Admin-Login",
+      your_email: "Ihre E-Mail",
+      your_password: "Ihr Passwort",
+      login_btn: "Anmelden",
+      admin_login_btn: "Admin-Anmeldung",
+      remember_me: "Angemeldet bleiben",
+      forgot_password: "Passwort vergessen?",
+      no_account: "Sie haben kein Konto?",
+      sign_up: "Registrieren",
+      create_account: "Konto erstellen",
+      full_name: "Vollständiger Name",
+      password_min_length: "Mindestens 6 Zeichen",
+      confirm_password: "Passwort bestätigen",
+      accept_terms: "Ich akzeptiere die",
+      terms_conditions: "Allgemeinen Geschäftsbedingungen",
+      create_account_btn: "Konto erstellen",
+      have_account: "Haben Sie bereits ein Konto?",
+      sign_in: "Anmelden",
+      or_login_with: "Oder anmelden mit",
+      login_with_google: "Mit Google anmelden",
+      login_with_facebook: "Mit Facebook anmelden",
+      login_with_github: "Mit GitHub anmelden",
+      signing_in: "Anmeldung läuft...",
+      creating_account: "Konto wird erstellt..."
+    },
     announcement: "🎯 Begrenzte Zeit: Erhalten Sie OCUS Job Hunter für 70% Rabatt!",
     buyNow: "Jetzt kaufen",
     watchDemo: "Demo ansehen",
