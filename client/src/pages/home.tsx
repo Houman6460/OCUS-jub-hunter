@@ -546,9 +546,9 @@ export default function Home() {
                 </div>
                 
                 <div className="bg-blue-50 rounded-lg p-4 mt-4">
-                  <h4 className="font-semibold text-blue-900 mb-2 text-sm">Always-Visible Floating Panel</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2 text-sm">Floating Control Panel</h4>
                   <p className="text-blue-800 text-xs leading-relaxed">
-                    {t?.floatingPanelDescription || 'This dark-themed floating panel stays visible while browsing OCUS. Shows real-time countdown timer with customizable refresh intervals. Premium users get unlimited access with detailed tracking metrics for missions found, opened, accepted, and login attempts.'}
+                    {t?.floatingPanelDescription || 'The floating panel gives you at-a-glance status updates. It shows login counts, mission status, and a countdown timer for the next refresh, ensuring you are always informed without interrupting your workflow.'}
                   </p>
                 </div>
               </div>
@@ -565,66 +565,15 @@ export default function Home() {
                     />
                   </div>
                 </div>
-                              <span className="premium-detail-value-showcase">Unlimited</span>
-                            </div>
-                            <div className="premium-detail-item-showcase">
-                              <span>Version:</span>
-                              <span className="premium-detail-value-showcase">2.1.0-PREMIUM</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Auto Login Configuration Section */}
-                      <div className="extension-popup-section-showcase">
-                        <div className="extension-popup-section-header-showcase">
-                          <h2 className="extension-popup-section-title-showcase">Auto Login Configuration</h2>
-                          <div className="toggle-switch-showcase">
-                            <input type="checkbox" id="auto-login-toggle-showcase" className="toggle-switch-checkbox-showcase" defaultChecked />
-                            <label htmlFor="auto-login-toggle-showcase" className="toggle-switch-label-showcase"></label>
-                          </div>
-                        </div>
-                        <div className="extension-popup-section-content-showcase">
-                          <div className="input-group-showcase">
-                            <label htmlFor="ocus-username-showcase" className="input-label-showcase">OCUS Username</label>
-                            <input type="text" id="ocus-username-showcase" className="input-field-showcase" value="houman.ghavamzadeh@gmail.com" readOnly />
-                          </div>
-                          <div className="input-group-showcase">
-                            <label htmlFor="ocus-password-showcase" className="input-label-showcase">OCUS Password</label>
-                            <input type="password" id="ocus-password-showcase" className="input-field-showcase" value="••••••••" readOnly />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Mission Monitor Configuration Section */}
-                      <div className="extension-popup-section-showcase">
-                        <div className="extension-popup-section-header-showcase">
-                          <h2 className="extension-popup-section-title-showcase">Mission Monitor Configuration</h2>
-                          <div className="toggle-switch-showcase">
-                            <input type="checkbox" id="mission-monitor-toggle-showcase" className="toggle-switch-checkbox-showcase" defaultChecked />
-                            <label htmlFor="mission-monitor-toggle-showcase" className="toggle-switch-label-showcase"></label>
-                          </div>
-                        </div>
-                        <div className="extension-popup-section-content-showcase">
-                          <div className="input-group-showcase">
-                            <label htmlFor="refresh-interval-showcase" className="input-label-showcase">Refresh Interval (sec)</label>
-                            <input type="text" id="refresh-interval-showcase" className="input-field-showcase" value="30" readOnly />
-                          </div>
-                          <div className="toggle-row-showcase">
-                            <label htmlFor="show-notifications-toggle-showcase" className="input-label-showcase">Show Notifications</label>
-                            <div className="toggle-switch-showcase">
-                              <input type="checkbox" id="show-notifications-toggle-showcase" className="toggle-switch-checkbox-showcase" defaultChecked />
-                              <label htmlFor="show-notifications-toggle-showcase" className="toggle-switch-label-showcase"></label>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="bg-green-50 rounded-lg p-4 mt-4">
+                  <h4 className="font-semibold text-green-900 mb-2 text-sm">Advanced Popup Interface</h4>
+                  <p className="text-green-800 text-xs leading-relaxed">
+                    {t?.extensionPopupDescription || 'The extension popup provides full control. It shows your premium license status, version, and allows you to configure auto-login credentials (securely stored) and mission monitoring settings. The UI is designed for clarity and ease of use, ensuring you can manage your job hunting automation effortlessly.'}
+                  </p>
                 </div>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </section>
       {/* Free Demo Download Section */}
