@@ -20,7 +20,7 @@ interface Invoice {
 
 export default function Invoices() {
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
-    queryKey: ['/api/invoices/customer/demo-customer-123'], // Replace with actual customer ID
+    queryKey: ['/api/me/invoices'],
   });
 
   const downloadPDF = async (invoiceId: number, invoiceNumber: string) => {

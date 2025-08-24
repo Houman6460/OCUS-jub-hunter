@@ -79,68 +79,54 @@ export default function Dashboard() {
       return;
     }
 
-    if (data) {
-      try {
-        const parsedData = JSON.parse(data);
-        
-        // Fetch fresh user data from API if we have user ID
-        if (parsedData.id) {
-          fetch(`/api/customer/profile?userId=${parsedData.id}`)
-            .then(response => response.json())
-            .then(profileData => {
-              console.log('Profile API response:', profileData);
-              if (profileData && profileData.success !== false) {
-                setCustomerData(profileData);
-                // Update localStorage with fresh data
-                localStorage.setItem('customer_data', JSON.stringify(profileData));
-              } else {
-                console.log('Using stored data, API response invalid:', profileData);
-                setCustomerData(parsedData);
-              }
-            })
-            .catch(error => {
-              console.error('Error fetching user profile:', error instanceof Error ? error.message : error);
-              setCustomerData(parsedData);
-            });
-        } else {
-          console.log('No user ID found, using stored data');
-          setCustomerData(parsedData);
-        }
-        
-        // Check if this is the first visit
-        const hasSeenGuide = localStorage.getItem('first-visit-guide-completed');
-        if (!hasSeenGuide) {
-          setShowFirstVisitGuide(true);
-        }
-      } catch (error) {
-        console.error('Error parsing customer data:', error instanceof Error ? error.message : error);
-        // Clear invalid data
-        localStorage.removeItem('customer_data');
-        // Create default customer data for testing
-        const defaultCustomer = {
-          id: 1,
-          email: 'user@example.com',
-          name: 'Test User',
-          extensionActivated: false,
-          isBlocked: false,
-          createdAt: new Date().toISOString()
-        };
-        setCustomerData(defaultCustomer);
-        localStorage.setItem('customer_data', JSON.stringify(defaultCustomer));
+    // Fetch fresh user data from the secure /api/me endpoint
+    fetch('/api/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    } else {
-      // If no customer data but has token, create default data
-      const defaultCustomer = {
-        id: 1,
-        email: 'user@example.com',
-        name: 'Test User',
-        extensionActivated: false,
-        isBlocked: false,
-        createdAt: new Date().toISOString()
-      };
-      setCustomerData(defaultCustomer);
-      localStorage.setItem('customer_data', JSON.stringify(defaultCustomer));
-    }
+    })
+      .then(response => {
+        if (!response.ok) {
+          // If unauthorized, clear local data and redirect to login
+          if (response.status === 401) {
+            localStorage.removeItem('customer_token');
+            localStorage.removeItem('customer_data');
+            navigate('/login');
+          }
+          throw new Error('Failed to fetch user data');
+        }
+        return response.json();
+      })
+      .then(profileData => {
+        if (profileData && profileData.id) { // Check for valid profile data
+          setCustomerData(profileData);
+          // Update localStorage with fresh data
+          localStorage.setItem('customer_data', JSON.stringify(profileData));
+
+          // Check if this is the first visit
+          const hasSeenGuide = localStorage.getItem('first-visit-guide-completed');
+          if (!hasSeenGuide) {
+            setShowFirstVisitGuide(true);
+          }
+        } else {
+          // Handle case where API returns invalid data, maybe logout
+          console.error('Invalid profile data from /api/me', profileData);
+          handleLogout();
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching user profile from /api/me:', error);
+        // Fallback to local data if API fails but token exists
+        if (data) {
+          try {
+            setCustomerData(JSON.parse(data));
+          } catch (e) {
+            handleLogout();
+          }
+        } else {
+          handleLogout();
+        }
+      });
   }, [navigate]);
 
   const handleLogout = () => {
@@ -334,7 +320,7 @@ export default function Dashboard() {
 
           {/* Orders Tab */}
           {activeTab === 'orders' && (
-            <UserPurchases userId={customerData?.id} />
+            <UserPurchases />
           )}
 
           {/* Downloads Tab */}
@@ -399,7 +385,7 @@ export default function Dashboard() {
 
 
           {/* Invoices Tab */}
-          {activeTab === 'invoices' && <UserInvoices userId={customerData?.id} />}
+          {activeTab === 'invoices' && <UserInvoices />}
 
           {/* Billing Tab */}
           {activeTab === 'billing' && isFeatureEnabled('billing') && (

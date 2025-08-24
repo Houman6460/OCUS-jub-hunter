@@ -31,9 +31,6 @@ interface Order {
   completedAt?: string;
 }
 
-interface UserPurchasesProps {
-  userId?: number;
-}
 
 // Purchase form component
 function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSuccess: () => void; paymentIntentId?: string; onPaymentSuccess?: (paymentIntentId: string) => void }) {
@@ -126,7 +123,7 @@ function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSucc
 }
 
 // Purchase dialog wrapper with Stripe Elements
-function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?: number }) {
+function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
   const [stripePublishableKey, setStripePublishableKey] = useState<string>('');
@@ -152,7 +149,6 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
           return apiRequest('POST', '/api/create-user-payment-intent', {
             amount: priceAmount,
             currency: priceCurrency,
-            userId: userId,
             customerEmail: 'user@example.com',
             customerName: 'User',
             productId: 'ocus-extension'
@@ -252,13 +248,13 @@ function PurchaseDialog({ onSuccess, userId }: { onSuccess: () => void; userId?:
   );
 }
 
-export function UserPurchases({ userId }: UserPurchasesProps) {
+export function UserPurchases() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handlePurchaseSuccess = () => {
     // Refresh orders list after successful purchase
-    queryClient.invalidateQueries({ queryKey: ['/api/user/orders'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/me/orders'] });
     toast({
       title: "Purchase Complete",
       description: "Your order has been processed. Premium extension download is now available!",
@@ -275,17 +271,15 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
   });
 
   // Get user orders
-  const { data: orders, isLoading, error } = useQuery<Order[]>({
-    queryKey: ['/api/user/orders', userId],
+  const { data: orders, isLoading, error } = useQuery<Order[]>({ 
+    queryKey: ['/api/me/orders'],
     queryFn: async () => {
-      if (!userId) return [];
-      const response = await apiRequest('GET', `/api/user/${userId}/orders`);
+      const response = await apiRequest('GET', `/api/me/orders`);
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
       }
       return response.json();
     },
-    enabled: !!userId
   });
 
   // Download file mutation
@@ -309,7 +303,7 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
         title: "Download Started",
         description: "Your extension download has started.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/user/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/me/orders'] });
     },
     onError: (error: any) => {
       toast({
@@ -321,7 +315,7 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
   });
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['/api/user/orders'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/me/orders'] });
   };
 
   const getStatusBadge = (status: string) => {
@@ -339,24 +333,6 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
     }
   };
 
-  if (!userId) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            Purchase History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600">Please log in to view your purchase history.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -394,7 +370,7 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                 )}
               </div>
             </div>
-            <PurchaseDialog onSuccess={handlePurchaseSuccess} userId={userId} />
+            <PurchaseDialog onSuccess={handlePurchaseSuccess} />
           </div>
         </CardContent>
       </Card>
@@ -477,7 +453,7 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('GET', `/api/download-extension/premium?userId=${userId}`);
+                            const response = await apiRequest('GET', `/api/me/download-extension/premium`);
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
@@ -511,7 +487,7 @@ export function UserPurchases({ userId }: UserPurchasesProps) {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('GET', `/api/download-extension/trial?userId=${userId}`);
+                            const response = await apiRequest('GET', `/api/me/download-extension/trial`);
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);

@@ -28,27 +28,22 @@ interface Invoice {
   customer_email?: string;
 }
 
-interface UserInvoicesProps {
-  userId?: number;
-}
 
-export function UserInvoices({ userId }: UserInvoicesProps) {
+export function UserInvoices() {
   const { toast } = useToast();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Get user invoices
-  const { data: invoices, isLoading, error } = useQuery<Invoice[]>({
-    queryKey: ['/api/user/invoices', userId],
+  const { data: invoices, isLoading, error } = useQuery<Invoice[]>({ 
+    queryKey: ['/api/me/invoices'],
     queryFn: async () => {
-      if (!userId) return [];
-      const response = await apiRequest('GET', `/api/user/${userId}/invoices`);
+      const response = await apiRequest('GET', `/api/me/invoices`);
       if (!response.ok) {
         throw new Error('Failed to fetch invoices');
       }
       return response.json();
     },
-    enabled: !!userId
   });
 
   const getStatusBadge = (status: string) => {
@@ -102,24 +97,6 @@ export function UserInvoices({ userId }: UserInvoicesProps) {
     }
   };
 
-  if (!userId) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Invoices & Receipts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600">Please log in to view your invoices.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">

@@ -1869,7 +1869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download trial Chrome extension (3 mission limit)
-  app.get("/api/download-extension/trial", async (req, res) => {
+  app.get("/api/me/download-extension/trial", requireAuth, async (req, res) => {
     try {
       console.log('Trial extension download requested');
       
@@ -1896,7 +1896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download premium Chrome extension (unlimited)
-  app.get("/api/download-extension/premium", async (req, res) => {
+  app.get("/api/me/download-extension/premium", requireAuth, async (req, res) => {
     try {
       console.log('Premium extension download requested');
       
@@ -5376,14 +5376,16 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
     }
   });
 
-  app.get("/api/invoices/customer/:customerId", async (req, res) => {
+  app.get("/api/me/invoices", requireAuth, async (req: any, res: any) => {
     try {
-      const { customerId } = req.params;
-      const invoices = await storage.getCustomerInvoices(customerId);
+      if (!req.user?.email) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      const invoices = await storage.getCustomerInvoicesByEmail(req.user.email);
       res.json(invoices);
-    } catch (error: any) {
-      console.error('Error fetching customer invoices:', error);
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      console.error("Error fetching user invoices:", error);
+      res.status(500).json({ error: "Failed to fetch invoices" });
     }
   });
 
