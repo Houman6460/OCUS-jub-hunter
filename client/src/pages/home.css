@@ -1034,7 +1034,7 @@
   position: relative;
   cursor: pointer;
   border-radius: 0.5rem; /* from rounded-lg */
-  height: 520px; /* Fixed height to match left panel image */
+  height: 667px; /* Fixed height to match left panel image */
 }
 
 .image-scroll-content {
