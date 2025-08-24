@@ -42,8 +42,6 @@ export default function Home() {
   const { t } = useLanguage();
   const [faqOpen, setFaqOpen] = useState<{ [key: number]: boolean }>({});
   const [isVisible, setIsVisible] = useState(false);
-  const [currentStat, setCurrentStat] = useState({ jobs: 0, earnings: 0 });
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const [showVideoPopup, setShowVideoPopup] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
