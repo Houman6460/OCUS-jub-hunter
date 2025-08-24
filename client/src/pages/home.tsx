@@ -214,37 +214,18 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative pb-24 overflow-hidden banner-aware-section">
-        {/* Dynamic Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5"></div>
-        
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-4 lg:left-10 w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-gradient-to-br from-primary/20 to-blue-500/10 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-10 right-4 lg:right-10 w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 bg-gradient-to-br from-accent/20 to-purple-500/10 rounded-full blur-3xl animate-float delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 md:w-96 md:h-96 lg:w-[600px] lg:h-[600px] bg-gradient-to-br from-blue-400/5 to-purple-400/5 rounded-full blur-3xl animate-breathe"></div>
+        {/* Floating Icons from Screenshot */}
+        <div className="floating-icon icon-1">
+          <Target className="w-8 h-8 text-blue-500" />
         </div>
-
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-
-        {/* Photography-themed Floating Icons */}
-        <div className="absolute top-32 left-8 lg:left-20 bg-white/90 backdrop-blur-sm rounded-2xl p-3 lg:p-4 shadow-lg border border-primary/10 animate-float delay-200">
-          <Target className="w-6 h-6 lg:w-8 lg:h-8 text-primary" />
+        <div className="floating-icon icon-2">
+          <Star className="w-8 h-8 text-yellow-400" />
         </div>
-        <div className="absolute top-40 right-8 lg:right-24 bg-white/90 backdrop-blur-sm rounded-2xl p-3 lg:p-4 shadow-lg border border-accent/10 animate-float delay-700">
-          <Bell className="w-6 h-6 lg:w-8 lg:h-8 text-accent" />
+        <div className="floating-icon icon-3">
+          <Bell className="w-8 h-8 text-red-500" />
         </div>
-        <div className="absolute bottom-32 left-8 lg:left-32 bg-white/90 backdrop-blur-sm rounded-2xl p-3 lg:p-4 shadow-lg border border-green-500/10 animate-float delay-1200">
-          <TrendingUp className="w-6 h-6 lg:w-8 lg:h-8 text-green-600" />
-        </div>
-        
-        {/* Additional Photography Elements */}
-        <div className="absolute top-1/2 left-4 lg:left-16 bg-white/80 backdrop-blur-sm rounded-xl p-2 lg:p-3 shadow-lg border border-yellow-400/20 animate-float delay-1500">
-          <Star className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-500" />
-        </div>
-        <div className="absolute bottom-1/4 right-4 lg:right-16 bg-white/80 backdrop-blur-sm rounded-xl p-2 lg:p-3 shadow-lg border border-blue-400/20 animate-float delay-800">
-          <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-blue-500" />
+        <div className="floating-icon icon-4">
+          <TrendingUp className="w-8 h-8 text-green-500" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
@@ -1414,12 +1395,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-2xl mx-auto features-grid">
             {features.map((feature, i) => (
               <Card
                 key={i}
-                className={`text-center p-6 md:p-8 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-pointer border-2 border-transparent hover:border-primary/20 ${isVisible ? 'animate-fadeInUp-delayed' : 'opacity-0'}`}
-                style={{ '--animation-delay': `${i * 100}ms` } as React.CSSProperties}
+                className={`feature-card text-center p-6 md:p-8 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-pointer border-2 border-transparent hover:border-primary/20 ${isVisible ? 'animate-fadeInUp-delayed' : 'opacity-0'}`}
               >
                 <CardContent className="pt-6">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/10 to-accent/10 text-primary rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
@@ -1531,42 +1511,42 @@ export default function Home() {
         {/* Floating Icons Background */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Top left area */}
-          <div className="absolute top-20 left-8 lg:left-20 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '0s', '--animation-duration': '3s' } as React.CSSProperties}>
+          <div className="absolute top-20 left-8 lg:left-20 opacity-20 animate-bounce animate-delay animate-duration pricing-floating-icon-1">
             <Shield className="w-8 h-8 text-primary" />
           </div>
-          <div className="absolute top-32 left-16 lg:left-32 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '1s', '--animation-duration': '4s' } as React.CSSProperties}>
+          <div className="absolute top-32 left-16 lg:left-32 opacity-15 animate-bounce animate-delay animate-duration pricing-floating-icon-2">
             <Star className="w-6 h-6 text-accent" />
           </div>
           
           {/* Top right area */}
-          <div className="absolute top-16 right-8 lg:right-20 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '2s', '--animation-duration': '3.5s' } as React.CSSProperties}>
+          <div className="absolute top-16 right-8 lg:right-20 opacity-20 animate-bounce animate-delay animate-duration pricing-floating-icon-3">
             <Zap className="w-7 h-7 text-primary" />
           </div>
-          <div className="absolute top-40 right-20 lg:right-40 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '0.5s', '--animation-duration': '4.5s' } as React.CSSProperties}>
+          <div className="absolute top-40 right-20 lg:right-40 opacity-15 animate-bounce animate-delay animate-duration pricing-floating-icon-4">
             <Target className="w-5 h-5 text-accent" />
           </div>
           
           {/* Bottom left area */}
-          <div className="absolute bottom-32 left-12 lg:left-24 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '1.5s', '--animation-duration': '3.2s' } as React.CSSProperties}>
+          <div className="absolute bottom-32 left-12 lg:left-24 opacity-20 animate-bounce animate-delay animate-duration pricing-floating-icon-5">
             <Bot className="w-8 h-8 text-primary" />
           </div>
-          <div className="absolute bottom-16 left-8 lg:left-16 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '2.5s', '--animation-duration': '4.2s' } as React.CSSProperties}>
+          <div className="absolute bottom-16 left-8 lg:left-16 opacity-15 animate-bounce animate-delay animate-duration pricing-floating-icon-6">
             <Globe className="w-6 h-6 text-accent" />
           </div>
           
           {/* Bottom right area */}
-          <div className="absolute bottom-24 right-12 lg:right-28 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '3s', '--animation-duration': '3.8s' } as React.CSSProperties}>
+          <div className="absolute bottom-24 right-12 lg:right-28 opacity-20 animate-bounce animate-delay animate-duration pricing-floating-icon-7">
             <BarChart3 className="w-7 h-7 text-primary" />
           </div>
-          <div className="absolute bottom-40 right-8 lg:right-16 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '0.8s', '--animation-duration': '4.8s' } as React.CSSProperties}>
+          <div className="absolute bottom-40 right-8 lg:right-16 opacity-15 animate-bounce animate-delay animate-duration pricing-floating-icon-8">
             <Clock className="w-5 h-5 text-accent" />
           </div>
           
           {/* Mid-level floating icons */}
-          <div className="absolute top-1/2 left-4 lg:left-8 opacity-10 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '2.2s', '--animation-duration': '5s' } as React.CSSProperties}>
+          <div className="absolute top-1/2 left-4 lg:left-8 opacity-10 animate-bounce animate-delay animate-duration pricing-floating-icon-9">
             <TrendingUp className="w-6 h-6 text-primary" />
           </div>
-          <div className="absolute top-1/3 right-4 lg:right-8 opacity-10 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '1.8s', '--animation-duration': '4.6s' } as React.CSSProperties}>
+          <div className="absolute top-1/3 right-4 lg:right-8 opacity-10 animate-bounce animate-delay animate-duration pricing-floating-icon-10">
             <Check className="w-6 h-6 text-accent" />
           </div>
         </div>

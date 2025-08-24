@@ -213,6 +213,33 @@
   color: #777; 
 }
 
+.banner-aware-section {
+  background-color: white;
+}
+
+.floating-icon {
+  position: absolute;
+  background-color: white;
+  border-radius: 50%;
+  padding: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: float 6s ease-in-out infinite;
+}
+
+.icon-1 { top: 20%; left: 10%; animation-delay: 0s; }
+.icon-2 { top: 60%; left: 15%; animation-delay: 1.5s; }
+.icon-3 { top: 25%; right: 12%; animation-delay: 3s; }
+.icon-4 { top: 70%; right: 18%; animation-delay: 4.5s; }
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
 .floating-panel-body {
   padding: 15px;
 }
@@ -559,6 +586,80 @@
     animation-duration: 1s;
     animation-fill-mode: both;
     animation-delay: var(--animation-delay, 0s);
+}
+
+.features-grid > .feature-card:nth-child(1) {
+  --animation-delay: 0ms;
+}
+
+.features-grid > .feature-card:nth-child(2) {
+  --animation-delay: 100ms;
+}
+
+.features-grid > .feature-card:nth-child(3) {
+  --animation-delay: 200ms;
+}
+
+.features-grid > .feature-card:nth-child(4) {
+  --animation-delay: 300ms;
+}
+
+.features-grid > .feature-card:nth-child(5) {
+  --animation-delay: 400ms;
+}
+
+.features-grid > .feature-card:nth-child(6) {
+  --animation-delay: 500ms;
+}
+
+.pricing-floating-icon-1 {
+  --animation-delay: 0s;
+  --animation-duration: 3s;
+}
+
+.pricing-floating-icon-2 {
+  --animation-delay: 1s;
+  --animation-duration: 4s;
+}
+
+.pricing-floating-icon-3 {
+  --animation-delay: 2s;
+  --animation-duration: 3.5s;
+}
+
+.pricing-floating-icon-4 {
+  --animation-delay: 0.5s;
+  --animation-duration: 4.5s;
+}
+
+.pricing-floating-icon-5 {
+  --animation-delay: 1.5s;
+  --animation-duration: 3.2s;
+}
+
+.pricing-floating-icon-6 {
+  --animation-delay: 2.5s;
+  --animation-duration: 4.2s;
+}
+
+.pricing-floating-icon-7 {
+  --animation-delay: 3s;
+  --animation-duration: 3.8s;
+}
+
+.pricing-floating-icon-8 {
+  --animation-delay: 0.8s;
+  --animation-duration: 4.8s;
+}
+
+.pricing-floating-icon-9 {
+  --animation-delay: 2.2s;
+  --animation-duration: 5s;
+}
+
+.pricing-floating-icon-10 {
+  --animation-delay: 1.8s;
+  --animation-duration: 4.6s;
 }
 
 @keyframes fadeInUp {
