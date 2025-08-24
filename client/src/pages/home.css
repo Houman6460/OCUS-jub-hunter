@@ -86,7 +86,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #2196F3;
+  background: #ccc;
   border-radius: 22px;
   transition: all 0.3s ease;
 }
@@ -120,9 +120,9 @@
 }
 
 .quick-set-button.active {
-  background: #2196F3;
+  background: #ccc;
   color: white;
-  border: 1px solid #2196F3;
+  border: 1px solid #ccc;
 }
 
 .flex-mb-6 {
@@ -132,7 +132,7 @@
 
 .set-button-small {
   padding: 4px 8px; 
-  background: #2196F3; 
+  background: #ccc; 
   color: white; 
   border: none; 
   border-radius: 3px; 
@@ -148,7 +148,7 @@
 
 .reset-button-small {
   padding: 4px 8px;
-  background: #2196F3;
+  background: #ccc;
   color: white;
   border: none;
   border-radius: 12px;
@@ -425,7 +425,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #2196F3;
+  background-color: transparent;
+  border: 1px solid #dee2e6;
   border-radius: 22px;
   transition: all 0.3s ease;
 }
@@ -439,6 +440,8 @@
   background: white;
   border-radius: 50%;
   transition: all 0.3s ease;
+  z-index: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .flex-space-between {
@@ -472,9 +475,9 @@
 }
 
 .interval-button-active {
-  background: #2196F3;
+  background: #ccc;
   color: white;
-  border-color: #2196F3;
+  border-color: #ccc;
 }
 
 .custom-interval-group {
@@ -484,7 +487,7 @@
 
 .set-button {
   padding: 4px 8px;
-  background: #2196F3;
+  background: #ccc;
   color: white;
   border: none;
   border-radius: 3px;
@@ -501,7 +504,7 @@
 
 .reset-button {
   padding: 4px 8px;
-  background: #2196F3;
+  background: #ccc;
   color: white;
   border: none;
   border-radius: 12px;

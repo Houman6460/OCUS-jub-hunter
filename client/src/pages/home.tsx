@@ -417,27 +417,13 @@ export default function Home() {
           {/* Call to action */}
           <div className="text-center mt-16">
             <Link href="/login">
-              <div className="inline-flex items-center gap-4 bg-gradient-to-r from-primary to-accent px-8 py-4 rounded-full text-white font-semibold shadow-lg hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 cursor-pointer group">
+              <a className="inline-flex items-center gap-4 bg-gradient-to-r from-primary to-accent px-8 py-4 rounded-full text-white font-semibold shadow-lg hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 cursor-pointer group">
                 <span>Get Started Today</span>
                 <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </div>
+              </a>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Problem Demonstration */}
-      <section className="py-20 bg-white banner-aware-additional-spacing">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-              {t?.problemTitle || 'The Photography Job Hunt Challenge'}
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              {t?.problemSubtitle || 'Traditional job hunting methods are inefficient and time-consuming. Our extension automates the entire process.'}
-            </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -543,99 +529,109 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Extension Panels - 2 Panels Side by Side */}
           <div className="mb-16">
             <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto items-start">
               
               {/* Floating OCUS Hunter Panel - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
-                <div className="flex justify-center flex-1 system-font">
+                <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                   {/* Exact Panel Design from Extension Code */}
-                  <div className="floating-panel">
+                  <div className="transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 overflow-y-auto" style={{
+                    width: '320px',
+                    height: '700px',
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                    border: '1px solid rgba(71, 85, 105, 0.4)',
+                    borderRadius: '12px',
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(16px)',
+                    overflow: 'auto',
+                    margin: '0 auto'
+                  }}>
                     {/* Header */}
-                    <div className="panel-header">
-                      <h1 className="extension-title">
-                        <span className="panel-icon">🎯</span>
-                        OCUS Unified Extension
-                      </h1>
-                      <span className="premium-badge-header">Premium</span>
+                    <div style={{
+                      cursor: 'move',
+                      userSelect: 'none',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '16px 20px',
+                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                      color: 'white',
+                      borderRadius: '12px 12px 0 0',
+                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        fontWeight: '600',
+                        fontSize: '15px' 
+                      }}>
+                        <span style={{ fontSize: '18px' }}>🎯</span>
+                        <span>OCUS Hunter</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button style={{ 
+                          background: 'rgba(255, 255, 255, 0.2)', 
+                          border: 'none', 
+                          color: 'white', 
+                          fontSize: '16px', 
+                          cursor: 'pointer', 
+                          padding: '4px 8px', 
+                          borderRadius: '6px',
+                          lineHeight: '1',
+                          transition: 'all 0.2s ease'
+                        }}>−</button>
+                        <button style={{ 
+                          background: 'rgba(255, 255, 255, 0.2)', 
+                          border: 'none', 
+                          color: 'white', 
+                          fontSize: '16px', 
+                          cursor: 'pointer', 
+                          padding: '4px 8px', 
+                          borderRadius: '6px',
+                          lineHeight: '1',
+                          transition: 'all 0.2s ease'
+                        }}>×</button>
+                      </div>
                     </div>
                     
                     {/* Body */}
-                    <div className="panel-body">
+                    <div style={{ 
+                      padding: '20px', 
+                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                      color: '#e2e8f0' 
+                    }}>
                       {/* Timer Section */}
-                      <div className="timer-section">
+                      <div style={{ marginBottom: '20px' }}>
                         {/* Timer Display */}
-                        <div className="timer-display">
-                          <div className="timer-value-container">
-                            <span>4</span>
-                            <span className="timer-unit">sec</span>
+                        <div style={{ 
+                          textAlign: 'center',
+                          marginBottom: '16px',
+                          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+                          padding: '16px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(71, 85, 105, 0.3)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#60a5fa', lineHeight: '1' }}>95</span>
+                            <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Logins</span>
                           </div>
-                          <div className="timer-label">
-                            Next Refresh
-                          </div>
-                        </div>
-                        
-                        {/* Interval Quick Select */}
-                        <div>
-                          <div className="interval-label">
-                            Refresh Interval
-                          </div>
-                          <div className="interval-buttons-container">
-                            <button className="interval-button active">5s</button>
-                            <button className="interval-button">10s</button>
-                            <button className="interval-button">20s</button>
-                            <button className="interval-button">30s</button>
-                          </div>
-                        </div>
-                        
-                        {/* Timer Controls */}
-                        <div className="timer-controls">
-                          <button className="timer-control-button primary">
-                            <span className="timer-control-icon">⏸</span>
-                            <span className="timer-control-text">Pause</span>
-                          </button>
-                          <button className="timer-control-button secondary">
-                            <span className="timer-control-icon">🔄</span>
-                            <span className="timer-control-text">Refresh</span>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Stats Section */}
-                      <div>
-                        <div className="stats-grid">
-                          <div className="stat-item">
-                            <span className="stat-value">∞</span>
-                            <span className="stat-label">Unlimited</span>
-                          </div>
-                          <div className="stat-item">
-                            <span className="stat-value">2295</span>
-                            <span className="stat-label">Refreshing</span>
-                          </div>
-                          <div className="stat-item">
-                            <span className="stat-value">444</span>
-                            <span className="stat-label">Opened</span>
-                          </div>
-                          <div className="stat-item">
-                            <span className="stat-value">444</span>
-                            <span className="stat-label">Accepted</span>
-                          </div>
-                        </div>
-                        
-                        {/* Bottom single stat - LOGINS */}
-                        <div className="stats-grid-single">
-                          <div className="stat-item">
-                            <span className="stat-value">95</span>
-                            <span className="stat-label">Logins</span>
-                          </div>
-                          <div></div>
                         </div>
                       </div>
                       
                       {/* Status Message */}
-                      <div className="status-message">
+                      <div style={{ 
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        color: '#94a3b8',
+                        background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(71, 85, 105, 0.3)',
+                        padding: '12px',
+                        marginTop: '16px'
+                      }}>
                         Ready
                       </div>
                     </div>
@@ -653,42 +649,143 @@ export default function Home() {
               {/* Extension Popup - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
-                <div className="flex justify-center flex-1 font-apple-system">
+                <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                   {/* Exact Popup Design from popup.html - Same Height as Floating Panel */}
-                  <div className="extension-popup-container">
+                  <div 
+                    className="transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 overflow-y-auto" 
+                    style={{
+                      width: '320px',
+                      height: '700px',
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    border: '1px solid rgba(71, 85, 105, 0.4)'
+                  }}
+                    onMouseEnter={(e) => {
+                      const scrollContainer = e.currentTarget;
+                      scrollContainer.dataset.userScrolled = 'false';
+                      const scrollToBottom = () => {
+                        if (scrollContainer.dataset.userScrolled === 'false') {
+                          scrollContainer.scrollTo({
+                            top: scrollContainer.scrollHeight,
+                            behavior: 'smooth'
+                          });
+                        }
+                      };
+                      setTimeout(scrollToBottom, 100);
+                    }}
+                    onMouseLeave={(e) => {
+                      const scrollContainer = e.currentTarget;
+                      scrollContainer.dataset.userScrolled = 'false';
+                      const scrollToTop = () => {
+                        if (scrollContainer.dataset.userScrolled === 'false') {
+                          scrollContainer.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                          });
+                        }
+                      };
+                      setTimeout(scrollToTop, 100);
+                    }}
+                    onScroll={(e) => {
+                      // Mark as user-scrolled to interrupt automatic scrolling
+                      const scrollContainer = e.currentTarget;
+                      scrollContainer.dataset.userScrolled = 'true';
+                    }}
+                  >
                     {/* Header - Compact */}
-                    <div className="extension-header">
-                      <h1 className="extension-title">
-                        <span className="icon-font-size-18">🎯</span>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px 20px',
+                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                      color: 'white',
+                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
+                    }}>
+                      <h1 style={{ 
+                        margin: '0', 
+                        fontSize: '16px', 
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <span style={{ fontSize: '18px' }}>🎯</span>
                         OCUS Unified Extension
                       </h1>
-                      <span className="premium-badge-header">Premium</span>
+                      <span style={{
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        background: '#4CAF50',
+                        color: 'white',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>Premium</span>
                     </div>
                     
                     {/* Body */}
-                    <div className="extension-body">
+                    <div style={{ color: '#e2e8f0' }}>
                       {/* Premium Status Section - Compact */}
-                      <div className="config-section">
-                        <div className="config-header">
+                      <div style={{ 
+                        margin: '16px',
+                        border: '1px solid rgba(71, 85, 105, 0.3)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
+                      }}>
+                        <div style={{
+                          padding: '12px 16px',
+                          fontWeight: '600',
+                          fontSize: '13px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
+                          color: 'white'
+                        }}>
                           <span>Premium Status</span>
-                          <span className="premium-badge-status">Premium</span>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)'
+                          }}>Active</span>
                         </div>
-                        <div className="premium-status-body">
-                          <div className="premium-status-banner">
-                            <p className="premium-banner-title">✅ Premium Version Active</p>
-                            <p className="premium-banner-text">Enjoy unlimited mission acceptance!</p>
+                        <div style={{ padding: '16px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+                          <div style={{ 
+                            background: 'rgba(16, 185, 129, 0.1)', 
+                            padding: '12px', 
+                            borderRadius: '6px', 
+                            marginBottom: '12px', 
+                            borderLeft: '3px solid #10b981'
+                          }}>
+                            <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: '#6ee7b7', fontSize: '13px' }}>✓ Premium Version Active</p>
+                            <p style={{ margin: '0', color: '#a7f3d0', fontSize: '12px' }}>Enjoy unlimited mission acceptance!</p>
                           </div>
-                          <div className="premium-details">
-                            <div className="premium-detail-row">
-                              <span className="premium-detail-label">Status:</span>
-                              <span className="premium-detail-value-status">✓ Premium</span>
+                          <div style={{
+                            fontSize: '12px',
+                            color: '#e2e8f0',
+                            display: 'grid',
+                            gap: '6px'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Status:</span>
+                              <span style={{ color: '#6ee7b7', fontWeight: 'bold' }}>✓ Premium</span>
                             </div>
-                            <div className="premium-detail-row">
-                              <span className="premium-detail-label">Usage:</span>
-                              <span className="premium-detail-value">Unlimited</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Usage:</span>
+                              <span style={{ fontWeight: 'bold' }}>Unlimited</span>
                             </div>
-                            <div className="flex-justify-between">
-                              <span className="premium-detail-label">Version:</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Version:</span>
                               <span>2.1.0-PREMIUM</span>
                             </div>
                           </div>
@@ -696,36 +793,65 @@ export default function Home() {
                       </div>
                       
                       {/* Auto Login Section - Compact */}
-                      <div className="config-section">
-                        <div className="config-header">
-                          <span>Auto Login Configuration</span>
+                      <div style={{ 
+                        margin: '0 16px 16px 16px',
+                        border: '1px solid rgba(71, 85, 105, 0.3)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
+                      }}>
+                        <div style={{
+                          padding: '12px 16px',
+                          fontWeight: '600',
+                          fontSize: '13px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
+                          color: 'white'
+                        }}>
+                          <span>Auto Login</span>
                           <div className="toggle-switch">
-                            <div className="toggle-switch-background">
-                              <div className="toggle-switch-slider"></div>
-                            </div>
+                            <input type="checkbox" id="auto-login-toggle-showcase" className="toggle-switch-checkbox" defaultChecked />
+                            <label htmlFor="auto-login-toggle-showcase" className="toggle-switch-label">
+                              <span className="toggle-switch-slider"></span>
+                              <span className="toggle-switch-knob"></span>
+                            </label>
                           </div>
                         </div>
-                        <div>
-                          <div className="margin-bottom-8">
-                            <label className="input-label">OCUS Username</label>
+                        <div style={{ padding: '16px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#e2e8f0' }}>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>OCUS Username</label>
                             <input 
                               type="text" 
-                              className="extension-input"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid rgba(71, 85, 105, 0.3)',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                boxSizing: 'border-box',
+                                background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+                                color: 'white'
+                              }}
                               value="photographer@example.com"
                               readOnly
-                              title="OCUS Username"
-                              placeholder="Enter your OCUS username"
-                              aria-label="OCUS Username"
                             />
                           </div>
                           <div>
-                            <label className="input-label">OCUS Password</label>
+                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>OCUS Password</label>
                             <input 
                               type="password" 
-                              className="extension-input"
-                              title="OCUS Password"
-                              placeholder="Enter your OCUS password"
-                              aria-label="OCUS Password"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid rgba(71, 85, 105, 0.3)',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                boxSizing: 'border-box',
+                                background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+                                color: 'white'
+                              }}
                               value="••••••••"
                               readOnly
                             />
@@ -734,214 +860,71 @@ export default function Home() {
                       </div>
 
                       {/* Mission Monitor Section - Compact */}
-                      <div className="config-section">
-                        <div className="config-header">
-                          <span>Mission Monitor Configuration</span>
+                      <div style={{ 
+                        margin: '0 16px 16px 16px',
+                        border: '1px solid rgba(71, 85, 105, 0.3)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
+                      }}>
+                        <div style={{
+                          padding: '12px 16px',
+                          fontWeight: '600',
+                          fontSize: '13px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
+                          color: 'white'
+                        }}>
+                          <span>Mission Monitor</span>
                           <div className="toggle-switch">
-                            <div className="toggle-switch-background">
-                              <div className="toggle-switch-slider"></div>
-                            </div>
+                            <input type="checkbox" id="mission-monitor-toggle-showcase" className="toggle-switch-checkbox" defaultChecked />
+                            <label htmlFor="mission-monitor-toggle-showcase" className="toggle-switch-label">
+                              <span className="toggle-switch-slider"></span>
+                              <span className="toggle-switch-knob"></span>
+                            </label>
                           </div>
                         </div>
-                        <div className="extension-panel-settings">
-                          <div className="extension-input-group">
-                            <label className="extension-input-label">Refresh Interval (sec)</label>
+                        <div style={{ padding: '16px', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#e2e8f0' }}>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>Refresh Interval (sec)</label>
                             <input 
                               type="number" 
-                              className="extension-input"
+                              style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid rgba(71, 85, 105, 0.3)',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                boxSizing: 'border-box',
+                                background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+                                color: 'white'
+                              }}
                               value="30"
                               readOnly
-                              title="Refresh Interval (seconds)"
-                              placeholder="Enter refresh interval"
-                              aria-label="Refresh Interval in seconds"
                             />
                           </div>
-                          <div className="extension-settings-row">
-                            <label className="extension-label">Show Notifications</label>
-                            <div className="extension-toggle-container">
-                              <div className="extension-toggle-background">
-                                <div className="extension-toggle-slider"></div>
-                              </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '500', color: '#94a3b8' }}>Show Notifications</label>
+                            <div className="toggle-switch">
+                              <input type="checkbox" id="notifications-toggle-showcase" className="toggle-switch-checkbox" defaultChecked />
+                              <label htmlFor="notifications-toggle-showcase" className="toggle-switch-label">
+                                <span className="toggle-switch-slider"></span>
+                                <span className="toggle-switch-knob"></span>
+                              </label>
                             </div>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Mission Acceptor Section - Compact */}
-                      <div className="config-section">
-                        <div className="config-header">
-                          <span>Mission Acceptor Configuration</span>
-                          <div className="toggle-switch">
-                            <div className="toggle-switch-background">
-                              <div className="toggle-switch-slider"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="settings-row">
-                            <label className="settings-label-small">Auto Close Tab After Accept</label>
-                            <div className="toggle-switch-small">
-                              <div className="toggle-switch-small-bg">
-                                <div className="toggle-switch-small-slider"></div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="margin-bottom-8">
-                            <label className="input-label">Close Delay (sec)</label>
-                            <input 
-                              type="number" 
-                              className="extension-input"
-                              value="2"
-                              readOnly
-                              title="Close Delay (seconds)"
-                              placeholder="Enter close delay"
-                              aria-label="Close Delay in seconds"
-                            />
-                          </div>
-                          <div className="flex-justify-between-items-center">
-                            <label className="settings-label-small">Play Success Sound</label>
-                            <div className="toggle-switch-small">
-                              <div className="toggle-switch-small-bg">
-                                <div className="toggle-switch-small-slider"></div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Page Refresh Timer Section - Compact */}
-                      <div className="config-section">
-                        <div className="config-header">
-                          <span>Page Refresh Timer</span>
-                          <div className="toggle-switch">
-                            <div className="toggle-switch-background">
-                              <div className="toggle-switch-slider"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="margin-bottom-8">
-                            <label className="input-label">Refresh Interval</label>
-                            <div className="flex-gap-3-mb-6">
-                              <button className="quick-set-button active">5s</button>
-                              <button className="quick-set-button">10s</button>
-                              <button className="quick-set-button">20s</button>
-                              <button className="quick-set-button">30s</button>
-                            </div>
-                            <div className="flex-mb-6">
-                              <input 
-                                type="number" 
-                                className="extension-input-small"
-                                value="5"
-                                readOnly
-                                title="Custom refresh interval"
-                                placeholder="Enter seconds"
-                                aria-label="Custom refresh interval in seconds"
-                              />
-                              <button className="set-button-small">Set</button>
-                            </div>
-                          </div>
-                          <div className="flex-justify-between-items-center">
-                            <label className="settings-label-small">Show Countdown Panel</label>
-                            <div className="toggle-switch-small">
-                              <div className="toggle-switch-small-bg">
-                                <div className="toggle-switch-small-slider"></div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Statistics Section - Compact */}
-                      <div className="config-section">
-                        <div className="config-header">
-                          <span>Statistics</span>
-                          <button className="reset-button-small">Reset</button>
-                        </div>
-                        <div className="stats-container-dark">
-                          <div className="stat-row-dark">
-                            <span className="premium-detail-label">Missions Refreshing:</span>
-                            <span className="stat-value-dark">2295</span>
-                          </div>
-                          <div className="stat-row-dark">
-                            <span className="premium-detail-label">Missions Opened:</span>
-                            <span className="stat-value-dark">444</span>
-                          </div>
-                          <div className="stat-row-dark">
-                            <span className="premium-detail-label">Missions Accepted:</span>
-                            <span className="stat-value-dark">444</span>
-                          </div>
-                          <div className="stat-row-dark">
-                            <span className="premium-detail-label">Login Attempts:</span>
-                            <span className="stat-value-dark">95</span>
-                          </div>
-                          <div className="stat-row-dark">
-                            <span className="premium-detail-label">Successful Logins:</span>
-                            <span className="stat-value-dark">95</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom Action Buttons - Compact */}
-                      <div className="action-buttons-container">
-                        <button className="action-button save-button">Save Configuration</button>
-                        <button className="action-button stop-button">Emergency Stop</button>
-                      </div>
-
-                      {/* Footer Note */}
-                      <div className="footer-note-small">
-                        Press Alt+E on any OCUS page to access emergency controls
                       </div>
                     </div>
                   </div>
                 </div>
-                
-                <div className="bg-green-50 rounded-lg p-4 mt-4">
-                  <h4 className="font-semibold text-green-900 mb-2 text-sm">Extension Popup Interface</h4>
-                  <p className="text-green-800 text-xs leading-relaxed">
-                    {t?.extensionPopupDescription || 'Click the browser extension icon to access this full control panel. Configure auto-login with your OCUS credentials, manage all extension settings, and monitor premium status. Dark-themed interface with comprehensive configuration options.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* How It Works Explanation */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-slate-900 mb-6 text-center">{t?.howItWorksTitle || 'How the Premium Extension Works'}</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <Shield className="h-5 w-5 text-blue-500 mr-2" />
-                  {t?.autoLoginTitle || 'Auto-Login System'}
-                </h4>
-                <p className="text-slate-600 text-sm">
-                  {t?.autoLoginDescription || 'Automatically logs you back in with your OCUS credentials when sessions expire. Never miss photography jobs due to unexpected logouts - the extension handles authentication seamlessly.'}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <Clock className="h-5 w-5 text-green-500 mr-2" />
-                  {t?.monitoringTitle || '24/7 Smart Monitoring'}
-                </h4>
-                <p className="text-slate-600 text-sm">
-                  {t?.monitoringDescription || 'After accepting a mission, automatically returns to home page to continue monitoring. Customizable refresh intervals (5-30 seconds) ensure you never miss new Ubereats and Foodora photography opportunities.'}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                  <Bell className="h-5 w-5 text-yellow-500 mr-2" />
-                  {t?.timerTitle || 'Smart Timer Settings'}
-                </h4>
-                <p className="text-slate-600 text-sm">
-                  {t?.timerDescription || 'Configurable refresh timer with floating panel display. Set your preferred monitoring intervals and track performance with real-time statistics. Pause, resume, or refresh immediately as needed.'}
-                </p>
-              </div>
             </div>
           </div>
         </div>
+        </div>
       </section>
-
       {/* Free Demo Download Section */}
       <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-100 relative overflow-hidden">
         {/* Background decorations */}
