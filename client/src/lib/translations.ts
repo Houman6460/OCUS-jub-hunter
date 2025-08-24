@@ -36,19 +36,19 @@ export interface Translations {
   }>;
 
   // Extension Preview Panel Translations
-  howItWorksTitle: string;
-  autoLoginTitle: string;
-  autoLoginDescription: string;
-  monitoringTitle: string;
-  monitoringDescription: string;
-  timerTitle: string;
-  timerDescription: string;
-  mainExtensionTitle: string;
-  mainExtensionDescription: string;
-  timerPanelTitle: string;
-  timerPanelDescription: string;
-  analyticsTitle: string;
-  analyticsDescription: string;
+  howItWorksTitle?: string;
+  autoLoginTitle?: string;
+  autoLoginDescription?: string;
+  monitoringTitle?: string;
+  monitoringDescription?: string;
+  timerTitle?: string;
+  timerDescription?: string;
+  mainExtensionTitle?: string;
+  mainExtensionDescription?: string;
+  timerPanelTitle?: string;
+  timerPanelDescription?: string;
+  analyticsTitle?: string;
+  analyticsDescription?: string;
 
   // Extension Showcase Section
   extensionShowcaseTitle: string;
@@ -448,7 +448,70 @@ export interface Translations {
   inactive: string;
 
   // Manual Page
-  manual: {
+  checkout?: {
+    backToHome: string;
+    pageTitle: string;
+    loadingMessage: string;
+    orderSummaryTitle: string;
+    productName: string;
+    productDescription: string;
+    lifetimeAccess: string;
+    whatsIncluded: string;
+    includedFeatures: string[];
+    originalPrice: string;
+    discount: string;
+    total: string;
+    totalUSD: string;
+    oneTimePayment: string;
+    securePayment: string;
+    sslSecure: string;
+    pciCompliant: string;
+    moneyBackGuarantee: string;
+    completePurchase: string;
+    yourInformation: string;
+    fullNameLabel: string;
+    fullNamePlaceholder: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    emailHint: string;
+    couponTitle: string;
+    couponPlaceholder: string;
+    applyButton: string;
+    couponApplied: string;
+    couponSaved: string;
+    invalidCoupon: string;
+    invalidCouponMessage: string;
+    couponValidationError: string;
+    paymentMethod: string;
+    creditCard: string;
+    payPal: string;
+    fillInfoToContinue: string;
+    preparingPayment: string;
+    processingPayment: string;
+    payWithCard: string;
+    payPalRedirect: string;
+    paymentFailed: string;
+    paymentSuccessTitle: string;
+    paymentSuccessDescription: string;
+    paymentErrorTitle: string;
+    paymentInitializationError: string;
+    successTitle: string;
+    successMessage: string;
+    activationCode: string;
+    activationCodeHint: string;
+    processingActivationCode: string;
+    processingActivationCodeMessage: string;
+    returnHome: string;
+    testModeTitle: string;
+    testModeSuccess: string;
+    testModeDecline: string;
+    testModeInstructions: string;
+    testModeWarning: string;
+    unknownError: string;
+    customerNameRequired: string;
+    customerEmailInvalid: string;
+  };
+  manual?: {
     title: string;
     subtitle: string;
     backToHome: string;
@@ -549,7 +612,7 @@ export interface Translations {
       feature1: string;
       feature2: string;
       feature3: string;
-      feature4: string;
+      feature4?: string;
     };
     userResponsibilities: {
       title: string;
@@ -599,6 +662,143 @@ export interface Translations {
     lastUpdated: string;
     changeLanguage: string;
     gdprNotice: string;
+  };
+
+  // Affiliate Page
+  affiliate?: {
+    title: string;
+    subtitle: string;
+    dashboard: string;
+    totalEarnings: string;
+    totalReferrals: string;
+    pendingCommission: string;
+    referralInfo: string;
+    yourReferralLink: string;
+    copyLink: string;
+    linkCopied: string;
+    copyFailed: string;
+    shareOnSocialMedia: string;
+    shareOnFacebook: string;
+    shareOnTwitter: string;
+    shareOnLinkedIn: string;
+    shareByEmail: string;
+    payoutRequests: string;
+    requestPayout: string;
+    amount: string;
+    paymentMethod: string;
+    paypalEmail: string;
+    submitRequest: string;
+    requesting: string;
+    requestSent: string;
+    requestFailed: string;
+    unknownError: string;
+    referrals: string;
+    date: string;
+    referredUser: string;
+    status: string;
+    commission: string;
+    noReferrals: string;
+    payoutHistory: string;
+    payoutDate: string;
+    payoutAmount: string;
+    payoutStatusHeader: string;
+    noPayouts: string;
+    marketingMaterials: string;
+    emailSwipe: string;
+    copyEmail: string;
+    emailCopied: string;
+    socialMediaPost: string;
+    copyPost: string;
+    postCopied: string;
+    tabs: {
+      dashboard: string;
+      referrals: string;
+      payouts: string;
+      marketing: string;
+    };
+    referralStatus: {
+      pending: string;
+      approved: string;
+      rejected: string;
+    };
+    payoutStatus: {
+      pending: string;
+      processing: string;
+      completed: string;
+      failed: string;
+    };
+    emailSubject: string;
+    emailBody: string;
+    socialPost: string;
+  };
+
+  customerManagement?: {
+    title: string;
+    failedToFetchCustomers: string;
+    activationKeyGenerated: string;
+    newActivationKey: string;
+    failedToGenerateKey: string;
+    never: string;
+    totalCustomers: string;
+    activeExtensions: string;
+    todaysActivity: string;
+    activeUsers: string;
+    jobsSuccess: string;
+    ofJobsApplied: string;
+    supportTickets: string;
+    ofTotal: string;
+    customersTab: string;
+    analyticsTab: string;
+    usageTab: string;
+    searchPlaceholder: string;
+    customerListTitle: string;
+    customerListDescription: string;
+    customerColumn: string;
+    statusColumn: string;
+    extensionColumn: string;
+    usageStatsColumn: string;
+    totalSpentColumn: string;
+    actionsColumn: string;
+    activeStatus: string;
+    inactiveStatus: string;
+    timesUsed: string;
+    successfulJobs: string;
+    lastUsed: string;
+    orders: string;
+    viewDetails: string;
+    customerDetailsTitle: string;
+    accountInfo: string;
+    email: string;
+    created: string;
+    subscription: string;
+    activationKey: string;
+    none: string;
+    extensionUsage: string;
+    totalUsage: string;
+    recentUsageActivity: string;
+    dateColumn: string;
+    platformColumn: string;
+    jobsFoundColumn: string;
+    appliedColumn: string;
+    successfulColumn: string;
+    durationColumn: string;
+    paymentHistory: string;
+    amountColumn: string;
+    methodColumn: string;
+    generateKey: string;
+    revenueAnalytics: string;
+    totalRevenueFromSales: string;
+    extensionPerformance: string;
+    todaysSessions: string;
+    jobsFound: string;
+    applications: string;
+    successRate: string;
+    globalUsageStats: string;
+    activeUsersColumn: string;
+    sessionsColumn: string;
+    avgDurationColumn: string;
+    noUsageStats: string;
+    error: string;
   };
 }
 
@@ -959,11 +1159,147 @@ export const translations: Record<string, Translations> = {
     have_account: "Already have an account?",
     sign_in: "Sign in",
     or_login_with: "Or continue with",
+
+    // Affiliate Page
+    affiliate: {
+      title: "Affiliate Program",
+      subtitle: "Earn commissions by referring new users to OCUS Job Hunter.",
+      dashboard: "Affiliate Dashboard",
+      totalEarnings: "Total Earnings",
+      totalReferrals: "Total Referrals",
+      pendingCommission: "Pending Commission",
+      referralInfo: "Referral Information",
+      yourReferralLink: "Your Referral Link",
+      copyLink: "Copy Link",
+      linkCopied: "Referral link copied to clipboard!",
+      copyFailed: "Failed to copy link.",
+      shareOnSocialMedia: "Share on Social Media",
+      shareOnFacebook: "Share on Facebook",
+      shareOnTwitter: "Share on Twitter",
+      shareOnLinkedIn: "Share on LinkedIn",
+      shareByEmail: "Share by Email",
+      payoutRequests: "Payout Requests",
+      requestPayout: "Request Payout",
+      amount: "Amount",
+      paymentMethod: "Payment Method",
+      paypalEmail: "PayPal Email",
+      submitRequest: "Submit Request",
+      requesting: "Requesting...",
+      requestSent: "Payout request sent successfully!",
+      requestFailed: "Failed to send payout request.",
+      unknownError: "An unknown error occurred.",
+      referrals: "Referrals",
+      date: "Date",
+      referredUser: "Referred User",
+      status: "Status",
+      commission: "Commission",
+      noReferrals: "You have no referrals yet.",
+      payoutHistory: "Payout History",
+      payoutDate: "Date",
+      payoutAmount: "Amount",
+      payoutStatusHeader: "Status",
+      noPayouts: "You have no payout history.",
+      marketingMaterials: "Marketing Materials",
+      emailSwipe: "Email Swipe",
+      copyEmail: "Copy Email",
+      emailCopied: "Email content copied to clipboard!",
+      socialMediaPost: "Social Media Post",
+      copyPost: "Copy Post",
+      postCopied: "Post content copied to clipboard!",
+      tabs: {
+        dashboard: "Dashboard",
+        referrals: "Referrals",
+        payouts: "Payouts",
+        marketing: "Marketing",
+      },
+      referralStatus: {
+        pending: "Pending",
+        approved: "Approved",
+        rejected: "Rejected",
+      },
+      payoutStatus: {
+        pending: "Pending",
+        processing: "Processing",
+        completed: "Completed",
+        failed: "Failed",
+      },
+      emailSubject: "Check out OCUS Job Hunter!",
+      emailBody: `Hey,\n\nI've been using OCUS Job Hunter to find photography jobs automatically, and it's been a game-changer. It saves me hours of manual searching and helps me find the best opportunities.\n\nIf you're a photographer, I highly recommend you check it out. You can use my referral link to sign up: {referralLink}\n\nBest,\n{userName}`,
+      socialPost: `Looking for an edge in finding photography jobs? I've been using OCUS Job Hunter to automate my job search, and it's amazing! #photography #freelance #automation. Sign up with my link: {referralLink}`,
+    },
+    customerManagement: {
+      title: "Customer Management",
+      failedToFetchCustomers: "Failed to fetch customers",
+      activationKeyGenerated: "Activation Key Generated",
+      newActivationKey: "New activation key: {key}",
+      failedToGenerateKey: "Failed to generate activation key",
+      never: "Never",
+      totalCustomers: "Total Customers",
+      activeExtensions: "{count} active extensions",
+      todaysActivity: "Today's Activity",
+      activeUsers: "{count} active users",
+      jobsSuccess: "Jobs Success",
+      ofJobsApplied: "of {count} applied",
+      supportTickets: "Support Tickets",
+      ofTotal: "of {count} total",
+      customersTab: "Customers",
+      analyticsTab: "Analytics",
+      usageTab: "Usage Statistics",
+      searchPlaceholder: "Search customers...",
+      customerListTitle: "Customer List",
+      customerListDescription: "Manage customer accounts and extension access",
+      customerColumn: "Customer",
+      statusColumn: "Status",
+      extensionColumn: "Extension",
+      usageStatsColumn: "Usage Stats",
+      totalSpentColumn: "Total Spent",
+      actionsColumn: "Actions",
+      activeStatus: "Active",
+      inactiveStatus: "Inactive",
+      timesUsed: "{count} times",
+      successfulJobs: "{count} successful jobs",
+      lastUsed: "Last used: {date}",
+      orders: "{count} orders",
+      viewDetails: "View Details",
+      customerDetailsTitle: "Customer Details: {name}",
+      accountInfo: "Account Information",
+      email: "Email:",
+      created: "Created:",
+      subscription: "Subscription:",
+      activationKey: "Activation Key:",
+      none: "None",
+      extensionUsage: "Extension Usage",
+      totalUsage: "Total Usage:",
+      recentUsageActivity: "Recent Usage Activity",
+      dateColumn: "Date",
+      platformColumn: "Platform",
+      jobsFoundColumn: "Jobs Found",
+      appliedColumn: "Applied",
+      successfulColumn: "Successful",
+      durationColumn: "Duration",
+      paymentHistory: "Payment History",
+      amountColumn: "Amount",
+      methodColumn: "Method",
+      generateKey: "Generate Key",
+      revenueAnalytics: "Revenue Analytics",
+      totalRevenueFromSales: "Total Revenue from {count} sales",
+      extensionPerformance: "Extension Performance",
+      todaysSessions: "Today's Sessions:",
+      jobsFound: "Jobs Found:",
+      applications: "Applications:",
+      successRate: "Success Rate:",
+      globalUsageStats: "Global Usage Statistics (Last 30 Days)",
+      activeUsersColumn: "Active Users",
+      sessionsColumn: "Sessions",
+      avgDurationColumn: "Avg Duration",
+      noUsageStats: "No usage statistics available yet. Statistics will appear once customers start using the extension.",
+      error: "Error",
+    },
     login_with_google: "Login with Google",
     login_with_facebook: "Login with Facebook",
     login_with_github: "Login with GitHub",
-    
-    // Navigation  
+
+    // Navigation
     home: "Home",
     about: "About",
     contact: "Contact",
@@ -2419,7 +2755,8 @@ export const translations: Record<string, Translations> = {
         content: "OCUS Job Hunter est une extension Chrome pour la recherche d'emplois photographiques :",
         feature1: "Recherche automatisée d'emplois photographiques",
         feature2: "Notifications en temps réel",
-        feature3: "Filtrage intelligent par localisation"
+        feature3: "Surveillance 24/7 pour ne jamais manquer une mission",
+        feature4: "Concentrez-vous sur les opportunités à haute valeur ajoutée"
       },
       userResponsibilities: {
         title: "Responsabilités de l'utilisateur",
