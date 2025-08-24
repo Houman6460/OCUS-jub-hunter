@@ -1026,3 +1026,21 @@
   padding: 12px;
   margin-top: 16px;
 }
+
+.image-scroll-container {
+  height: 560px; /* Match the height of the other panel image */
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  border-radius: 0.5rem; /* from rounded-lg */
+}
+
+.image-scroll-content {
+  width: 100%;
+  height: auto;
+  transition: transform 2s ease-in-out;
+}
+
+.image-scroll-container:hover .image-scroll-content {
+  transform: translateY(calc(-100% + 560px));
+}

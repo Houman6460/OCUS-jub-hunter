@@ -35,6 +35,8 @@ import {
   X
 } from "lucide-react";
 import './home.css';
+import ocusUnifiedExtensionNew from '@/assets/ocus-unified-extension-new.png';
+import ocusHunterNew from '@/assets/ocus-hunter-new.png';
 
 export default function Home() {
   const { t } = useLanguage();
@@ -535,38 +537,12 @@ export default function Home() {
               {/* Floating OCUS Hunter Panel - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
-                <div className="flex justify-center flex-1 hunter-panel-font">
-                  <div className="hunter-panel-container transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300">
-                    {/* Header */}
-                    <div className="hunter-panel-header">
-                      <div className="hunter-panel-title">
-                        <span aria-label="Target icon" role="img">🎯</span>
-                        <span>OCUS Hunter</span>
-                      </div>
-                      <div className="hunter-panel-controls">
-                        <button aria-label="Minimize panel">−</button>
-                        <button aria-label="Close panel">×</button>
-                      </div>
-                    </div>
-                    
-                    {/* Body */}
-                    <div className="hunter-panel-body">
-                      {/* Timer Section */}
-                      <div className="hunter-timer-section">
-                        <div className="hunter-timer-display">
-                          <div className="hunter-timer-value">
-                            <span>95</span>
-                            <span className="hunter-timer-label">Logins</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Status Message */}
-                      <div className="hunter-status-message">
-                        Ready
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex justify-center flex-1">
+                  <img 
+                    src={ocusHunterNew} 
+                    alt="OCUS Hunter Panel Preview" 
+                    className="rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
                 
                 <div className="bg-blue-50 rounded-lg p-4 mt-4">
@@ -580,41 +556,15 @@ export default function Home() {
               {/* Extension Popup - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
-                <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                  {/* Exact Popup Design from popup.html - Same Height as Floating Panel */}
-                  <div className="extension-popup-container-showcase">
-                    {/* Header */}
-                    <div className="extension-popup-header-showcase">
-                      <div className="extension-popup-title-container-showcase">
-                        <span role="img" aria-label="Target Icon" className="extension-popup-icon-showcase">🎯</span>
-                        <h1 className="extension-popup-title-showcase">OCUS Unified Extension</h1>
-                      </div>
-                      <span className="extension-popup-premium-badge-showcase">PREMIUM</span>
-                    </div>
-
-                    {/* Body */}
-                    <div className="extension-popup-body-showcase">
-                      {/* Premium Status Section */}
-                      <div className="extension-popup-section-showcase">
-                        <div className="extension-popup-section-header-showcase">
-                          <h2 className="extension-popup-section-title-showcase">Premium Status</h2>
-                          <span className="extension-popup-status-badge-showcase">PREMIUM</span>
-                        </div>
-                        <div className="extension-popup-section-content-showcase">
-                          <div className="premium-active-banner-showcase">
-                            <span role="img" aria-label="Checkmark Icon" className="premium-active-icon-showcase">✓</span>
-                            <div>
-                              <p className="premium-active-title-showcase">Premium Version Active</p>
-                              <p className="premium-active-subtitle-showcase">Enjoy unlimited mission acceptance!</p>
-                            </div>
-                          </div>
-                          <div className="premium-details-grid-showcase">
-                            <div className="premium-detail-item-showcase">
-                              <span>Status:</span>
-                              <span className="premium-detail-value-showcase premium-active-text-showcase">✓ Premium</span>
-                            </div>
-                            <div className="premium-detail-item-showcase">
-                              <span>Usage:</span>
+                <div className="flex justify-center flex-1">
+                  <div className="image-scroll-container rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <img 
+                      src={ocusUnifiedExtensionNew} 
+                      alt="OCUS Unified Extension Panel Preview" 
+                      className="image-scroll-content"
+                    />
+                  </div>
+                </div>
                               <span className="premium-detail-value-showcase">Unlimited</span>
                             </div>
                             <div className="premium-detail-item-showcase">
