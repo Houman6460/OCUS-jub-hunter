@@ -214,6 +214,9 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative pb-24 overflow-hidden banner-aware-section">
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5"></div>
+
         {/* Floating Icons from Screenshot */}
         <div className="floating-icon icon-1">
           <Target className="w-8 h-8 text-blue-500" />
@@ -1090,7 +1093,6 @@ export default function Home() {
                 {/* Dynamic Background */}
                 <div className="absolute inset-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-purple-600/20 to-accent/30"></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20"></div>
                 </div>
                 
                 {/* Animated Mesh Background */}
