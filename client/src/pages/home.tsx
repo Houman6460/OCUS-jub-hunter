@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -35,14 +35,15 @@ import {
   X
 } from "lucide-react";
 import './home.css';
-import ocusUnifiedExtensionNew from '@/assets/ocus-unified-extension-new.png';
-import ocusHunterNew from '@/assets/ocus-hunter-new.png';
+const ExtensionShowcaseSection = lazy(() => import('@/components/home/ExtensionShowcaseSection'));
 
 export default function Home() {
   const { t } = useLanguage();
   const [faqOpen, setFaqOpen] = useState<{ [key: number]: boolean }>({});
   const [isVisible, setIsVisible] = useState(false);
   const [showVideoPopup, setShowVideoPopup] = useState(false);
+  const [currentStat, setCurrentStat] = useState({ jobs: 0, earnings: 0 });
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleFAQ = (index: number) => {
@@ -52,6 +53,10 @@ export default function Home() {
   const scrollToPurchase = () => {
     const pricingSection = document.getElementById('pricing');
     pricingSection?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Animation for hero section and scroll detection
@@ -79,6 +84,66 @@ export default function Home() {
       document.body.style.overflow = 'auto';
     };
   }, [showVideoPopup]);
+
+  // Stat counter animation
+  useEffect(() => {
+    const stats = {
+      jobs: 43,
+      earnings: 3655,
+    };
+    const duration = 2000; // 2 seconds
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = timestamp - startTime;
+      const percentage = Math.min(progress / duration, 1);
+
+      setCurrentStat({
+        jobs: Math.floor(stats.jobs * percentage),
+        earnings: Math.floor(stats.earnings * percentage),
+      });
+
+      if (progress < duration) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          requestAnimationFrame(animate);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const statsSection = document.querySelector('.enhanced-animated-stats-container');
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+
+    return () => {
+      if (statsSection) {
+        observer.unobserve(statsSection);
+      }
+    };
+  }, []);
+
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const featuresIcons = [Bot, Shield, Bell, Filter, BarChart3, Clock];
   
@@ -248,7 +313,7 @@ export default function Home() {
           </div>
 
           {/* Enhanced Animated Stats */}
-          <div className={`grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12 transition-all duration-1000 delay-600 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+          <div className={`enhanced-animated-stats-container grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12 transition-all duration-1000 delay-600 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-primary/10 transform hover:scale-105 transition-all duration-300">
               <div className="text-3xl lg:text-4xl font-black text-primary mb-2">{currentStat.jobs}+</div>
               <div className="text-xs lg:text-sm font-semibold text-slate-600 uppercase tracking-wide">{t?.jobsFound || 'Jobs Found'}</div>
@@ -480,88 +545,19 @@ export default function Home() {
       </section>
 
       {/* Extension Interface Showcase */}
-      <section className="py-20 bg-slate-50 banner-aware-additional-spacing">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-              {t?.extensionShowcaseTitle || 'Premium OCUS Job Hunter Extension'}
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-4">
-              {t?.extensionShowcaseSubtitle || 'Complete automation for OCUS photography jobs with intelligent monitoring and seamless workflow management'}
-            </p>
-            <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 max-w-4xl mx-auto">
-              <h3 className="text-lg font-semibold text-slate-800 mb-3 text-center">
-                {t?.extensionHowItWorksTitle || '🎯 How the Premium Extension Works'}
-              </h3>
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
-                <div className="text-center">
-                  <div className="text-blue-600 font-semibold mb-1">{t?.extensionAutoLoginTitle || '🔐 Auto-Login'}</div>
-                  <p className="text-slate-600">{t?.extensionAutoLoginDescription || 'Uses your OCUS credentials to automatically log you back in when sessions expire'}</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-green-600 font-semibold mb-1">{t?.extension24MonitoringTitle || '🕐 24/7 Monitoring'}</div>
-                  <p className="text-slate-600">{t?.extension24MonitoringDescription || 'After accepting missions, returns to home page to continue monitoring for new opportunities'}</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-purple-600 font-semibold mb-1">{t?.extensionSmartTimerTitle || '⚡ Smart Timer'}</div>
-                  <p className="text-slate-600">{t?.extensionSmartTimerDescription || 'Customizable refresh intervals (5-30 seconds) with floating panel controls and performance tracking'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ExtensionShowcaseSection t={t} />
+      </Suspense>
+      {showScrollTop && (
+        <Button
+          onClick={handleScrollToTop}
+          className="fixed bottom-5 right-5 bg-primary hover:bg-primary/90 rounded-full w-12 h-12 flex items-center justify-center shadow-lg z-50 animate-bounce"
+          aria-label="Scroll to top"
+        >
+          <ChevronUp className="h-6 w-6 text-white" />
+        </Button>
+      )}
 
-          <div className="mb-16">
-            <div className="grid md:grid-cols-2 gap-8 items-start">
-              <h3 className="text-xl font-bold text-slate-900 text-center md:col-span-1">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
-              <h3 className="text-xl font-bold text-slate-900 text-center md:col-span-1">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 items-start mt-4">
-              {/* Left Image Panel */}
-              <div className="flex justify-center items-start max-w-xs mx-auto">
-                <img 
-                  src={ocusHunterNew} 
-                  alt="OCUS Hunter Panel Preview" 
-                  className="rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-
-              {/* Right Image Panel */}
-              <div className="flex justify-center items-start max-w-xs mx-auto overflow-hidden rounded-lg">
-                <div className="image-scroll-container rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
-                  <img 
-                    src={ocusUnifiedExtensionNew} 
-                    alt="OCUS Unified Extension Panel Preview" 
-                    className="image-scroll-content"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 items-start mt-4">
-              {/* Left Text Box */}
-              <div className="max-w-xs mx-auto w-full">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-2 text-sm">Floating Control Panel</h4>
-                  <p className="text-blue-800 text-xs leading-relaxed">
-                    {t?.floatingPanelDescription || 'The floating panel gives you at-a-glance status updates. It shows login counts, mission status, and a countdown timer for the next refresh, ensuring you are always informed without interrupting your workflow.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Right Text Box */}
-              <div className="max-w-xs mx-auto w-full">
-                <div className="bg-green-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-green-900 mb-2 text-sm">Advanced Popup Interface</h4>
-                  <p className="text-green-800 text-xs leading-relaxed">
-                    {t?.extensionPopupDescription || 'The extension popup is your command center. It provides detailed information about your missions, auto-login credentials, and configuration settings for refresh intervals and notifications.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
       {/* Free Demo Download Section */}
       <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-100 relative overflow-hidden">
         {/* Background decorations */}

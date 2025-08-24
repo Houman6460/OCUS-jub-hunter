@@ -134,7 +134,7 @@ export default function PayPalButton({
             checkoutOptionsPromise,
           );
         } catch (e) {
-          console.error(e);
+          console.error("PayPal checkout error:", e);
         }
       };
 
@@ -150,7 +150,7 @@ export default function PayPalButton({
         }
       };
     } catch (e) {
-      console.error(e);
+      console.error("PayPal initialization error:", e);
     }
   };
 
