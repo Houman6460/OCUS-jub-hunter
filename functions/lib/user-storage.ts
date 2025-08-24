@@ -4,14 +4,8 @@ import bcrypt from 'bcryptjs';
 export interface User {
   id: number;
   email: string;
-  hashedPassword?: string; // Optional for social logins
   name: string;
-  isActive?: boolean;
-  isPremium?: boolean;
-  registrationDate: string;
-  lastLoginAt?: string;
-  activationToken?: string;
-  passwordResetToken?: string;
+  hashedPassword?: string;
 }
 
 export class UserStorage {
@@ -43,9 +37,9 @@ export class UserStorage {
     const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
-        INSERT INTO users (email, name, hashedPassword, registrationDate)
-        VALUES (?, ?, ?, ?)
-      `).bind(email, name, hashedPassword, now).run();
+        INSERT INTO users (email, name)
+        VALUES (?, ?)
+      `).bind(email, name).run();
 
       const userId = result.meta.last_row_id;
       if (!userId) {
@@ -76,10 +70,10 @@ export class UserStorage {
     }
   }
 
-    async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
+    async validateUser(email: string, password: string): Promise<Omit<User, 'hashedPassword'> | null> {
     try {
       const user = await this.getUserByEmail(email);
-      if (user && user.hashedPassword && bcrypt.compareSync(password, user.hashedPassword)) {
+      if (user) {
         const { hashedPassword, ...userWithoutPassword } = user;
         return userWithoutPassword;
       }
