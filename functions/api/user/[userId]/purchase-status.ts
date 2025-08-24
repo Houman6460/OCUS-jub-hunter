@@ -2,6 +2,16 @@ interface Env {
   DB: D1Database;
 }
 
+interface UserEmail {
+  email: string;
+}
+
+interface PurchaseStatus {
+  completedOrders: number;
+  totalSpent: number;
+  lastPurchaseDate: string | null;
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     const { params } = context;
@@ -16,7 +26,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     // Get user email first
     const userQuery = `SELECT email FROM users WHERE id = ?`;
-    const userResult = await context.env.DB.prepare(userQuery).bind(userId).first();
+    const userResult = await context.env.DB.prepare(userQuery).bind(userId).first<UserEmail>();
     
     if (!userResult) {
       return new Response(JSON.stringify({ 
@@ -43,7 +53,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       WHERE customerEmail = ?
     `;
 
-    const statusResult = await context.env.DB.prepare(statusQuery).bind(userResult.email).first();
+    const statusResult = await context.env.DB.prepare(statusQuery).bind(userResult.email).first<PurchaseStatus>();
     
     const hasPurchased = (statusResult?.completedOrders || 0) > 0;
     const totalSpent = (statusResult?.totalSpent || 0).toFixed(2);
