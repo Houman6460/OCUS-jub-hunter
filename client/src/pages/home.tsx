@@ -34,6 +34,7 @@ import {
   Menu,
   X
 } from "lucide-react";
+import './home.css';
 
 export default function Home() {
   const { t } = useLanguage();
@@ -568,362 +569,90 @@ export default function Home() {
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
                 <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                   {/* Exact Panel Design from Extension Code */}
-                  <div className="transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 overflow-y-auto" style={{
-                    width: '320px',
-                    height: '700px',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    border: '1px solid rgba(71, 85, 105, 0.4)',
-                    borderRadius: '12px',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(16px)',
-                    overflow: 'auto',
-                    margin: '0 auto'
-                  }}>
+                  <div className="floating-panel">
                     {/* Header */}
-                    <div style={{
-                      cursor: 'move',
-                      userSelect: 'none',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '16px 20px',
-                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                      color: 'white',
-                      borderRadius: '12px 12px 0 0',
-                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
-                    }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        fontWeight: '600',
-                        fontSize: '15px' 
-                      }}>
+                    <div className="panel-header">
+                      <h1 className="extension-title">
                         <span style={{ fontSize: '18px' }}>🎯</span>
-                        <span>OCUS Hunter</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button style={{ 
-                          background: 'rgba(255, 255, 255, 0.2)', 
-                          border: 'none', 
-                          color: 'white', 
-                          fontSize: '16px', 
-                          cursor: 'pointer', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px',
-                          lineHeight: '1',
-                          transition: 'all 0.2s ease'
-                        }}>−</button>
-                        <button style={{ 
-                          background: 'rgba(255, 255, 255, 0.2)', 
-                          border: 'none', 
-                          color: 'white', 
-                          fontSize: '16px', 
-                          cursor: 'pointer', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px',
-                          lineHeight: '1',
-                          transition: 'all 0.2s ease'
-                        }}>×</button>
-                      </div>
+                        OCUS Unified Extension
+                      </h1>
+                      <span className="premium-badge-header">Premium</span>
                     </div>
                     
                     {/* Body */}
-                    <div style={{ 
-                      padding: '20px', 
-                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                      color: '#e2e8f0' 
-                    }}>
+                    <div className="panel-body">
                       {/* Timer Section */}
-                      <div style={{ marginBottom: '20px' }}>
+                      <div className="timer-section">
                         {/* Timer Display */}
-                        <div style={{ 
-                          textAlign: 'center',
-                          marginBottom: '16px',
-                          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                          padding: '16px',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(71, 85, 105, 0.3)'
-                        }}>
-                          <div style={{ 
-                            display: 'flex',
-                            alignItems: 'baseline',
-                            justifyContent: 'center',
-                            gap: '4px',
-                            fontSize: '32px',
-                            fontWeight: '700',
-                            color: '#60a5fa',
-                            lineHeight: '1'
-                          }}>
+                        <div className="timer-display">
+                          <div className="timer-value-container">
                             <span>4</span>
-                            <span style={{ fontSize: '16px', fontWeight: '500', color: '#94a3b8' }}>sec</span>
+                            <span className="timer-unit">sec</span>
                           </div>
-                          <div style={{ 
-                            fontSize: '12px',
-                            color: '#94a3b8',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginTop: '4px'
-                          }}>
+                          <div className="timer-label">
                             Next Refresh
                           </div>
                         </div>
                         
                         {/* Interval Quick Select */}
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ 
-                            fontSize: '12px',
-                            color: '#94a3b8',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '8px',
-                            textAlign: 'center'
-                          }}>
+                        <div>
+                          <div className="interval-label">
                             Refresh Interval
                           </div>
-                          <div style={{ 
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
-                            gap: '6px'
-                          }}>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                              color: 'white',
-                              borderColor: '#3b82f6',
-                              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>5s</button>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                              color: '#e2e8f0',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>10s</button>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                              color: '#e2e8f0',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>20s</button>
-                            <button style={{ 
-                              padding: '8px 4px',
-                              border: '1px solid rgba(71, 85, 105, 0.3)',
-                              borderRadius: '6px',
-                              background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                              color: '#e2e8f0',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              textAlign: 'center'
-                            }}>30s</button>
+                          <div className="interval-buttons-container">
+                            <button className="interval-button active">5s</button>
+                            <button className="interval-button">10s</button>
+                            <button className="interval-button">20s</button>
+                            <button className="interval-button">30s</button>
                           </div>
                         </div>
                         
                         {/* Timer Controls */}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button style={{ 
-                            flex: '1',
-                            padding: '10px 12px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                            color: 'white',
-                            boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
-                          }}>
-                            <span style={{ fontSize: '14px' }}>⏸</span>
-                            <span style={{ fontSize: '12px' }}>Pause</span>
+                        <div className="timer-controls">
+                          <button className="timer-control-button primary">
+                            <span className="timer-control-icon">⏸</span>
+                            <span className="timer-control-text">Pause</span>
                           </button>
-                          <button style={{ 
-                            flex: '1',
-                            padding: '10px 12px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            background: 'linear-gradient(135deg, #475569 0%, #64748b 100%)',
-                            color: '#e2e8f0'
-                          }}>
-                            <span style={{ fontSize: '14px' }}>🔄</span>
-                            <span style={{ fontSize: '12px' }}>Refresh</span>
+                          <button className="timer-control-button secondary">
+                            <span className="timer-control-icon">🔄</span>
+                            <span className="timer-control-text">Refresh</span>
                           </button>
                         </div>
                       </div>
                       
                       {/* Stats Section */}
-                      <div style={{ marginBottom: '16px' }}>
-                        <div style={{ 
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '12px'
-                        }}>
-                          <div style={{ 
-                            textAlign: 'center',
-                            padding: '12px',
-                            background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)'
-                          }}>
-                            <span style={{ 
-                              display: 'block',
-                              fontSize: '20px',
-                              fontWeight: '700',
-                              color: '#60a5fa',
-                              lineHeight: '1'
-                            }}>∞</span>
-                            <span style={{ 
-                              fontSize: '11px',
-                              color: '#94a3b8',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginTop: '4px'
-                            }}>Unlimited</span>
+                      <div>
+                        <div className="stats-grid">
+                          <div className="stat-item">
+                            <span className="stat-value">∞</span>
+                            <span className="stat-label">Unlimited</span>
                           </div>
-                          <div style={{ 
-                            textAlign: 'center',
-                            padding: '12px',
-                            background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)'
-                          }}>
-                            <span style={{ 
-                              display: 'block',
-                              fontSize: '20px',
-                              fontWeight: '700',
-                              color: '#60a5fa',
-                              lineHeight: '1'
-                            }}>2295</span>
-                            <span style={{ 
-                              fontSize: '11px',
-                              color: '#94a3b8',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginTop: '4px'
-                            }}>Refreshing</span>
+                          <div className="stat-item">
+                            <span className="stat-value">2295</span>
+                            <span className="stat-label">Refreshing</span>
                           </div>
-                          <div style={{ 
-                            textAlign: 'center',
-                            padding: '12px',
-                            background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)'
-                          }}>
-                            <span style={{ 
-                              display: 'block',
-                              fontSize: '20px',
-                              fontWeight: '700',
-                              color: '#60a5fa',
-                              lineHeight: '1'
-                            }}>444</span>
-                            <span style={{ 
-                              fontSize: '11px',
-                              color: '#94a3b8',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginTop: '4px'
-                            }}>Opened</span>
+                          <div className="stat-item">
+                            <span className="stat-value">444</span>
+                            <span className="stat-label">Opened</span>
                           </div>
-                          <div style={{ 
-                            textAlign: 'center',
-                            padding: '12px',
-                            background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)'
-                          }}>
-                            <span style={{ 
-                              display: 'block',
-                              fontSize: '20px',
-                              fontWeight: '700',
-                              color: '#60a5fa',
-                              lineHeight: '1'
-                            }}>444</span>
-                            <span style={{ 
-                              fontSize: '11px',
-                              color: '#94a3b8',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginTop: '4px'
-                            }}>Accepted</span>
+                          <div className="stat-item">
+                            <span className="stat-value">444</span>
+                            <span className="stat-label">Accepted</span>
                           </div>
                         </div>
                         
                         {/* Bottom single stat - LOGINS */}
-                        <div style={{ 
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '12px',
-                          marginTop: '12px'
-                        }}>
-                          <div style={{ 
-                            textAlign: 'center',
-                            padding: '12px',
-                            background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(71, 85, 105, 0.3)'
-                          }}>
-                            <span style={{ 
-                              display: 'block',
-                              fontSize: '20px',
-                              fontWeight: '700',
-                              color: '#60a5fa',
-                              lineHeight: '1'
-                            }}>95</span>
-                            <span style={{ 
-                              fontSize: '11px',
-                              color: '#94a3b8',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px',
-                              marginTop: '4px'
-                            }}>Logins</span>
+                        <div className="stats-grid-single">
+                          <div className="stat-item">
+                            <span className="stat-value">95</span>
+                            <span className="stat-label">Logins</span>
                           </div>
                           <div></div>
                         </div>
                       </div>
                       
                       {/* Status Message */}
-                      <div style={{ 
-                        textAlign: 'center',
-                        fontSize: '14px',
-                        color: '#94a3b8',
-                        background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(71, 85, 105, 0.3)',
-                        padding: '12px',
-                        marginTop: '16px'
-                      }}>
+                      <div className="status-message">
                         Ready
                       </div>
                     </div>
@@ -943,134 +672,40 @@ export default function Home() {
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
                 <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                   {/* Exact Popup Design from popup.html - Same Height as Floating Panel */}
-                  <div 
-                    className="transform hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 overflow-y-auto" 
-                    style={{
-                      width: '320px',
-                      height: '700px',
-                    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(71, 85, 105, 0.4)'
-                  }}
-                    onMouseEnter={(e) => {
-                      const scrollContainer = e.currentTarget;
-                      scrollContainer.dataset.userScrolled = 'false';
-                      const scrollToBottom = () => {
-                        if (scrollContainer.dataset.userScrolled === 'false') {
-                          scrollContainer.scrollTo({
-                            top: scrollContainer.scrollHeight,
-                            behavior: 'smooth'
-                          });
-                        }
-                      };
-                      setTimeout(scrollToBottom, 100);
-                    }}
-                    onMouseLeave={(e) => {
-                      const scrollContainer = e.currentTarget;
-                      scrollContainer.dataset.userScrolled = 'false';
-                      const scrollToTop = () => {
-                        if (scrollContainer.dataset.userScrolled === 'false') {
-                          scrollContainer.scrollTo({
-                            top: 0,
-                            behavior: 'smooth'
-                          });
-                        }
-                      };
-                      setTimeout(scrollToTop, 100);
-                    }}
-                    onScroll={(e) => {
-                      // Mark as user-scrolled to interrupt automatic scrolling
-                      const scrollContainer = e.currentTarget;
-                      scrollContainer.dataset.userScrolled = 'true';
-                    }}
-                  >
+                  <div className="extension-popup-container">
                     {/* Header - Compact */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '16px 20px',
-                      background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                      color: 'white',
-                      borderBottom: '1px solid rgba(71, 85, 105, 0.3)'
-                    }}>
-                      <h1 style={{ 
-                        margin: '0', 
-                        fontSize: '16px', 
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
+                    <div className="extension-header">
+                      <h1 className="extension-title">
                         <span style={{ fontSize: '18px' }}>🎯</span>
                         OCUS Unified Extension
                       </h1>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '10px',
-                        fontWeight: '600',
-                        background: '#4CAF50',
-                        color: 'white',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}>Premium</span>
+                      <span className="premium-badge-header">Premium</span>
                     </div>
                     
                     {/* Body */}
-                    <div style={{ color: '#e2e8f0' }}>
+                    <div className="extension-body">
                       {/* Premium Status Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          background: '#f8f9fa',
-                          padding: '8px 12px',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e1e5e9',
-                          color: '#333'
-                        }}>
+                      <div className="config-section">
+                        <div className="config-header">
                           <span>Premium Status</span>
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            fontSize: '10px',
-                            fontWeight: '600',
-                            background: '#4CAF50',
-                            color: 'white',
-                            textTransform: 'uppercase'
-                          }}>Premium</span>
+                          <span className="premium-badge-status">Premium</span>
                         </div>
-                        <div style={{ padding: '12px', background: 'white' }}>
-                          <div style={{ background: '#E8F5E9', padding: '10px', borderRadius: '6px', marginBottom: '10px' }}>
-                            <p style={{ margin: '0 0 3px 0', fontWeight: 'bold', color: '#2E7D32', fontSize: '12px' }}>✅ Premium Version Active</p>
-                            <p style={{ margin: '0', color: '#388E3C', fontSize: '11px' }}>Enjoy unlimited mission acceptance!</p>
+                        <div className="premium-status-body">
+                          <div className="premium-status-banner">
+                            <p className="premium-banner-title">✅ Premium Version Active</p>
+                            <p className="premium-banner-text">Enjoy unlimited mission acceptance!</p>
                           </div>
-                          <div style={{ 
-                            background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                            borderRadius: '4px',
-                            padding: '10px',
-                            fontSize: '11px',
-                            color: '#e2e8f0'
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Status:</span>
-                              <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>✓ Premium</span>
+                          <div className="premium-details">
+                            <div className="premium-detail-row">
+                              <span className="premium-detail-label">Status:</span>
+                              <span className="premium-detail-value-status">✓ Premium</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Usage:</span>
-                              <span style={{ fontWeight: 'bold' }}>Unlimited</span>
+                            <div className="premium-detail-row">
+                              <span className="premium-detail-label">Usage:</span>
+                              <span className="premium-detail-value">Unlimited</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontWeight: '500', color: '#94a3b8' }}>Version:</span>
+                              <span className="premium-detail-label">Version:</span>
                               <span>2.1.0-PREMIUM</span>
                             </div>
                           </div>
@@ -1078,57 +713,18 @@ export default function Home() {
                       </div>
                       
                       {/* Auto Login Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          background: '#f8f9fa',
-                          padding: '8px 12px',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e1e5e9',
-                          color: '#333'
-                        }}>
+                      <div className="config-section">
+                        <div className="config-header">
                           <span>Auto Login Configuration</span>
-                          <div style={{
-                            position: 'relative',
-                            display: 'inline-block',
-                            width: '40px',
-                            height: '22px'
-                          }}>
-                            <div style={{
-                              position: 'absolute',
-                              cursor: 'pointer',
-                              top: '0',
-                              left: '0',
-                              right: '0',
-                              bottom: '0',
-                              background: '#2196F3',
-                              borderRadius: '22px',
-                              transition: 'all 0.3s ease'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                height: '16px',
-                                width: '16px',
-                                right: '3px',
-                                bottom: '3px',
-                                background: 'white',
-                                borderRadius: '50%',
-                                transition: 'all 0.3s ease'
-                              }}></div>
+                          <div className="toggle-switch">
+                            <div className="toggle-switch-background">
+                              <div className="toggle-switch-slider"></div>
                             </div>
                           </div>
                         </div>
-                        <div style={{ padding: '12px', background: 'white', color: '#333' }}>
+                        <div>
                           <div style={{ marginBottom: '8px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>OCUS Username</label>
+                            <label className="input-label">OCUS Username</label>
                             <input 
                               type="text" 
                               className="extension-input"
@@ -1140,7 +736,7 @@ export default function Home() {
                             />
                           </div>
                           <div>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>OCUS Password</label>
+                            <label className="input-label">OCUS Password</label>
                             <input 
                               type="password" 
                               className="extension-input"
@@ -1155,51 +751,12 @@ export default function Home() {
                       </div>
 
                       {/* Mission Monitor Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          background: '#f8f9fa',
-                          padding: '8px 12px',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e1e5e9',
-                          color: '#333'
-                        }}>
+                      <div className="config-section">
+                        <div className="config-header">
                           <span>Mission Monitor Configuration</span>
-                          <div style={{
-                            position: 'relative',
-                            display: 'inline-block',
-                            width: '40px',
-                            height: '22px'
-                          }}>
-                            <div style={{
-                              position: 'absolute',
-                              cursor: 'pointer',
-                              top: '0',
-                              left: '0',
-                              right: '0',
-                              bottom: '0',
-                              background: '#2196F3',
-                              borderRadius: '22px',
-                              transition: 'all 0.3s ease'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                height: '16px',
-                                width: '16px',
-                                right: '3px',
-                                bottom: '3px',
-                                background: 'white',
-                                borderRadius: '50%',
-                                transition: 'all 0.3s ease'
-                              }}></div>
+                          <div className="toggle-switch">
+                            <div className="toggle-switch-background">
+                              <div className="toggle-switch-slider"></div>
                             </div>
                           </div>
                         </div>
@@ -1228,56 +785,17 @@ export default function Home() {
                       </div>
 
                       {/* Mission Acceptor Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          background: '#f8f9fa',
-                          padding: '8px 12px',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e1e5e9',
-                          color: '#333'
-                        }}>
+                      <div className="config-section">
+                        <div className="config-header">
                           <span>Mission Acceptor Configuration</span>
-                          <div style={{
-                            position: 'relative',
-                            display: 'inline-block',
-                            width: '40px',
-                            height: '22px'
-                          }}>
-                            <div style={{
-                              position: 'absolute',
-                              cursor: 'pointer',
-                              top: '0',
-                              left: '0',
-                              right: '0',
-                              bottom: '0',
-                              background: '#2196F3',
-                              borderRadius: '22px',
-                              transition: 'all 0.3s ease'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                height: '16px',
-                                width: '16px',
-                                right: '3px',
-                                bottom: '3px',
-                                background: 'white',
-                                borderRadius: '50%',
-                                transition: 'all 0.3s ease'
-                              }}></div>
+                          <div className="toggle-switch">
+                            <div className="toggle-switch-background">
+                              <div className="toggle-switch-slider"></div>
                             </div>
                           </div>
                         </div>
-                        <div style={{ padding: '12px', background: 'white', color: '#333' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div>
+                          <div className="settings-row">
                             <label style={{ fontSize: '11px', fontWeight: '500', color: '#666' }}>Auto Close Tab After Accept</label>
                             <div style={{
                               position: 'relative',
@@ -1310,7 +828,7 @@ export default function Home() {
                             </div>
                           </div>
                           <div style={{ marginBottom: '8px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>Close Delay (sec)</label>
+                            <label className="input-label">Close Delay (sec)</label>
                             <input 
                               type="number" 
                               className="extension-input"
@@ -1357,57 +875,18 @@ export default function Home() {
                       </div>
 
                       {/* Page Refresh Timer Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          background: '#f8f9fa',
-                          padding: '8px 12px',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e1e5e9',
-                          color: '#333'
-                        }}>
+                      <div className="config-section">
+                        <div className="config-header">
                           <span>Page Refresh Timer</span>
-                          <div style={{
-                            position: 'relative',
-                            display: 'inline-block',
-                            width: '40px',
-                            height: '22px'
-                          }}>
-                            <div style={{
-                              position: 'absolute',
-                              cursor: 'pointer',
-                              top: '0',
-                              left: '0',
-                              right: '0',
-                              bottom: '0',
-                              background: '#2196F3',
-                              borderRadius: '22px',
-                              transition: 'all 0.3s ease'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                height: '16px',
-                                width: '16px',
-                                right: '3px',
-                                bottom: '3px',
-                                background: 'white',
-                                borderRadius: '50%',
-                                transition: 'all 0.3s ease'
-                              }}></div>
+                          <div className="toggle-switch">
+                            <div className="toggle-switch-background">
+                              <div className="toggle-switch-slider"></div>
                             </div>
                           </div>
                         </div>
-                        <div style={{ padding: '12px', background: 'white', color: '#333' }}>
+                        <div>
                           <div style={{ marginBottom: '8px' }}>
-                            <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: '500', color: '#666' }}>Refresh Interval</label>
+                            <label className="input-label">Refresh Interval</label>
                             <div style={{ display: 'flex', gap: '3px', marginBottom: '6px' }}>
                               <button style={{ flex: '1', textAlign: 'center', background: '#2196F3', color: 'white', border: '1px solid #2196F3', padding: '3px 6px', fontSize: '10px', borderRadius: '3px' }}>5s</button>
                               <button style={{ flex: '1', textAlign: 'center', background: '#f8f9fa', color: '#333', border: '1px solid #e1e5e9', padding: '3px 6px', fontSize: '10px', borderRadius: '3px' }}>10s</button>
@@ -1471,23 +950,8 @@ export default function Home() {
                       </div>
 
                       {/* Statistics Section - Compact */}
-                      <div style={{ 
-                        margin: '0 16px 16px 16px',
-                        border: '1px solid #e1e5e9',
-                        borderRadius: '6px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          background: '#f8f9fa',
-                          padding: '8px 12px',
-                          fontWeight: '600',
-                          fontSize: '12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e1e5e9',
-                          color: '#333'
-                        }}>
+                      <div className="config-section">
+                        <div className="config-header">
                           <span>Statistics</span>
                           <button style={{
                             padding: '4px 8px',
@@ -1508,23 +972,23 @@ export default function Home() {
                           color: '#e2e8f0'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: '500', color: '#94a3b8' }}>Missions Refreshing:</span>
+                            <span className="premium-detail-label">Missions Refreshing:</span>
                             <span style={{ color: '#60a5fa', fontWeight: '600' }}>2295</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: '500', color: '#94a3b8' }}>Missions Opened:</span>
+                            <span className="premium-detail-label">Missions Opened:</span>
                             <span style={{ color: '#60a5fa', fontWeight: '600' }}>444</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: '500', color: '#94a3b8' }}>Missions Accepted:</span>
+                            <span className="premium-detail-label">Missions Accepted:</span>
                             <span style={{ color: '#60a5fa', fontWeight: '600' }}>444</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: '500', color: '#94a3b8' }}>Login Attempts:</span>
+                            <span className="premium-detail-label">Login Attempts:</span>
                             <span style={{ color: '#60a5fa', fontWeight: '600' }}>95</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: '500', color: '#94a3b8' }}>Successful Logins:</span>
+                            <span className="premium-detail-label">Successful Logins:</span>
                             <span style={{ color: '#60a5fa', fontWeight: '600' }}>95</span>
                           </div>
                         </div>
@@ -2077,10 +1541,10 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-2xl mx-auto">
             {features.map((feature, i) => (
-              <Card 
-                key={i} 
-                className={`text-center p-6 md:p-8 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-pointer border-2 border-transparent hover:border-primary/20 ${isVisible ? 'animate-fadeInUp opacity-100' : 'opacity-0'}`}
-                style={{ animationDelay: `${i * 100}ms` }}
+              <Card
+                key={i}
+                className={`text-center p-6 md:p-8 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group cursor-pointer border-2 border-transparent hover:border-primary/20 ${isVisible ? 'animate-fadeInUp-delayed' : 'opacity-0'}`}
+                style={{ '--animation-delay': `${i * 100}ms` } as React.CSSProperties}
               >
                 <CardContent className="pt-6">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary/10 to-accent/10 text-primary rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
@@ -2192,42 +1656,42 @@ export default function Home() {
         {/* Floating Icons Background */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Top left area */}
-          <div className="absolute top-20 left-8 lg:left-20 opacity-20 animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>
+          <div className="absolute top-20 left-8 lg:left-20 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '0s', '--animation-duration': '3s' } as React.CSSProperties}>
             <Shield className="w-8 h-8 text-primary" />
           </div>
-          <div className="absolute top-32 left-16 lg:left-32 opacity-15 animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}>
+          <div className="absolute top-32 left-16 lg:left-32 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '1s', '--animation-duration': '4s' } as React.CSSProperties}>
             <Star className="w-6 h-6 text-accent" />
           </div>
           
           {/* Top right area */}
-          <div className="absolute top-16 right-8 lg:right-20 opacity-20 animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}>
+          <div className="absolute top-16 right-8 lg:right-20 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '2s', '--animation-duration': '3.5s' } as React.CSSProperties}>
             <Zap className="w-7 h-7 text-primary" />
           </div>
-          <div className="absolute top-40 right-20 lg:right-40 opacity-15 animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '4.5s' }}>
+          <div className="absolute top-40 right-20 lg:right-40 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '0.5s', '--animation-duration': '4.5s' } as React.CSSProperties}>
             <Target className="w-5 h-5 text-accent" />
           </div>
           
           {/* Bottom left area */}
-          <div className="absolute bottom-32 left-12 lg:left-24 opacity-20 animate-bounce" style={{ animationDelay: '1.5s', animationDuration: '3.2s' }}>
+          <div className="absolute bottom-32 left-12 lg:left-24 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '1.5s', '--animation-duration': '3.2s' } as React.CSSProperties}>
             <Bot className="w-8 h-8 text-primary" />
           </div>
-          <div className="absolute bottom-16 left-8 lg:left-16 opacity-15 animate-bounce" style={{ animationDelay: '2.5s', animationDuration: '4.2s' }}>
+          <div className="absolute bottom-16 left-8 lg:left-16 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '2.5s', '--animation-duration': '4.2s' } as React.CSSProperties}>
             <Globe className="w-6 h-6 text-accent" />
           </div>
           
           {/* Bottom right area */}
-          <div className="absolute bottom-24 right-12 lg:right-28 opacity-20 animate-bounce" style={{ animationDelay: '3s', animationDuration: '3.8s' }}>
+          <div className="absolute bottom-24 right-12 lg:right-28 opacity-20 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '3s', '--animation-duration': '3.8s' } as React.CSSProperties}>
             <BarChart3 className="w-7 h-7 text-primary" />
           </div>
-          <div className="absolute bottom-40 right-8 lg:right-16 opacity-15 animate-bounce" style={{ animationDelay: '0.8s', animationDuration: '4.8s' }}>
+          <div className="absolute bottom-40 right-8 lg:right-16 opacity-15 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '0.8s', '--animation-duration': '4.8s' } as React.CSSProperties}>
             <Clock className="w-5 h-5 text-accent" />
           </div>
           
           {/* Mid-level floating icons */}
-          <div className="absolute top-1/2 left-4 lg:left-8 opacity-10 animate-bounce" style={{ animationDelay: '2.2s', animationDuration: '5s' }}>
+          <div className="absolute top-1/2 left-4 lg:left-8 opacity-10 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '2.2s', '--animation-duration': '5s' } as React.CSSProperties}>
             <TrendingUp className="w-6 h-6 text-primary" />
           </div>
-          <div className="absolute top-1/3 right-4 lg:right-8 opacity-10 animate-bounce" style={{ animationDelay: '1.8s', animationDuration: '4.6s' }}>
+          <div className="absolute top-1/3 right-4 lg:right-8 opacity-10 animate-bounce animate-delay animate-duration" style={{ '--animation-delay': '1.8s', '--animation-duration': '4.6s' } as React.CSSProperties}>
             <Check className="w-6 h-6 text-accent" />
           </div>
         </div>

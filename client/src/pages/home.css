@@ -1,0 +1,400 @@
+/* Styles extracted from home.tsx */
+
+/* Floating Panel */
+.floating-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 280px;
+  color: #333;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s ease-in-out;
+}
+
+.floating-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.floating-panel-title {
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.floating-panel-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.floating-panel-body {
+  padding: 15px;
+}
+
+.countdown-timer {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.countdown-timer-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.countdown-timer-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111;
+}
+
+.floating-panel-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.floating-panel-button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.button-pause {
+  background: #ffc107;
+  color: #333;
+}
+
+.button-refresh {
+  background: #17a2b8;
+  color: white;
+}
+
+.button-stop {
+  background: #dc3545;
+  color: white;
+}
+
+/* Extension Popup Styles */
+.extension-popup-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 1px solid #e1e5e9;
+  width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+}
+
+.extension-popup-header {
+  background: linear-gradient(135deg, #1e293b 0%, #2c3e50 100%);
+  padding: 16px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.extension-popup-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.extension-popup-logo {
+  background: white;
+  border-radius: 50%;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.extension-popup-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.extension-popup-subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.extension-popup-status {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #4ade80;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-indicator-premium {
+  width: 7px;
+  height: 7px;
+  background: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 5px #4ade80;
+}
+
+.extension-popup-body {
+  background: #f8f9fa;
+}
+
+.auto-login-section {
+  margin: 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.section-header {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e1e5e9;
+  color: #333;
+}
+
+.section-content {
+  padding: 12px;
+  background: white;
+  color: #333;
+}
+
+.input-group {
+  margin-bottom: 8px;
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+}
+
+.toggle-switch-container {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.toggle-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #2196F3;
+  border-radius: 22px;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch-knob {
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  right: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.flex-space-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-refresh-section {
+  margin: 0 16px 16px 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.interval-buttons {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+.interval-button {
+  flex: 1;
+  text-align: center;
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #e1e5e9;
+  padding: 3px 6px;
+  font-size: 10px;
+  border-radius: 3px;
+}
+
+.interval-button-active {
+  background: #2196F3;
+  color: white;
+  border-color: #2196F3;
+}
+
+.custom-interval-group {
+  display: flex;
+  margin-bottom: 6px;
+}
+
+.set-button {
+  padding: 4px 8px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.statistics-section {
+  margin: 0 16px 16px 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.reset-button {
+  padding: 4px 8px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.statistics-body {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 11px;
+  color: #e2e8f0;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.stat-value {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.bottom-actions {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px 16px 10px 16px;
+  gap: 8px;
+}
+
+.save-button {
+  flex: 1;
+  padding: 8px 12px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stop-button {
+  flex: 1;
+  padding: 8px 12px;
+  background: #F44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.footer-note {
+  text-align: center;
+  margin: 15px 20px;
+  font-size: 12px;
+  color: #777;
+}
+
+/* Animation Utilities */
+.animate-delay {
+  animation-delay: var(--animation-delay, 0s);
+}
+
+.animate-duration {
+  animation-duration: var(--animation-duration, 1s);
+}
+
+.animate-fadeInUp-delayed {
+    animation-name: fadeInUp;
+    animation-duration: 1s;
+    animation-fill-mode: both;
+    animation-delay: var(--animation-delay, 0s);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}

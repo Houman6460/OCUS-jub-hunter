@@ -27,43 +27,66 @@ export interface Translations {
   
   // Features
   features: string;
-  faqQuestions?: string[];
-  faqAnswers?: string[];
-  installationSteps?: string[];
-  featuresList?: Array<{
+  faqQuestions: string[];
+  faqAnswers: string[];
+  installationSteps: string[];
+  featuresList: Array<{
     title: string;
     description: string;
   }>;
 
   // Extension Preview Panel Translations
-  howItWorksTitle?: string;
-  autoLoginTitle?: string;
-  autoLoginDescription?: string;
-  monitoringTitle?: string;
-  monitoringDescription?: string;
-  timerTitle?: string;
-  timerDescription?: string;
-  mainExtensionTitle?: string;
-  mainExtensionDescription?: string;
-  timerPanelTitle?: string;
-  timerPanelDescription?: string;
-  analyticsTitle?: string;
-  analyticsDescription?: string;
-  
+  howItWorksTitle: string;
+  autoLoginTitle: string;
+  autoLoginDescription: string;
+  monitoringTitle: string;
+  monitoringDescription: string;
+  timerTitle: string;
+  timerDescription: string;
+  mainExtensionTitle: string;
+  mainExtensionDescription: string;
+  timerPanelTitle: string;
+  timerPanelDescription: string;
+  analyticsTitle: string;
+  analyticsDescription: string;
+
   // Extension Showcase Section
-  extensionShowcaseTitle?: string;
-  extensionShowcaseSubtitle?: string;
-  extensionHowItWorksTitle?: string;
-  extensionAutoLoginTitle?: string;
-  extensionAutoLoginDescription?: string;
-  extension24MonitoringTitle?: string;
-  extension24MonitoringDescription?: string;
-  extensionSmartTimerTitle?: string;
-  extensionSmartTimerDescription?: string;
-  floatingPanelTitle?: string;
-  floatingPanelDescription?: string;
-  extensionPopupTitle?: string;
-  extensionPopupDescription?: string;
+  extensionShowcaseTitle: string;
+  extensionShowcaseSubtitle: string;
+  extensionHowItWorksTitle: string;
+  extensionAutoLoginTitle: string;
+  extensionAutoLoginDescription: string;
+  extension24MonitoringTitle: string;
+  extension24MonitoringDescription: string;
+  extensionSmartTimerTitle: string;
+  extensionSmartTimerDescription: string;
+  floatingPanelTitle: string;
+  floatingPanelDescription: string;
+  extensionPopupTitle: string;
+  extensionPopupDescription: string;
+
+  // Free Demo Section
+  freeDemoBadge: string;
+  freeDemoTitle: string;
+  freeDemoSubtitle: string;
+  freeDemoTestText: string;
+  freeDemoFeature1: string;
+  freeDemoFeature2: string;
+  freeDemoFeature3: string;
+  freeDemoFeature4: string;
+  freeDemoUpgradeText: string;
+  freeDemoDownloadButton: string;
+
+  // Purchase Card
+  chromeExtensionFile: string;
+  autoLoginOcus: string;
+  jobMonitoringSystem: string;
+  desktopNotifications: string;
+  performanceAnalytics: string;
+  installationManual: string;
+  lifetimeUpdatesSupport: string;
+  securePayment: string;
+  instantDigitalDelivery: string;
   
   // Additional content for home page
   manualJobHuntingProblems?: string[];
@@ -673,23 +696,23 @@ export const translations: Record<string, Translations> = {
     floatingPanelDescription: "This dark-themed floating panel stays visible while browsing OCUS. Shows real-time countdown timer with customizable refresh intervals. Premium users get unlimited access with detailed tracking metrics for missions found, opened, accepted, and login attempts.",
     extensionPopupTitle: "Extension Popup Interface",
     extensionPopupDescription: "Click the browser extension icon to access this full control panel. Configure auto-login with your OCUS credentials, manage all extension settings, and monitor premium status. Dark-themed interface with comprehensive configuration options.",
-    
+
     // Free Demo Section
     freeDemoBadge: "FREE DEMO",
     freeDemoTitle: "Try OCUS Job Hunter Free",
     freeDemoSubtitle: "Experience the power of automated job hunting",
     freeDemoTestText: "Test all features for 7 days",
     freeDemoFeature1: "Chrome Extension File",
-    freeDemoFeature2: "Auto Login to OCUS", 
+    freeDemoFeature2: "Auto Login to OCUS",
     freeDemoFeature3: "Job Monitoring System",
     freeDemoFeature4: "Desktop Notifications",
     freeDemoUpgradeText: "Upgrade to unlock unlimited access",
     freeDemoDownloadButton: "Download Free Demo",
-    
+
     // Purchase Card Features
     chromeExtensionFile: "Chrome Extension (.crx file)",
     autoLoginOcus: "Auto Login to OCUS",
-    jobMonitoringSystem: "Job Monitoring System", 
+    jobMonitoringSystem: "Job Monitoring System",
     desktopNotifications: "Desktop Notifications",
     performanceAnalytics: "Performance Analytics",
     installationManual: "Installation Manual",
@@ -701,14 +724,14 @@ export const translations: Record<string, Translations> = {
     manualJobHuntingProblems: [
       "Spending hours manually searching for photography jobs",
       "Missing high-paying opportunities while scrolling",
-      "Auto login",
+      "Dealing with tedious and repetitive tasks",
       "Wasting time on low-value delivery requests"
     ],
     automatedBenefits: [
       "Instant notifications for photography jobs",
-      "Auto back to home page to monitor",
-      "24/7 Monitoring",
-      "One-click job applications"
+      "Automated job filtering and application",
+      "24/7 monitoring so you never miss a job",
+      "Focus on high-value opportunities"
     ],
     howItWorksSteps: [
       "Install the Chrome extension in 2 minutes",
@@ -794,7 +817,7 @@ export const translations: Record<string, Translations> = {
         description: "Unlock unlimited job catching forever with a one-time license—just the cost of 2 jobs."
       }
     ],
-    
+
     // Privacy Policy (English)
     privacy: {
       title: "Privacy Policy",
