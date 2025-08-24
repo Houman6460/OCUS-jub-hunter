@@ -14,6 +14,9 @@ import {
   OrdersController,
 } from "@paypal/paypal-server-sdk";
 import { Request, Response } from "express";
+import { db } from "./db";
+import { orders, customers, customerPayments } from "@shared/schema";
+import { eq, sql } from "drizzle-orm";
 
 /* PayPal Controllers Setup */
 
@@ -132,6 +135,65 @@ export async function capturePaypalOrder(req: Request, res: Response) {
 
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
+
+    // If payment is successful, update our database
+    if (httpStatusCode >= 200 && httpStatusCode < 300 && jsonResponse.status === 'COMPLETED') {
+      try {
+        const transactionId = jsonResponse.id;
+        const purchaseUnit = jsonResponse.purchase_units[0];
+        const amount = purchaseUnit.payments.captures[0].amount.value;
+        const currency = purchaseUnit.payments.captures[0].amount.currency_code;
+
+        // 1. Find and update the order in our database
+        const [order] = await db.update(orders)
+          .set({
+            status: 'completed',
+            completedAt: new Date(),
+            paymentIntentId: transactionId, // Using this field for the capture ID
+          })
+          .where(eq(orders.paypalOrderId, orderID))
+          .returning();
+
+        if (order) {
+          // 2. Find the customer by email
+          const [customer] = await db.select().from(customers).where(eq(customers.email, order.customerEmail));
+
+          if (customer) {
+            // 3. Update customer's subscription and stats
+            const currentExpiry = customer.subscriptionExpiresAt || new Date();
+            const newExpiry = new Date(currentExpiry);
+            newExpiry.setFullYear(newExpiry.getFullYear() + 1); // Add 1 year
+
+            await db.update(customers)
+              .set({
+                subscriptionStatus: 'active',
+                subscriptionExpiresAt: newExpiry,
+                totalSpent: sql`${customers.totalSpent} + ${amount}`,
+                totalOrders: sql`${customers.totalOrders} + 1`,
+                lastOrderDate: new Date(),
+              })
+              .where(eq(customers.id, customer.id));
+
+            // 4. Log the transaction in customer_payments
+            await db.insert(customerPayments).values({
+              customerId: customer.id,
+              orderId: order.id,
+              paymentMethod: 'paypal',
+              paypalOrderId: orderID,
+              amount: amount,
+              currency: currency,
+              status: 'completed',
+              processedAt: new Date(),
+            });
+          }
+        } else {
+            console.error(`[CRITICAL] PayPal order ${orderID} captured but not found in DB.`);
+        }
+      } catch (dbError) {
+        console.error('Failed to update database after PayPal capture:', dbError);
+        // Do not block the response to the client, but log this critical failure
+      }
+    }
 
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {

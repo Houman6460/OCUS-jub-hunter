@@ -18,20 +18,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const invoicesQuery = `
       SELECT 
         i.id,
-        i.invoiceNumber as invoice_number,
-        i.orderId as order_id,
+        i.invoiceNumber,
+        i.orderId,
         i.amount,
         i.currency,
-        i.taxAmount as tax_amount,
+        i.taxAmount,
         i.status,
-        i.invoiceDate as invoice_date,
-        i.dueDate as due_date,
-        i.paidAt as paid_at,
-        i.createdAt as created_at,
-        o.productId as product_id,
-        o.paymentMethod as payment_method,
-        u.name as customer_name,
-        u.email as customer_email
+        i.invoiceDate,
+        i.dueDate,
+        i.paidAt,
+        i.createdAt,
+        o.productId,
+        o.paymentMethod,
+        u.name as customerName,
+        u.email as customerEmail
       FROM invoices i
       LEFT JOIN orders o ON i.orderId = o.id
       LEFT JOIN users u ON o.customerEmail = u.email

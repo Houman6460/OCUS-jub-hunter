@@ -18,20 +18,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const ordersQuery = `
       SELECT 
         id,
-        customerEmail as customer_email,
-        customerName as customer_name,
-        productId as product_id,
-        originalAmount as original_amount,
-        finalAmount as final_amount,
+        customerEmail,
+        customerName,
+        productId,
+        originalAmount,
+        finalAmount,
         currency,
         status,
-        paymentMethod as payment_method,
-        downloadToken as download_token,
-        downloadCount as download_count,
-        maxDownloads as max_downloads,
-        activationCode as activation_code,
-        createdAt as created_at,
-        completedAt as completed_at
+        paymentMethod,
+        downloadToken,
+        downloadCount,
+        maxDownloads,
+        activationCode,
+        createdAt,
+        completedAt
       FROM orders 
       WHERE customerEmail = (SELECT email FROM users WHERE id = ?)
       ORDER BY createdAt DESC
