@@ -88,7 +88,6 @@ export class UserStorage {
       return null;
     }
   }
-  }
 
   async getUserById(id: number): Promise<User | null> {
     try {
