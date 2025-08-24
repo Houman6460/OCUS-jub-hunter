@@ -567,13 +567,13 @@ export default function Home() {
               {/* Floating OCUS Hunter Panel - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.floatingPanelTitle || 'Floating OCUS Hunter Panel'}</h3>
-                <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                <div className="flex justify-center flex-1 system-font">
                   {/* Exact Panel Design from Extension Code */}
                   <div className="floating-panel">
                     {/* Header */}
                     <div className="panel-header">
                       <h1 className="extension-title">
-                        <span style={{ fontSize: '18px' }}>🎯</span>
+                        <span className="panel-icon">🎯</span>
                         OCUS Unified Extension
                       </h1>
                       <span className="premium-badge-header">Premium</span>
@@ -670,13 +670,13 @@ export default function Home() {
               {/* Extension Popup - Exact Match */}
               <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold text-slate-900 text-center mb-4">{t?.extensionPopupTitle || 'Extension Popup Interface'}</h3>
-                <div className="flex justify-center flex-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                <div className="flex justify-center flex-1 font-apple-system">
                   {/* Exact Popup Design from popup.html - Same Height as Floating Panel */}
                   <div className="extension-popup-container">
                     {/* Header - Compact */}
                     <div className="extension-header">
                       <h1 className="extension-title">
-                        <span style={{ fontSize: '18px' }}>🎯</span>
+                        <span className="icon-font-size-18">🎯</span>
                         OCUS Unified Extension
                       </h1>
                       <span className="premium-badge-header">Premium</span>
@@ -704,7 +704,7 @@ export default function Home() {
                               <span className="premium-detail-label">Usage:</span>
                               <span className="premium-detail-value">Unlimited</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div className="flex-justify-between">
                               <span className="premium-detail-label">Version:</span>
                               <span>2.1.0-PREMIUM</span>
                             </div>
@@ -723,7 +723,7 @@ export default function Home() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ marginBottom: '8px' }}>
+                          <div className="margin-bottom-8">
                             <label className="input-label">OCUS Username</label>
                             <input 
                               type="text" 
@@ -796,38 +796,14 @@ export default function Home() {
                         </div>
                         <div>
                           <div className="settings-row">
-                            <label style={{ fontSize: '11px', fontWeight: '500', color: '#666' }}>Auto Close Tab After Accept</label>
-                            <div style={{
-                              position: 'relative',
-                              display: 'inline-block',
-                              width: '40px',
-                              height: '22px'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                cursor: 'pointer',
-                                top: '0',
-                                left: '0',
-                                right: '0',
-                                bottom: '0',
-                                background: '#2196F3',
-                                borderRadius: '22px',
-                                transition: 'all 0.3s ease'
-                              }}>
-                                <div style={{
-                                  position: 'absolute',
-                                  height: '16px',
-                                  width: '16px',
-                                  right: '3px',
-                                  bottom: '3px',
-                                  background: 'white',
-                                  borderRadius: '50%',
-                                  transition: 'all 0.3s ease'
-                                }}></div>
+                            <label className="settings-label-small">Auto Close Tab After Accept</label>
+                            <div className="toggle-switch-small">
+                              <div className="toggle-switch-small-bg">
+                                <div className="toggle-switch-small-slider"></div>
                               </div>
                             </div>
                           </div>
-                          <div style={{ marginBottom: '8px' }}>
+                          <div className="margin-bottom-8">
                             <label className="input-label">Close Delay (sec)</label>
                             <input 
                               type="number" 
@@ -839,35 +815,11 @@ export default function Home() {
                               aria-label="Close Delay in seconds"
                             />
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '500', color: '#666' }}>Play Success Sound</label>
-                            <div style={{
-                              position: 'relative',
-                              display: 'inline-block',
-                              width: '40px',
-                              height: '22px'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                cursor: 'pointer',
-                                top: '0',
-                                left: '0',
-                                right: '0',
-                                bottom: '0',
-                                background: '#2196F3',
-                                borderRadius: '22px',
-                                transition: 'all 0.3s ease'
-                              }}>
-                                <div style={{
-                                  position: 'absolute',
-                                  height: '16px',
-                                  width: '16px',
-                                  right: '3px',
-                                  bottom: '3px',
-                                  background: 'white',
-                                  borderRadius: '50%',
-                                  transition: 'all 0.3s ease'
-                                }}></div>
+                          <div className="flex-justify-between-items-center">
+                            <label className="settings-label-small">Play Success Sound</label>
+                            <div className="toggle-switch-small">
+                              <div className="toggle-switch-small-bg">
+                                <div className="toggle-switch-small-slider"></div>
                               </div>
                             </div>
                           </div>
@@ -885,15 +837,15 @@ export default function Home() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ marginBottom: '8px' }}>
+                          <div className="margin-bottom-8">
                             <label className="input-label">Refresh Interval</label>
-                            <div style={{ display: 'flex', gap: '3px', marginBottom: '6px' }}>
-                              <button style={{ flex: '1', textAlign: 'center', background: '#2196F3', color: 'white', border: '1px solid #2196F3', padding: '3px 6px', fontSize: '10px', borderRadius: '3px' }}>5s</button>
-                              <button style={{ flex: '1', textAlign: 'center', background: '#f8f9fa', color: '#333', border: '1px solid #e1e5e9', padding: '3px 6px', fontSize: '10px', borderRadius: '3px' }}>10s</button>
-                              <button style={{ flex: '1', textAlign: 'center', background: '#f8f9fa', color: '#333', border: '1px solid #e1e5e9', padding: '3px 6px', fontSize: '10px', borderRadius: '3px' }}>20s</button>
-                              <button style={{ flex: '1', textAlign: 'center', background: '#f8f9fa', color: '#333', border: '1px solid #e1e5e9', padding: '3px 6px', fontSize: '10px', borderRadius: '3px' }}>30s</button>
+                            <div className="flex-gap-3-mb-6">
+                              <button className="quick-set-button active">5s</button>
+                              <button className="quick-set-button">10s</button>
+                              <button className="quick-set-button">20s</button>
+                              <button className="quick-set-button">30s</button>
                             </div>
-                            <div style={{ display: 'flex', marginBottom: '6px' }}>
+                            <div className="flex-mb-6">
                               <input 
                                 type="number" 
                                 className="extension-input-small"
@@ -903,46 +855,14 @@ export default function Home() {
                                 placeholder="Enter seconds"
                                 aria-label="Custom refresh interval in seconds"
                               />
-                              <button style={{ 
-                                padding: '4px 8px', 
-                                background: '#2196F3', 
-                                color: 'white', 
-                                border: 'none', 
-                                borderRadius: '3px', 
-                                fontSize: '10px',
-                                cursor: 'pointer'
-                              }}>Set</button>
+                              <button className="set-button-small">Set</button>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '500', color: '#666' }}>Show Countdown Panel</label>
-                            <div style={{
-                              position: 'relative',
-                              display: 'inline-block',
-                              width: '40px',
-                              height: '22px'
-                            }}>
-                              <div style={{
-                                position: 'absolute',
-                                cursor: 'pointer',
-                                top: '0',
-                                left: '0',
-                                right: '0',
-                                bottom: '0',
-                                background: '#2196F3',
-                                borderRadius: '22px',
-                                transition: 'all 0.3s ease'
-                              }}>
-                                <div style={{
-                                  position: 'absolute',
-                                  height: '16px',
-                                  width: '16px',
-                                  right: '3px',
-                                  bottom: '3px',
-                                  background: 'white',
-                                  borderRadius: '50%',
-                                  transition: 'all 0.3s ease'
-                                }}></div>
+                          <div className="flex-justify-between-items-center">
+                            <label className="settings-label-small">Show Countdown Panel</label>
+                            <div className="toggle-switch-small">
+                              <div className="toggle-switch-small-bg">
+                                <div className="toggle-switch-small-slider"></div>
                               </div>
                             </div>
                           </div>
@@ -953,85 +873,40 @@ export default function Home() {
                       <div className="config-section">
                         <div className="config-header">
                           <span>Statistics</span>
-                          <button style={{
-                            padding: '4px 8px',
-                            background: '#2196F3',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontSize: '10px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}>Reset</button>
+                          <button className="reset-button-small">Reset</button>
                         </div>
-                        <div style={{ 
-                          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-                          borderRadius: '4px',
-                          padding: '12px',
-                          fontSize: '11px',
-                          color: '#e2e8f0'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <div className="stats-container-dark">
+                          <div className="stat-row-dark">
                             <span className="premium-detail-label">Missions Refreshing:</span>
-                            <span style={{ color: '#60a5fa', fontWeight: '600' }}>2295</span>
+                            <span className="stat-value-dark">2295</span>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <div className="stat-row-dark">
                             <span className="premium-detail-label">Missions Opened:</span>
-                            <span style={{ color: '#60a5fa', fontWeight: '600' }}>444</span>
+                            <span className="stat-value-dark">444</span>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <div className="stat-row-dark">
                             <span className="premium-detail-label">Missions Accepted:</span>
-                            <span style={{ color: '#60a5fa', fontWeight: '600' }}>444</span>
+                            <span className="stat-value-dark">444</span>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <div className="stat-row-dark">
                             <span className="premium-detail-label">Login Attempts:</span>
-                            <span style={{ color: '#60a5fa', fontWeight: '600' }}>95</span>
+                            <span className="stat-value-dark">95</span>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div className="stat-row-dark">
                             <span className="premium-detail-label">Successful Logins:</span>
-                            <span style={{ color: '#60a5fa', fontWeight: '600' }}>95</span>
+                            <span className="stat-value-dark">95</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Bottom Action Buttons - Compact */}
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        margin: '15px 16px 10px 16px', 
-                        gap: '8px' 
-                      }}>
-                        <button style={{
-                          flex: '1',
-                          padding: '8px 12px',
-                          background: '#4CAF50',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}>Save Configuration</button>
-                        <button style={{
-                          flex: '1',
-                          padding: '8px 12px',
-                          background: '#F44336',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}>Emergency Stop</button>
+                      <div className="action-buttons-container">
+                        <button className="action-button save-button">Save Configuration</button>
+                        <button className="action-button stop-button">Emergency Stop</button>
                       </div>
 
                       {/* Footer Note */}
-                      <div style={{ 
-                        textAlign: 'center', 
-                        margin: '15px 20px', 
-                        fontSize: '12px', 
-                        color: '#777' 
-                      }}>
+                      <div className="footer-note-small">
                         Press Alt+E on any OCUS page to access emergency controls
                       </div>
                     </div>
