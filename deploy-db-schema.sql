@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS users (
   lastLoginAt TEXT,
   activationToken TEXT,
   passwordResetToken TEXT,
-  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-  updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Create indexes for performance

@@ -1,4 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
+import bcrypt from 'bcryptjs';
 
 export interface User {
   id: number;
@@ -36,13 +37,14 @@ export class UserStorage {
     }
   }
 
-  async createUser(email: string, password: string, name: string): Promise<User> {
+    async createUser(email: string, password: string, name: string): Promise<User> {
+    const hashedPassword = bcrypt.hashSync(password, 10);
     const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
         INSERT INTO users (email, password, name, role, created_at, updated_at)
         VALUES (?, ?, ?, 'customer', ?, ?)
-      `).bind(email, password, name, now, now).run();
+      `).bind(email, hashedPassword, name, now, now).run();
 
       const userId = result.meta.last_row_id;
       if (!userId) {
@@ -73,11 +75,10 @@ export class UserStorage {
     }
   }
 
-  async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
+    async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
     try {
       const user = await this.getUserByEmail(email);
-      // Note: This is a simple password check. Use a hashing library like bcrypt in production.
-      if (user && user.password === password) {
+      if (user && user.password && bcrypt.compareSync(password, user.password)) {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
       }
@@ -86,6 +87,7 @@ export class UserStorage {
       console.error('Failed to validate user:', error);
       return null;
     }
+  }
   }
 
   async getUserById(id: number): Promise<User | null> {
