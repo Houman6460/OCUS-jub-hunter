@@ -5378,10 +5378,10 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
 
   app.get("/api/me/invoices", requireAuth, async (req: any, res: any) => {
     try {
-      if (!req.user?.email) {
+      if (!(req.user as any)?.id) {
         return res.status(401).json({ error: "Authentication required" });
       }
-      const invoices = await storage.getCustomerInvoicesByEmail(req.user.email);
+      const invoices = await storage.getCustomerInvoices((req.user as any).id);
       res.json(invoices);
     } catch (error) {
       console.error("Error fetching user invoices:", error);
