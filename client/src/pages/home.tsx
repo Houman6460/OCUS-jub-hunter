@@ -215,7 +215,6 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pb-24 overflow-hidden banner-aware-section">
         <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5"></div>
 
         {/* Floating Icons from Screenshot */}
         <div className="floating-icon icon-1">
