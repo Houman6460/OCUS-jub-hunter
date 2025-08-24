@@ -133,7 +133,7 @@ export function UsersManagement() {
         throw new Error('Failed to generate PDF');
       }
     } catch (error) {
-      console.error('Error generating invoice PDF:', error);
+      console.error('Error generating invoice PDF:', error instanceof Error ? error.message : error);
       alert('Failed to generate invoice PDF');
     }
   };

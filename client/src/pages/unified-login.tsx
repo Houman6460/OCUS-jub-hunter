@@ -13,6 +13,25 @@ import { Users, Shield, Chrome, Github, Facebook, Lock, User, EyeOff, Eye } from
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+interface AuthSettings {
+  recaptchaEnabled?: boolean;
+  recaptchaSiteKey?: string;
+  recaptchaAdminEnabled?: boolean;
+  recaptchaCustomerEnabled?: boolean;
+  googleEnabled?: boolean;
+  facebookEnabled?: boolean;
+  githubEnabled?: boolean;
+}
+
+interface CustomerLoginResponse {
+  token: string;
+  user: any; 
+}
+
+interface ErrorResponse {
+  message: string;
+}
+
 declare global {
   interface Window {
     grecaptcha: any;
@@ -57,7 +76,7 @@ export default function UnifiedLogin() {
   };
 
   // Fetch auth settings
-  const { data: authSettings } = useQuery({
+  const { data: authSettings } = useQuery<AuthSettings>({
     queryKey: ['/api/auth-settings'],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/auth-settings");
@@ -98,20 +117,21 @@ export default function UnifiedLogin() {
     mutationFn: async (credentials: { username: string; password: string; recaptchaToken: string | null }) => {
       const response = await apiRequest("POST", "/api/admin/login", credentials);
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as ErrorResponse;
         throw new Error(error.message || "Login failed");
       }
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Admin login successful" });
+      toast({ title: t.success, description: t.admin_login_successful });
       localStorage.setItem('admin_authenticated', 'true');
       localStorage.setItem('admin_user', JSON.stringify({ username: adminUsername, role: 'admin' }));
       // Redirect directly to admin dashboard
       window.location.href = '/admin';
     },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : t.an_unknown_error_occurred;
+      toast({ title: t.error, description: message, variant: "destructive" });
     }
   });
 
@@ -120,13 +140,13 @@ export default function UnifiedLogin() {
     mutationFn: async (credentials: { email: string; password: string; recaptchaToken: string | null }) => {
       const response = await apiRequest("POST", "/api/customer/login", credentials);
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as ErrorResponse;
         throw new Error(error.message || "Login failed");
       }
-      return response.json();
+      return response.json() as CustomerLoginResponse;
     },
-    onSuccess: (data) => {
-      toast({ title: "Success", description: "Login successful" });
+    onSuccess: (data: CustomerLoginResponse) => {
+      toast({ title: t.success, description: t.login_successful });
       localStorage.setItem('customer_token', data.token);
       if (data.user) {
         localStorage.setItem('customer_data', JSON.stringify(data.user));
@@ -134,8 +154,8 @@ export default function UnifiedLogin() {
       // Redirect to customer dashboard
       navigate('/dashboard');
     },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: t.error, description: error.message, variant: "destructive" });
     }
   });
 
@@ -147,7 +167,7 @@ export default function UnifiedLogin() {
     if (authSettings?.recaptchaEnabled && authSettings?.recaptchaAdminEnabled) {
       recaptchaToken = await verifyRecaptcha('admin_login');
       if (!recaptchaToken) {
-        toast({ title: "Error", description: "reCAPTCHA verification failed", variant: "destructive" });
+        toast({ title: t.error, description: t.recaptcha_failed, variant: "destructive" });
         return;
       }
     }
@@ -167,7 +187,7 @@ export default function UnifiedLogin() {
     if (authSettings?.recaptchaEnabled && authSettings?.recaptchaCustomerEnabled) {
       recaptchaToken = await verifyRecaptcha('customer_login');
       if (!recaptchaToken) {
-        toast({ title: "Error", description: "reCAPTCHA verification failed", variant: "destructive" });
+        toast({ title: t.error, description: t.recaptcha_failed, variant: "destructive" });
         return;
       }
     }
@@ -191,13 +211,13 @@ export default function UnifiedLogin() {
     mutationFn: async (userData: { email: string; password: string; name: string; recaptchaToken?: string | null }) => {
       const response = await apiRequest("POST", "/api/auth/register", userData);
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as ErrorResponse;
         throw new Error(error.message || "Registration failed");
       }
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Registration successful! Please login with your credentials." });
+      toast({ title: t.success, description: t.registration_successful });
       setShowRegistration(false);
       // Clear registration form
       setRegEmail("");
@@ -207,8 +227,9 @@ export default function UnifiedLogin() {
       // Set login form with registered email
       setCustomerEmail(regEmail);
     },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : t.an_unknown_error_occurred;
+      toast({ title: t.error, description: message, variant: "destructive" });
     }
   });
 
@@ -216,12 +237,12 @@ export default function UnifiedLogin() {
     e.preventDefault();
     
     if (regPassword !== regConfirmPassword) {
-      toast({ title: "Error", description: "As senhas não coincidem", variant: "destructive" });
+      toast({ title: t.error, description: t.passwords_do_not_match, variant: "destructive" });
       return;
     }
 
     if (regPassword.length < 6) {
-      toast({ title: "Error", description: "A senha deve ter pelo menos 6 caracteres", variant: "destructive" });
+      toast({ title: t.error, description: t.password_too_short, variant: "destructive" });
       return;
     }
 
@@ -229,7 +250,7 @@ export default function UnifiedLogin() {
     if (authSettings?.recaptchaEnabled && authSettings?.recaptchaCustomerEnabled) {
       recaptchaToken = await verifyRecaptcha('register');
       if (!recaptchaToken) {
-        toast({ title: "Error", description: "reCAPTCHA verification failed", variant: "destructive" });
+        toast({ title: t.error, description: t.recaptcha_failed, variant: "destructive" });
         return;
       }
     }
@@ -252,8 +273,8 @@ export default function UnifiedLogin() {
             <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
               <Chrome className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">{t.welcome_back}</h2>
-            <p className="mt-3 text-lg text-gray-600">{t.sign_in_account}</p>
+            <h2 className="text-3xl font-bold text-gray-900">{t.unifiedLogin.welcome_back}</h2>
+            <p className="mt-3 text-lg text-gray-600">{t.unifiedLogin.sign_in_account}</p>
           </div>
 
           <Card className="shadow-2xl border-0 bg-white backdrop-blur-sm rounded-2xl overflow-hidden">
@@ -262,11 +283,11 @@ export default function UnifiedLogin() {
               <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
                 <TabsTrigger value="user" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all duration-200">
                   <Users className="h-4 w-4" />
-                  {t.user_login}
+                  {t.unifiedLogin.user_login}
                 </TabsTrigger>
                 <TabsTrigger value="admin" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg transition-all duration-200">
                   <Shield className="h-4 w-4" />
-                  {t.admin_login}
+                  {t.unifiedLogin.admin_login}
                 </TabsTrigger>
               </TabsList>
 
@@ -275,7 +296,7 @@ export default function UnifiedLogin() {
               <CardContent className="pt-8 px-8 pb-8">
                 <form onSubmit={handleCustomerLogin} className="space-y-6">
                   <div>
-                    <Label htmlFor="customer-email" className="text-sm font-medium text-gray-700">{t.your_email}</Label>
+                    <Label htmlFor="customer-email" className="text-sm font-medium text-gray-700">{t.unifiedLogin.your_email}</Label>
                     <Input
                       id="customer-email"
                       type="email"
@@ -288,7 +309,7 @@ export default function UnifiedLogin() {
                   </div>
 
                   <div>
-                    <Label htmlFor="customer-password" className="text-sm font-medium text-gray-700">{t.your_password}</Label>
+                    <Label htmlFor="customer-password" className="text-sm font-medium text-gray-700">{t.unifiedLogin.your_password}</Label>
                     <div className="mt-2 relative">
                       <Input
                         id="customer-password"
@@ -318,7 +339,7 @@ export default function UnifiedLogin() {
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-medium shadow-lg transform transition-all duration-200 hover:scale-105"
                     disabled={customerLoginMutation.isPending}
                   >
-                    {customerLoginMutation.isPending ? 'Signing in...' : t.login_btn}
+                    {customerLoginMutation.isPending ? t.unifiedLogin.signing_in : t.unifiedLogin.login_btn}
                   </Button>
 
                   {/* Social Login Options */}
@@ -329,7 +350,7 @@ export default function UnifiedLogin() {
                             <div className="w-full border-t border-gray-300" />
                           </div>
                           <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-gray-500">{t.or_login_with}</span>
+                            <span className="px-2 bg-white text-gray-500">{t.unifiedLogin.or_login_with}</span>
                           </div>
                         </div>
 
@@ -344,7 +365,7 @@ export default function UnifiedLogin() {
                               <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
                                 <span className="text-white text-xs font-bold">G</span>
                               </div>
-                              {t.login_with_google}
+                              {t.unifiedLogin.login_with_google}
                             </Button>
                           )}
                           {authSettings.facebookEnabled && (
@@ -357,7 +378,7 @@ export default function UnifiedLogin() {
                               <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
                                 <Facebook className="h-3 w-3 text-white" />
                               </div>
-                              {t.login_with_facebook}
+                              {t.unifiedLogin.login_with_facebook}
                             </Button>
                           )}
                           {authSettings.githubEnabled && (
@@ -370,7 +391,7 @@ export default function UnifiedLogin() {
                               <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
                                 <Github className="h-3 w-3 text-white" />
                               </div>
-                              {t.login_with_github}
+                              {t.unifiedLogin.login_with_github}
                             </Button>
                           )}
                         </div>
@@ -386,11 +407,11 @@ export default function UnifiedLogin() {
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                     <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                      {t.remember_me}
+                      {t.unifiedLogin.remember_me}
                     </label>
                     <div className="text-sm ml-auto">
                       <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                        {t.forgot_password}
+                        {t.unifiedLogin.forgot_password}
                       </a>
                     </div>
                   </div>
@@ -408,13 +429,13 @@ export default function UnifiedLogin() {
 
                   {/* Sign up link */}
                   <div className="text-center text-sm text-gray-600">
-                    {t.no_account}{' '}
+                    {t.unifiedLogin.no_account}{' '}
                     <button 
                       type="button"
                       onClick={() => setShowRegistration(true)}
                       className="font-medium text-blue-600 hover:text-blue-500"
                     >
-                      {t.sign_up}
+                      {t.unifiedLogin.sign_up}
                     </button>
                   </div>
                 </form>
@@ -473,7 +494,7 @@ export default function UnifiedLogin() {
                     className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 rounded-lg font-medium shadow-lg transform transition-all duration-200 hover:scale-105"
                     disabled={adminLoginMutation.isPending}
                   >
-                    {adminLoginMutation.isPending ? 'Signing in...' : t.admin_login_btn}
+                    {adminLoginMutation.isPending ? t.unifiedLogin.signing_in : t.unifiedLogin.admin_login_btn}
                   </Button>
 
                   {/* Demo Credentials Info */}
@@ -494,13 +515,13 @@ export default function UnifiedLogin() {
             // Registration Form
             <CardContent className="pt-8 px-8 pb-8">
               <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">{t.create_account}</h3>
-                <p className="text-sm text-gray-500">{t.sign_in_account}</p>
+                <h3 className="text-xl font-bold text-gray-900">{t.unifiedLogin.create_account}</h3>
+                <p className="text-sm text-gray-500">{t.unifiedLogin.sign_in_account}</p>
               </div>
               
               <form onSubmit={handleRegistration} className="space-y-6">
                 <div>
-                  <Label htmlFor="reg-name" className="text-sm font-medium text-gray-700">{t.full_name}</Label>
+                  <Label htmlFor="reg-name" className="text-sm font-medium text-gray-700">{t.unifiedLogin.full_name}</Label>
                   <Input
                     id="reg-name"
                     type="text"
@@ -513,7 +534,7 @@ export default function UnifiedLogin() {
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-email" className="text-sm font-medium text-gray-700">{t.your_email}</Label>
+                  <Label htmlFor="reg-email" className="text-sm font-medium text-gray-700">{t.unifiedLogin.your_email}</Label>
                   <Input
                     id="reg-email"
                     type="email"
@@ -526,7 +547,7 @@ export default function UnifiedLogin() {
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-password" className="text-sm font-medium text-gray-700">{t.your_password}</Label>
+                  <Label htmlFor="reg-password" className="text-sm font-medium text-gray-700">{t.unifiedLogin.your_password}</Label>
                   <div className="mt-2 relative">
                     <Input
                       id="reg-password"
@@ -552,7 +573,7 @@ export default function UnifiedLogin() {
                 </div>
 
                 <div>
-                  <Label htmlFor="reg-confirm-password" className="text-sm font-medium text-gray-700">{t.confirm_password}</Label>
+                  <Label htmlFor="reg-confirm-password" className="text-sm font-medium text-gray-700">{t.unifiedLogin.confirm_password}</Label>
                   <div className="mt-2 relative">
                     <Input
                       id="reg-confirm-password"
@@ -587,9 +608,9 @@ export default function UnifiedLogin() {
                     required
                   />
                   <label htmlFor="accept-terms" className="ml-2 block text-sm text-gray-900">
-                    {t.accept_terms}{' '}
+                    {t.unifiedLogin.accept_terms}{' '}
                     <a href="#" className="text-blue-600 hover:text-blue-500">
-                      {t.terms_conditions}
+                      {t.unifiedLogin.terms_conditions}
                     </a>
                   </label>
                 </div>
@@ -599,7 +620,7 @@ export default function UnifiedLogin() {
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-lg font-medium shadow-lg transform transition-all duration-200 hover:scale-105"
                   disabled={registrationMutation.isPending}
                 >
-                  {registrationMutation.isPending ? 'Creating account...' : t.create_account_btn}
+                  {registrationMutation.isPending ? t.unifiedLogin.creating_account : t.unifiedLogin.create_account_btn}
                 </Button>
 
                 {/* Social Registration Options */}
@@ -610,7 +631,7 @@ export default function UnifiedLogin() {
                           <div className="w-full border-t border-gray-300" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                          <span className="px-2 bg-white text-gray-500">{t.or_login_with}</span>
+                          <span className="px-2 bg-white text-gray-500">{t.unifiedLogin.or_login_with}</span>
                         </div>
                       </div>
 
@@ -625,7 +646,7 @@ export default function UnifiedLogin() {
                             <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
                               <span className="text-white text-xs font-bold">G</span>
                             </div>
-                            {t.login_with_google}
+                            {t.unifiedLogin.login_with_google}
                           </Button>
                         )}
                         {authSettings.facebookEnabled && (
@@ -638,7 +659,7 @@ export default function UnifiedLogin() {
                             <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
                               <Facebook className="h-3 w-3 text-white" />
                             </div>
-                            {t.login_with_facebook}
+                            {t.unifiedLogin.login_with_facebook}
                           </Button>
                         )}
                         {authSettings.githubEnabled && (
@@ -651,7 +672,7 @@ export default function UnifiedLogin() {
                             <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
                               <Github className="h-3 w-3 text-white" />
                             </div>
-                            {t.login_with_github}
+                            {t.unifiedLogin.login_with_github}
                           </Button>
                         )}
                       </div>
@@ -670,13 +691,13 @@ export default function UnifiedLogin() {
 
                 {/* Back to login link */}
                 <div className="text-center text-sm text-gray-600">
-                  {t.have_account}{' '}
+                  {t.unifiedLogin.have_account}{' '}
                   <button 
                     type="button"
                     onClick={() => setShowRegistration(false)}
                     className="font-medium text-blue-600 hover:text-blue-500"
                   >
-                    {t.sign_in}
+                    {t.unifiedLogin.sign_in}
                   </button>
                 </div>
               </form>

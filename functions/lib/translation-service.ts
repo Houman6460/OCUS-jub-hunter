@@ -10,6 +10,14 @@ interface TranslationResult {
   [language: string]: string;
 }
 
+interface OpenAIResponse {
+  choices: {
+    message: {
+      content: string;
+    };
+  }[];
+}
+
 export class TranslationService {
   private static readonly supportedLanguages = {
     en: 'English',
@@ -102,7 +110,7 @@ Example format:
         throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as OpenAIResponse;
       const translationText = data.choices[0]?.message?.content;
       
       if (!translationText) {

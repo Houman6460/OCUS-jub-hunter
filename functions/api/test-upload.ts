@@ -70,9 +70,10 @@ export const onRequestPost = async ({ request, env }: any) => {
     
   } catch (error) {
     console.error('Test upload error:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({
       success: false,
-      message: `Test upload failed: ${error.message || error}`
+      message: `Test upload failed: ${message}`
     }), {
       status: 500,
       headers: { 

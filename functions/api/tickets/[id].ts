@@ -1,5 +1,9 @@
 import { TicketStorage, Env } from '../../lib/db';
 
+interface TicketUpdatePayload {
+  status?: string;
+}
+
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -34,7 +38,7 @@ export const onRequestPatch = async ({ request, params, env }: { request: Reques
       }
       return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
-    const updates = await request.json();
+    const updates = await request.json() as TicketUpdatePayload;
     const storage = new TicketStorage(env.DB);
 
     const ticket = await storage.getTicketById(ticketId);
@@ -47,7 +51,9 @@ export const onRequestPatch = async ({ request, params, env }: { request: Reques
     const updatedTicket = await storage.getTicketById(ticketId);
     return json({ success: true, ticket: updatedTicket });
   } catch (error) {
-    return json({ success: false, message: 'Failed to update ticket' }, 500);
+    console.error('Failed to update ticket:', error);
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    return json({ success: false, message }, 500);
   }
 };
 
@@ -88,7 +94,9 @@ export const onRequestDelete = async ({ request, params, env }: { request: Reque
     await storage.deleteTicket(ticketId);
     return json({ success: true, message: `Ticket ${ticketId} deleted` });
   } catch (error) {
-    return json({ success: false, message: 'Failed to delete ticket' }, 500);
+    console.error('Failed to delete ticket:', error);
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    return json({ success: false, message }, 500);
   }
 };
 

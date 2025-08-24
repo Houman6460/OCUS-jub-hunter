@@ -130,7 +130,7 @@ export function InvoiceManagement() {
 
       toast({ title: "Invoice PDF downloaded successfully" });
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error downloading PDF:', error instanceof Error ? error.message : error);
       toast({ title: "Error downloading PDF", variant: "destructive" });
     }
   };

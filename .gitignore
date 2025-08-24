@@ -6,6 +6,7 @@
 
 # misc
 .DS_Store
+dev.db
 server/public
 vite.config.ts.*
 *.tar.gz

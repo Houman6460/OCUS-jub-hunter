@@ -27,6 +27,7 @@ import {
   Percent
 } from "lucide-react";
 import { CheckoutTutorial } from "@/components/tutorials/CheckoutTutorial";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -34,176 +35,7 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY ?
   loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY) : 
   null;
 
-const customerSchema = z.object({
-  customerName: z.string().min(1, "Name is required"),
-  customerEmail: z.string().email("Valid email is required"),
-  couponCode: z.string().optional(),
-});
-
-type CustomerForm = z.infer<typeof customerSchema>;
-
-const StripeCheckoutForm = ({ customerData, finalPrice, onSuccess }: { customerData: CustomerForm, finalPrice: number, onSuccess?: () => void }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) {
-      return;
-    }
-
-    setIsProcessing(true);
-
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/checkout`,
-        receipt_email: customerData.customerEmail,
-      },
-      redirect: 'if_required'
-    });
-
-    setIsProcessing(false);
-
-    if (error) {
-      console.error('Payment error:', error.message);
-      toast({
-        title: "Payment Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      console.log('Payment succeeded:', paymentIntent);
-      
-      // Complete the order on the backend
-      try {
-        const completeResponse = await fetch('/api/complete-stripe-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            paymentIntentId: paymentIntent.id,
-            customerEmail: customerData.customerEmail,
-            customerName: customerData.customerName
-          })
-        });
-        
-        if (completeResponse.ok) {
-          const result = await completeResponse.json();
-          console.log('Order completed with activation key:', result);
-          // Store activation code for display
-          if (result.activationKey) {
-            localStorage.setItem('latestActivationKey', result.activationKey);
-            console.log('Activation key saved to localStorage:', result.activationKey);
-          }
-        } else {
-          console.error('Failed to complete order - response not ok:', completeResponse.status);
-        }
-      } catch (error) {
-        console.error('Failed to complete order:', error instanceof Error ? error.message : error);
-      }
-      
-      toast({
-        title: "Payment Successful", 
-        description: "Thank you for your purchase! Check your email for download instructions.",
-      });
-      // Trigger parent success state
-      if (onSuccess) {
-        onSuccess();
-      }
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-slate-50 rounded-lg p-4">
-        <PaymentElement 
-          options={{
-            layout: "tabs",
-            defaultValues: {
-              billingDetails: {
-                name: customerData.customerName,
-                email: customerData.customerEmail,
-              }
-            }
-          }}
-        />
-      </div>
-      <Button 
-        type="submit" 
-        disabled={!stripe || !elements || isProcessing}
-        className="w-full bg-primary hover:bg-secondary text-white py-4 text-lg font-semibold"
-        size="lg"
-      >
-        {isProcessing ? (
-          <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Processing Payment...
-          </>
-        ) : (
-          <>
-            <CreditCard className="mr-2 h-5 w-5" />
-            Pay ${finalPrice} with Card
-          </>
-        )}
-      </Button>
-    </form>
-  );
-};
-
-const PayPalSection = ({ customerData, onPayPalSuccess, finalPrice, referralCode }: { 
-  customerData: CustomerForm, 
-  onPayPalSuccess: () => void,
-  finalPrice: number,
-  referralCode?: string | null
-}) => {
-  const { toast } = useToast();
-
-  const handlePayPalApprove = async (orderID: string) => {
-    try {
-      const response = await apiRequest('POST', '/api/complete-paypal-payment', {
-        orderID,
-        customerEmail: customerData.customerEmail,
-        customerName: customerData.customerName,
-        amount: finalPrice,
-        referralCode: referralCode
-      });
-      
-      if (response.ok) {
-        onPayPalSuccess();
-        toast({
-          title: "Payment Successful",
-          description: "Thank you for your purchase! Check your email for download instructions.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Payment Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="text-center">
-        <PayPalButton 
-          amount={finalPrice.toString()}
-          currency="USD"
-          intent="CAPTURE"
-          onApprove={handlePayPalApprove}
-        />
-      </div>
-      <p className="text-sm text-slate-600 text-center">
-        You'll be redirected to PayPal to complete your payment securely
-      </p>
-    </div>
-  );
-};
-
+// Define interfaces for API responses
 interface ProductPricing {
   id: number;
   name: string;
@@ -212,26 +44,197 @@ interface ProductPricing {
   currency: string;
 }
 
+interface CouponValidationResponse {
+  valid: boolean;
+  discountAmount: number;
+  finalAmount: number;
+  message?: string;
+  coupon?: { code: string };
+}
+
+interface OrderCompletionResponse {
+  activationKey: string;
+}
+
 export default function Checkout() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [clientSecret, setClientSecret] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [couponValidation, setCouponValidation] = useState<{
-    valid: boolean;
-    discountAmount: number;
-    finalAmount: number;
-    coupon?: any;
-  } | null>(null);
+  const [couponValidation, setCouponValidation] = useState<CouponValidationResponse | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  const customerSchema = useMemo(() => t.checkout ? z.object({
+    customerName: z.string().min(1, t.checkout.customerNameRequired),
+    customerEmail: z.string().email(t.checkout.customerEmailInvalid),
+    couponCode: z.string().optional(),
+  }) : z.object({ // Fallback schema
+    customerName: z.string().min(1, "Name is required"),
+    customerEmail: z.string().email("Valid email is required"),
+    couponCode: z.string().optional(),
+  }), [t.checkout]);
+
+  type CustomerForm = z.infer<typeof customerSchema>;
+
+  const StripeCheckoutForm = ({ customerData, finalPrice, onSuccess }: { customerData: CustomerForm, finalPrice: number, onSuccess?: () => void }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const { toast } = useToast();
+    const [isProcessing, setIsProcessing] = useState(false);
+  
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+  
+      if (!stripe || !elements || !t.checkout) {
+        return;
+      }
+  
+      setIsProcessing(true);
+  
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout`,
+          receipt_email: customerData.customerEmail,
+        },
+        redirect: 'if_required'
+      });
+  
+      setIsProcessing(false);
+  
+      if (error) {
+        toast({
+          title: t.checkout.paymentFailed,
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        try {
+          const response = await apiRequest('POST', '/api/complete-stripe-payment', {
+            paymentIntentId: paymentIntent.id,
+            customerEmail: customerData.customerEmail,
+            customerName: customerData.customerName
+          });
+  
+          if (response.ok) {
+            const result: OrderCompletionResponse = await response.json();
+            if (result.activationKey) {
+              localStorage.setItem('latestActivationKey', result.activationKey);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to complete order:', err);
+        }
+        
+        toast({
+          title: t.checkout.paymentSuccessTitle, 
+          description: t.checkout.paymentSuccessDescription,
+        });
+        
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
+    }
+  
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-slate-50 rounded-lg p-4">
+          <PaymentElement 
+            options={{
+              layout: "tabs",
+              defaultValues: {
+                billingDetails: {
+                  name: customerData.customerName,
+                  email: customerData.customerEmail,
+                }
+              }
+            }}
+          />
+        </div>
+        <Button 
+          type="submit" 
+          disabled={!stripe || !elements || isProcessing}
+          className="w-full bg-primary hover:bg-secondary text-white py-4 text-lg font-semibold"
+          size="lg"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              {t.checkout?.processingPayment}
+            </>
+          ) : (
+            <>
+              <CreditCard className="mr-2 h-5 w-5" />
+              {t.checkout?.payWithCard} ${finalPrice}
+            </>
+          )}
+        </Button>
+      </form>
+    );
+  };
+  
+  const PayPalSection = ({ customerData, onPayPalSuccess, finalPrice, referralCode }: { 
+    customerData: CustomerForm, 
+    onPayPalSuccess: () => void,
+    finalPrice: number,
+    referralCode?: string | null
+  }) => {
+    const { toast } = useToast();
+  
+    const handlePayPalApprove = async (orderID: string) => {
+      if (!t.checkout) return;
+      try {
+        const response = await apiRequest('POST', '/api/complete-paypal-payment', {
+          orderID,
+          customerEmail: customerData.customerEmail,
+          customerName: customerData.customerName,
+          amount: finalPrice,
+          referralCode: referralCode
+        });
+        
+        if (response.ok) {
+          onPayPalSuccess();
+          toast({
+            title: t.checkout.paymentSuccessTitle,
+            description: t.checkout.paymentSuccessDescription,
+          });
+        }
+      } catch (error: any) {
+        toast({
+          title: t.checkout.paymentErrorTitle,
+          description: error.message || t.checkout.unknownError,
+          variant: "destructive",
+        });
+      }
+    };
+  
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <PayPalButton 
+            amount={finalPrice.toString()}
+            currency="USD"
+            intent="CAPTURE"
+            onApprove={handlePayPalApprove}
+          />
+        </div>
+        <p className="text-sm text-slate-600 text-center">
+          {t.checkout?.payPalRedirect}
+        </p>
+      </div>
+    );
+  };
 
   // Fetch dynamic pricing from API
   const { data: pricingData, isLoading: pricingLoading } = useQuery<ProductPricing>({
     queryKey: ['/api/products/pricing'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/products/pricing');
+      if (!response.ok) throw new Error('Failed to fetch pricing');
       return await response.json();
     },
     refetchOnMount: true,
@@ -265,13 +268,13 @@ export default function Checkout() {
   const finalPrice = couponValidation ? couponValidation.finalAmount : originalPrice;
   const discount = couponValidation ? couponValidation.discountAmount : 0;
   
-  // Show loading state while pricing is being fetched
-  if (pricingLoading) {
+  // Show loading state while pricing is being fetched or translations are loading
+  if (pricingLoading || !t.checkout) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-slate-600">Loading checkout...</p>
+          <p className="text-slate-600">{t.checkout?.loadingMessage || 'Loading...'}</p>
         </div>
       </div>
     );
@@ -289,27 +292,27 @@ export default function Checkout() {
         code: code.trim(),
         orderAmount: originalPrice
       });
-      const data = await response.json();
+      const data: CouponValidationResponse = await response.json();
       
       if (response.ok && data.valid) {
         setCouponValidation(data);
         toast({
-          title: "Coupon Applied!",
-          description: `You saved $${data.discountAmount.toFixed(2)}`,
+          title: t.checkout?.couponApplied,
+          description: `${t.checkout?.couponSaved} $${data.discountAmount.toFixed(2)}`,
         });
       } else {
         setCouponValidation(null);
         toast({
-          title: "Invalid Coupon",
-          description: data.message || "The coupon code is not valid",
+          title: t.checkout?.invalidCoupon,
+          description: data.message || t.checkout?.invalidCouponMessage,
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       setCouponValidation(null);
       toast({
-        title: "Error",
-        description: "Failed to validate coupon",
+        title: t.common.error,
+        description: t.checkout?.couponValidationError,
         variant: "destructive",
       });
     } finally {
@@ -320,7 +323,6 @@ export default function Checkout() {
   useEffect(() => {
     if (isFormValid && paymentMethod === 'stripe' && !clientSecret) {
       setIsLoading(true);
-      // Create PaymentIntent as soon as customer data is valid
       apiRequest("POST", "/api/create-payment-intent", { 
         amount: finalPrice,
         customerEmail: customerData.customerEmail,
@@ -335,21 +337,19 @@ export default function Checkout() {
           setClientSecret(data.clientSecret);
           setIsLoading(false);
         })
-        .catch((error) => {
-          console.error('Failed to create payment intent:', error instanceof Error ? error.message : error);
+        .catch(() => {
           setIsLoading(false);
           toast({
-            title: "Error",
-            description: "Failed to initialize payment. Please try again.",
+            title: t.common.error,
+            description: t.checkout?.paymentInitializationError,
             variant: "destructive",
           });
         });
     }
-  }, [isFormValid, paymentMethod, customerData, clientSecret, finalPrice, toast]);
+  }, [isFormValid, paymentMethod, customerData, clientSecret, finalPrice, toast, t]);
 
   if (isSuccess) {
     const activationKey = localStorage.getItem('latestActivationKey');
-    console.log('Success page - checking activation key:', activationKey);
     
     return (
       <div className="min-h-screen bg-slate-50 py-12">
@@ -358,26 +358,24 @@ export default function Checkout() {
             <div className="w-16 h-16 bg-accent text-white rounded-full flex items-center justify-center mx-auto mb-6">
               <Check className="h-8 w-8" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-4">Payment Successful!</h1>
-            <p className="text-slate-600 mb-6">
-              Thank you for purchasing OCUS Job Hunter! Check your email for download instructions and installation guide.
-            </p>
+            <h1 className="text-2xl font-bold text-slate-900 mb-4">{t.checkout.successTitle}</h1>
+            <p className="text-slate-600 mb-6">{t.checkout.successMessage}</p>
             
             {activationKey ? (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-blue-900 mb-3">Your Activation Code</h3>
+                <h3 className="font-semibold text-blue-900 mb-3">{t.checkout.activationCode}</h3>
                 <div className="bg-white border rounded p-3 font-mono text-sm text-slate-900 break-all">
                   {activationKey}
                 </div>
                 <p className="text-sm text-blue-700 mt-2">
-                  Copy this code and use it in the Chrome extension to unlock unlimited missions.
+                  {t.checkout.activationCodeHint}
                 </p>
               </div>
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-yellow-900 mb-3">Processing Activation Code</h3>
+                <h3 className="font-semibold text-yellow-900 mb-3">{t.checkout.processingActivationCode}</h3>
                 <p className="text-sm text-yellow-700">
-                  Your activation code is being generated. Please check your email or contact support if you don't receive it within a few minutes.
+                  {t.checkout.processingActivationCodeMessage}
                 </p>
               </div>
             )}
@@ -385,7 +383,7 @@ export default function Checkout() {
             <div className="flex justify-center space-x-4">
               <Link href="/">
                 <Button variant="outline">
-                  Return Home
+                  {t.checkout.returnHome}
                 </Button>
               </Link>
             </div>
@@ -404,12 +402,12 @@ export default function Checkout() {
             <Link href="/">
               <Button variant="ghost" size="sm" className="mr-4">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                {t.checkout.backToHome}
               </Button>
             </Link>
             <div className="flex items-center">
               <Bot className="text-primary mr-3 h-6 w-6" />
-              <span className="text-lg font-semibold text-slate-900">OCUS Job Hunter</span>
+              <span className="text-lg font-semibold text-slate-900">{t.checkout.pageTitle}</span>
             </div>
           </div>
         </div>
@@ -424,7 +422,7 @@ export default function Checkout() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Bot className="h-5 w-5 text-primary" />
-                    Order Summary
+                    {t.checkout.orderSummaryTitle}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -434,13 +432,13 @@ export default function Checkout() {
                       <Bot className="h-8 w-8" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900">OCUS Job Hunter Chrome Extension</h3>
+                      <h3 className="font-semibold text-slate-900">{t.checkout.productName}</h3>
                       <p className="text-slate-600 text-sm mt-1">
-                        Automate your OCUS job search with our powerful Chrome extension
+                        {t.checkout.productDescription}
                       </p>
                       <div className="mt-2">
                         <Badge variant="secondary" className="bg-accent/10 text-accent">
-                          Lifetime Access
+                          {t.checkout.lifetimeAccess}
                         </Badge>
                       </div>
                     </div>
@@ -455,7 +453,7 @@ export default function Checkout() {
                             </div>
                           )}
                           <div className="text-2xl font-bold text-slate-900">${finalPrice}</div>
-                          <div className="text-sm text-slate-500">One-time payment</div>
+                          <div className="text-sm text-slate-500">{t.checkout.oneTimePayment}</div>
                         </>
                       )}
                     </div>
@@ -465,17 +463,9 @@ export default function Checkout() {
 
                   {/* Features Included */}
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-3">What's Included:</h4>
+                    <h4 className="font-semibold text-slate-900 mb-3">{t.checkout.whatsIncluded}</h4>
                     <div className="space-y-2">
-                      {[
-                        "Automatic job scanning on OCUS",
-                        "Advanced filtering & search",
-                        "Real-time job alerts",
-                        "Export to CSV/PDF",
-                        "Analytics dashboard",
-                        "Free lifetime updates",
-                        "30-day money-back guarantee"
-                      ].map((feature, i) => (
+                      {t.checkout.includedFeatures.map((feature, i) => (
                         <div key={i} className="flex items-center space-x-2">
                           <Check className="h-4 w-4 text-accent" />
                           <span className="text-sm text-slate-600">{feature}</span>
@@ -489,7 +479,7 @@ export default function Checkout() {
                   {/* Pricing Breakdown */}
                   <div className="space-y-2" data-tutorial="pricing-breakdown">
                     <div className="flex justify-between text-slate-600">
-                      <span>Original Price</span>
+                      <span>{t.checkout.originalPrice}</span>
                       <span>
                         {pricingLoading ? (
                           <div className="animate-pulse bg-gray-200 rounded h-4 w-12"></div>
@@ -501,19 +491,19 @@ export default function Checkout() {
                     {discount > 0 && (
                       <>
                         <div className="flex justify-between text-accent">
-                          <span>Discount ({couponValidation?.coupon?.code})</span>
+                          <span>{t.checkout.discount} ({couponValidation?.coupon?.code})</span>
                           <span>-${discount.toFixed(2)}</span>
                         </div>
                         <Separator />
                       </>
                     )}
                     <div className="flex justify-between items-center text-lg font-semibold">
-                      <span>Total</span>
+                      <span>{t.checkout.total}</span>
                       <span className="text-primary">
                         {pricingLoading ? (
                           <div className="animate-pulse bg-gray-200 rounded h-6 w-16"></div>
                         ) : (
-                          `$${finalPrice} USD`
+                          `$${finalPrice} ${t.checkout.totalUSD}`
                         )}
                       </span>
                     </div>
@@ -522,7 +512,7 @@ export default function Checkout() {
                   {/* Security Badge */}
                   <div className="bg-slate-50 rounded-lg p-4 text-center" data-tutorial="security-badge">
                     <Shield className="h-6 w-6 text-accent mx-auto mb-2" />
-                    <div className="text-sm font-medium text-slate-900">Secure Payment</div>
+                    <div className="text-sm font-medium text-slate-900">{t.checkout.securePayment}</div>
                     <div className="text-xs text-slate-600">Protected by SSL encryption</div>
                   </div>
                 </CardContent>
@@ -533,22 +523,22 @@ export default function Checkout() {
             <div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Complete Your Purchase</CardTitle>
+                  <CardTitle>{t.checkout.completePurchase}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Customer Information */}
                   <div className="space-y-4" data-tutorial="customer-form">
                     <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      Your Information
+                      {t.checkout.yourInformation}
                     </h3>
                     
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <Label htmlFor="customerName">Full Name</Label>
+                        <Label htmlFor="customerName">{t.checkout.fullNameLabel}</Label>
                         <Input
                           id="customerName"
-                          placeholder="Enter your full name"
+                          placeholder={t.checkout.fullNamePlaceholder}
                           {...form.register('customerName')}
                           className={form.formState.errors.customerName ? 'border-red-500' : ''}
                         />
@@ -560,11 +550,11 @@ export default function Checkout() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="customerEmail">Email Address</Label>
+                        <Label htmlFor="customerEmail">{t.checkout.emailLabel}</Label>
                         <Input
                           id="customerEmail"
                           type="email"
-                          placeholder="Enter your email"
+                          placeholder={t.checkout.emailPlaceholder}
                           {...form.register('customerEmail')}
                           className={form.formState.errors.customerEmail ? 'border-red-500' : ''}
                         />
@@ -575,7 +565,7 @@ export default function Checkout() {
                         )}
                         <p className="text-xs text-slate-500 mt-1">
                           <Mail className="h-3 w-3 inline mr-1" />
-                          Download link will be sent to this email
+                          {t.checkout.emailHint}
                         </p>
                       </div>
                     </div>
@@ -587,14 +577,14 @@ export default function Checkout() {
                   <div className="space-y-4" data-tutorial="coupon-field">
                     <h3 className="font-semibold text-slate-900 flex items-center gap-2">
                       <Percent className="h-4 w-4" />
-                      Coupon Code (Optional)
+                      {t.checkout.couponTitle}
                     </h3>
                     
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <Input
                           id="couponCode"
-                          placeholder="Enter coupon code"
+                          placeholder={t.checkout.couponPlaceholder}
                           {...form.register('couponCode')}
                           className="uppercase"
                           onChange={(e) => {
@@ -612,21 +602,21 @@ export default function Checkout() {
                         {couponLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          'Apply'
+                          t.checkout.applyButton
                         )}
                       </Button>
                     </div>
                     
-                    {couponValidation && (
+                    {couponValidation?.valid && (
                       <div className="bg-accent/10 border border-accent/20 rounded-lg p-3">
                         <div className="flex items-center gap-2 text-accent">
                           <Check className="h-4 w-4" />
                           <span className="font-medium">
-                            Coupon "{couponValidation.coupon.code}" applied successfully!
+                            {t.checkout.couponApplied} "{couponValidation.coupon?.code}"
                           </span>
                         </div>
                         <p className="text-sm text-accent/80 mt-1">
-                          You saved ${couponValidation.discountAmount.toFixed(2)}
+                          {t.checkout.couponSaved} ${couponValidation.discountAmount.toFixed(2)}
                         </p>
                       </div>
                     )}
@@ -636,7 +626,7 @@ export default function Checkout() {
 
                   {/* Payment Method Selection */}
                   <div data-tutorial="payment-tabs">
-                    <h3 className="font-semibold text-slate-900 mb-4">Payment Method</h3>
+                    <h3 className="font-semibold text-slate-900 mb-4">{t.checkout.paymentMethod}</h3>
                     <div className="grid grid-cols-2 gap-3 mb-6">
                       <Button
                         variant={paymentMethod === 'stripe' ? 'default' : 'outline'}
@@ -645,7 +635,7 @@ export default function Checkout() {
                         type="button"
                       >
                         <CreditCard className="mr-2 h-4 w-4" />
-                        Credit Card
+                        {t.checkout.creditCard}
                       </Button>
                       <Button
                         variant={paymentMethod === 'paypal' ? 'default' : 'outline'}
@@ -653,7 +643,7 @@ export default function Checkout() {
                         className="h-12"
                         type="button"
                       >
-                        PayPal
+                        {t.checkout.payPal}
                       </Button>
                     </div>
 
@@ -669,7 +659,7 @@ export default function Checkout() {
                             ) : (
                               <div className="flex items-center justify-center py-8">
                                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                                <span className="ml-2 text-slate-600">Preparing payment...</span>
+                                <span className="ml-2 text-slate-600">{t.checkout.preparingPayment}</span>
                               </div>
                             )}
                           </>
@@ -686,28 +676,28 @@ export default function Checkout() {
                       </>
                     ) : (
                       <div className="bg-slate-50 rounded-lg p-6 text-center">
-                        <p className="text-slate-600">Please fill in your information above to continue</p>
+                        <p className="text-slate-600">{t.checkout.fillInfoToContinue}</p>
                       </div>
                     )}
                   </div>
 
                   {/* Test Mode Info */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <h4 className="font-semibold text-blue-900 mb-2">TEST MODE - Use Test Card Numbers</h4>
+                    <h4 className="font-semibold text-blue-900 mb-2">{t.checkout.testModeTitle}</h4>
                     <div className="text-sm text-blue-800 space-y-1">
-                      <p><strong>Successful payment:</strong> 4242 4242 4242 4242</p>
-                      <p><strong>Declined payment:</strong> 4000 0000 0000 0002</p>
-                      <p><strong>Any future date</strong> for expiry, <strong>any 3-digit CVC</strong></p>
-                      <p className="text-xs mt-2">Real cards will be declined in test mode</p>
+                      <p><strong>{t.checkout.testModeSuccess}</strong> 4242 4242 4242 4242</p>
+                      <p><strong>{t.checkout.testModeDecline}</strong> 4000 0000 0000 0002</p>
+                      <p>{t.checkout.testModeInstructions}</p>
+                      <p className="text-xs mt-2">{t.checkout.testModeWarning}</p>
                     </div>
                   </div>
 
                   {/* Security Info */}
                   <div className="text-center text-sm text-slate-500 space-y-2">
                     <div className="flex justify-center space-x-4">
-                      <span>🔒 SSL Secure</span>
-                      <span>💳 PCI Compliant</span>
-                      <span>🔄 30-day Refund</span>
+                      <span>🔒 {t.checkout.sslSecure}</span>
+                      <span>💳 {t.checkout.pciCompliant}</span>
+                      <span>🔄 {t.checkout.moneyBackGuarantee}</span>
                     </div>
                     <p>Your payment information is encrypted and secure</p>
                   </div>

@@ -1,4 +1,4 @@
-import { PagesFunction } from '@cloudflare/workers-types';
+import { PagesFunction, HeadersInit } from '@cloudflare/workers-types';
 
 interface Env {
   DB: D1Database;
@@ -15,7 +15,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
-        }
+        } as HeadersInit
       });
     }
 
@@ -31,7 +31,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
-        }
+        } as HeadersInit
       });
     }
 
@@ -46,7 +46,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
-        }
+        } as HeadersInit
       });
     }
 
@@ -74,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
-      }
+      } as HeadersInit
     });
 
   } catch (error) {
@@ -88,7 +88,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
-      }
+      } as HeadersInit
     });
   }
 };
@@ -100,6 +100,6 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    } as HeadersInit,
   });
 };

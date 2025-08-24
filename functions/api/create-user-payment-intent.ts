@@ -1,4 +1,4 @@
-import type { PagesFunction } from '@cloudflare/workers-types';
+import type { PagesFunction, HeadersInit } from '@cloudflare/workers-types';
 import { Env } from '../lib/context';
 
 interface PaymentIntentRequest {
@@ -30,7 +30,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
-        }
+        } as HeadersInit
       });
     }
 
@@ -59,7 +59,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
-        }
+        } as HeadersInit
       });
     }
 
@@ -112,7 +112,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
-        }
+        } as HeadersInit
       });
     }
 
@@ -155,7 +155,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
-      }
+      } as HeadersInit
     });
 
   } catch (error) {
@@ -169,7 +169,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
-      }
+      } as HeadersInit
     });
   }
 };
@@ -180,6 +180,6 @@ export const onRequestOptions: PagesFunction = async () => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type'
-    }
+    } as HeadersInit
   });
 };

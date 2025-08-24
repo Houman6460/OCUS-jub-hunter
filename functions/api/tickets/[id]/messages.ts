@@ -1,5 +1,14 @@
 import { TicketStorage, Env } from '../../../lib/db';
+
+interface MessagePayload {
+  content?: string;
+  message?: string;
+  customerEmail?: string;
+  customerName?: string;
+  isAdmin?: boolean;
+}
 import { UserStorage } from '../../../lib/user-storage';
+import type { D1Database } from '@cloudflare/workers-types';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -52,7 +61,7 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
     const ct = request.headers.get('content-type') || '';
     try {
       if (ct.includes('application/json')) {
-        const body = await request.json();
+        const body = await request.json() as MessagePayload;
         content = body?.content ?? body?.message;
         customerEmail = body?.customerEmail;
         customerName = body?.customerName;
@@ -88,7 +97,7 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
       } else {
         // Try JSON first, then text fallback
         try {
-          const body = await request.json();
+          const body = await request.json() as MessagePayload;
           content = body?.content ?? body?.message;
           customerEmail = body?.customerEmail;
           customerName = body?.customerName;
@@ -128,7 +137,7 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
     // If we don't have customerName but have customerEmail, try to fetch from user storage
     if (!customerName && customerEmail && !isAdmin) {
       try {
-        const userStorage = new UserStorage(env.DB);
+        const userStorage = new UserStorage(env.DB as D1Database);
         await userStorage.initializeUsers();
         const user = await userStorage.getUserByEmail(customerEmail);
         if (user) {
@@ -150,7 +159,9 @@ export const onRequestPost = async ({ request, params, env }: { request: Request
 
     return json({ success: true, message: msg });
   } catch (error) {
-    return json({ success: false, message: 'Failed to add message' }, 500);
+    console.error('Failed to add message:', error);
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    return json({ success: false, message }, 500);
   }
 };
 

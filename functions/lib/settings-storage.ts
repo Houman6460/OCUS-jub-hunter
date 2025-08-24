@@ -91,7 +91,8 @@ export class SettingsStorage {
     } catch (error) {
       console.error('Failed to set chat settings:', error);
       console.error('Settings object:', settings);
-      throw new Error(`Settings storage error: ${error.message || error}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Settings storage error: ${message}`);
     }
   }
 

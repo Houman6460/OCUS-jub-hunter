@@ -1,5 +1,10 @@
 import crypto from 'crypto';
 
+interface RecaptchaResponse {
+  success: boolean;
+  'error-codes'?: string[];
+}
+
 interface CaptchaChallenge {
   question: string;
   answer: string;
@@ -85,7 +90,7 @@ class CaptchaService {
         body: `secret=${secretKey}&response=${token}`
       });
 
-      const data = await response.json();
+      const data = await response.json() as RecaptchaResponse;
       
       if (data.success) {
         return true;

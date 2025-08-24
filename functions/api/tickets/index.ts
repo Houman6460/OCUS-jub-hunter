@@ -2,7 +2,18 @@
 // Uses D1 database for persistent ticket storage
 
 import { TicketStorage, Env } from '../../lib/db';
+
+interface TicketPayload {
+  title?: string;
+  description?: string;
+  category?: string;
+  priority?: string;
+  customerEmail?: string;
+  customerName?: string;
+  customerId?: string;
+}
 import { UserStorage } from '../../lib/user-storage';
+import type { D1Database } from '@cloudflare/workers-types';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -95,8 +106,8 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       }
       return new Response(proxied.body, { status: proxied.status, headers: respHeaders });
     }
-    const body = await request.json();
-    const { title, description, category, priority, customerEmail, customerName, customerId } = body || {};
+    const body = await request.json() as TicketPayload;
+    const { title, description, category, priority, customerEmail, customerName, customerId } = body;
     if (!title || !description || !customerEmail) {
       return json({ success: false, message: 'Missing required fields' }, 400);
     }
@@ -113,7 +124,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     // If we have customerId but no customerName, fetch from user storage
     if (customerId && !customerName) {
       try {
-        const userStorage = new UserStorage(env.DB);
+        const userStorage = new UserStorage(env.DB as D1Database);
         await userStorage.initializeUsers();
         const user = await userStorage.getUserById(parseInt(customerId));
         if (user) {
@@ -135,8 +146,9 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     });
 
     return json({ success: true, ticket });
-  } catch (e: any) {
+  } catch (e) {
     console.error('Failed to create ticket:', e);
-    return json({ success: false, message: 'Failed to create ticket' }, 500);
+    const message = e instanceof Error ? e.message : 'An unknown error occurred';
+    return json({ success: false, message }, 500);
   }
 };

@@ -11,9 +11,7 @@ import {
   Chrome, 
   Settings, 
   Play, 
-  Filter,
   Bell,
-  ChartLine,
   ArrowLeft,
   CheckCircle,
   AlertTriangle,
@@ -21,68 +19,60 @@ import {
   Monitor,
   Zap,
   Target,
-  RefreshCw
+  RefreshCw,
+  LucideProps
 } from "lucide-react";
+
+// Define interfaces for the content structure
+interface InstallationStep {
+  step: string;
+  title: string;
+  description: string;
+  details: string;
+  icon: React.ComponentType<LucideProps>;
+  color: string;
+  warning?: boolean;
+}
+
+interface UsageStep {
+  title: string;
+  description: string;
+  icon: React.ComponentType<LucideProps>;
+  tip?: string;
+}
+
+interface Feature {
+  title: string;
+  description: string;
+  icon: React.ComponentType<LucideProps>;
+  details: string[];
+}
+
 
 export default function Manual() {
   const [, navigate] = useLocation();
   const { t } = useLanguage();
   
-  const installationSteps = t.manual?.installationSteps || [
-    {
-      step: "1",
-      title: "Download Extension File",
-      description: "After purchasing, download the .crx file from your email confirmation link.",
-      details: "Look for an email from OCUS Job Hunter with the subject 'Your Extension is Ready!' and click the download button.",
-      icon: Download,
-      color: "bg-primary"
-    },
-    {
-      step: "2", 
-      title: "Open Chrome Extensions Page",
-      description: "Navigate to Chrome Extensions management page.",
-      details: "Type 'chrome://extensions/' in your address bar or go to Chrome menu → More tools → Extensions",
-      icon: Chrome,
-      color: "bg-secondary"
-    },
-    {
-      step: "3",
-      title: "Enable Developer Mode",
-      description: "Toggle 'Developer mode' switch in the top right corner.",
-      details: "This is required to install extensions from .crx files. The toggle should turn blue when enabled.",
-      icon: Settings,
-      color: "bg-accent",
-      warning: true
-    },
-    {
-      step: "4",
-      title: "Install Extension",
-      description: "Drag and drop the .crx file onto the extensions page.",
-      details: "You can also click 'Load unpacked' if the drag-and-drop doesn't work. Chrome will show a confirmation dialog.",
-      icon: CheckCircle,
-      color: "bg-accent"
-    }
-  ];
+  const installationSteps: InstallationStep[] = (t.manual?.installationSteps || []).map((step: any, index: number) => ({
+    ...step,
+    icon: [Download, Chrome, Settings, CheckCircle][index] || Download,
+    color: ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-accent'][index] || 'bg-primary',
+  }));
 
-  const usageSteps = (t.manual?.usageSteps || []).map((step, index) => ({
+  const usageSteps: UsageStep[] = (t.manual?.usageSteps || []).map((step: { title: string; description: string; tip?: string }, index: number) => ({
     title: step.title,
     description: step.description,
     icon: [Monitor, Zap, Target, RefreshCw][index] || Monitor,
     tip: step.tip
   }));
 
-  const features = (t.manual?.features || []).map((feature, index) => ({
+  const features: Feature[] = (t.manual?.features || []).map((feature: { title: string; description: string; details: string[] }, index: number) => ({
     title: feature.title,
     description: feature.description,
     icon: [Target, Settings, Bell, Chrome, CheckCircle][index] || Target,
     details: feature.details
   }));
 
-  const troubleshooting = (t.manual?.troubleshooting || []).map((item, index) => ({
-    problem: item.problem,
-    solution: item.solution,
-    severity: ["warning", "info", "warning", "info"][index] || "info"
-  }));
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -113,28 +103,24 @@ export default function Manual() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary/5 to-secondary/5 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Badge className="bg-accent/10 text-accent mb-6">
-            <Bot className="w-4 h-4 mr-2" />
-            {t.manual?.badge || "Complete User Guide"}
-          </Badge>
           <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-            {t.manual?.heroTitle || "OCUS Job Hunter"}
-            <span className="text-primary"> {t.manual?.heroSubtitle || "User Manual"}</span>
+            {t.manual?.title || "OCUS Job Hunter"}
+            <span className="text-primary"> {t.manual?.subtitle || "User Manual"}</span>
           </h1>
           <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-8">
-            {t.manual?.heroDescription || "Everything you need to know to install, configure, and get the most out of your OCUS Job Hunter Chrome extension."}
+            {t.manual?.subtitle || "Everything you need to know to install, configure, and get the most out of your OCUS Job Hunter Chrome extension."}
           </p>
           <div className="flex justify-center space-x-4">
             <a href="#installation">
               <Button size="lg" className="bg-primary text-white hover:bg-secondary">
                 <Play className="mr-2 h-4 w-4" />
-                {t.manual?.getStartedButton || "Get Started"}
+                {t.getStarted || "Get Started"}
               </Button>
             </a>
             <Link href="/checkout">
               <Button variant="outline" size="lg" className="border-slate-300 text-slate-700 hover:border-primary hover:bg-primary hover:text-white">
                 <Download className="mr-2 h-4 w-4" />
-                {t.manual?.purchaseButton || "Purchase Extension"}
+                {t.buyNow || "Purchase Extension"}
               </Button>
             </Link>
           </div>
@@ -149,7 +135,7 @@ export default function Manual() {
               {t.manual?.installationTitle || "Installation Guide"}
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              {t.manual?.installationDescription || "Follow these simple steps to install your OCUS Job Hunter extension in less than 2 minutes"}
+              {t.manual?.installationSubtitle || "Follow these simple steps to install your OCUS Job Hunter extension in less than 2 minutes"}
             </p>
           </div>
 
@@ -202,7 +188,7 @@ export default function Manual() {
               {t.manual?.usageTitle || "How to Use"}
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              {t.manual?.usageDescription || "Start finding your dream job automatically with these easy steps"}
+              {t.manual?.usageSubtitle || "Start finding your dream job automatically with these easy steps"}
             </p>
           </div>
 
@@ -238,7 +224,7 @@ export default function Manual() {
               {t.manual?.featuresTitle || "Feature Overview"}
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              {t.manual?.featuresDescription || "Detailed breakdown of all the powerful features at your disposal"}
+              {t.manual?.featuresSubtitle || "Detailed breakdown of all the powerful features at your disposal"}
             </p>
           </div>
 
@@ -276,53 +262,6 @@ export default function Manual() {
         </div>
       </section>
 
-      {/* Troubleshooting */}
-      <section id="troubleshooting" className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-              {t.manual?.troubleshootingTitle || "Troubleshooting"}
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              {t.manual?.troubleshootingDescription || "Common issues and their solutions"}
-            </p>
-          </div>
-
-          <div className="space-y-4 max-w-4xl mx-auto">
-            {troubleshooting.map((item, i) => (
-              <Card key={i} className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    item.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
-                  }`}>
-                    {item.severity === 'warning' ? (
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                    ) : (
-                      <Info className="h-4 w-4 text-blue-600" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 mb-2">{item.problem}</h3>
-                    <p className="text-slate-600">{item.solution}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Card className="inline-block p-8">
-              <h3 className="text-xl font-semibold text-slate-900 mb-4">Still Need Help?</h3>
-              <p className="text-slate-600 mb-6">
-                Can't find what you're looking for? Our support team is here to help.
-              </p>
-              <Button className="bg-primary text-white hover:bg-secondary">
-                Contact Support
-              </Button>
-            </Card>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

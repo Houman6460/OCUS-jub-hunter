@@ -1,6 +1,6 @@
 import { UserStorage } from '../../lib/user-storage';
 import { Env } from '../../lib/context';
-import type { PagesFunction } from '@cloudflare/workers-types';
+import type { PagesFunction, HeadersInit } from '@cloudflare/workers-types';
 
 interface RegisterBody {
   email?: string;
@@ -9,7 +9,7 @@ interface RegisterBody {
 }
 
 const jsonResponse = (body: object, status: number) => {
-  const headers = {
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
   };
@@ -54,6 +54,6 @@ export const onRequestOptions: PagesFunction = async () => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    } as HeadersInit,
   });
 };
