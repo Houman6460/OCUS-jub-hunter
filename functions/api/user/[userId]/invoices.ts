@@ -18,25 +18,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const invoicesQuery = `
       SELECT 
         i.id,
-        i.invoice_number,
-        i.order_id,
+        i.invoiceNumber as invoice_number,
+        i.orderId as order_id,
         i.amount,
         i.currency,
-        i.tax_amount,
+        i.taxAmount as tax_amount,
         i.status,
-        i.invoice_date,
-        i.due_date,
-        i.paid_at,
-        i.created_at,
-        o.product_id,
-        o.payment_method,
+        i.invoiceDate as invoice_date,
+        i.dueDate as due_date,
+        i.paidAt as paid_at,
+        i.createdAt as created_at,
+        o.productId as product_id,
+        o.paymentMethod as payment_method,
         u.name as customer_name,
         u.email as customer_email
       FROM invoices i
-      LEFT JOIN orders o ON i.order_id = o.id
-      LEFT JOIN users u ON i.customer_id = u.id
-      WHERE i.customer_id = ? 
-      ORDER BY i.created_at DESC
+      LEFT JOIN orders o ON i.orderId = o.id
+      LEFT JOIN users u ON o.customerEmail = u.email
+      WHERE u.id = ? 
+      ORDER BY i.createdAt DESC
     `;
 
     const invoicesResult = await context.env.DB.prepare(invoicesQuery).bind(userId).all();

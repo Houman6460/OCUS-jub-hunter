@@ -30,7 +30,7 @@ export async function onRequestPut(context: any) {
     // Update order status
     const updateQuery = `
       UPDATE orders 
-      SET status = ?, completed_at = ?
+      SET status = ?, completedAt = ?
       WHERE id = ?
     `;
     
@@ -48,7 +48,7 @@ export async function onRequestPut(context: any) {
     if (status === 'completed') {
       // Get order details to update user
       const orderQuery = `
-        SELECT customer_id, final_amount 
+        SELECT customerEmail, finalAmount 
         FROM orders 
         WHERE id = ?
       `;
@@ -60,15 +60,12 @@ export async function onRequestPut(context: any) {
         const userUpdateQuery = `
           UPDATE users 
           SET 
-            is_premium = 1,
-            premium_activated_at = COALESCE(premium_activated_at, ?),
-            total_spent = COALESCE(total_spent, 0) + ?,
-            total_orders = COALESCE(total_orders, 0) + 1
-          WHERE id = ?
+            isPremium = 1
+          WHERE email = ?
         `;
         
         await env.DB.prepare(userUpdateQuery)
-          .bind(new Date().toISOString(), parseFloat(orderResult.final_amount), orderResult.customer_id)
+          .bind(orderResult.customerEmail)
           .run();
       }
     }
