@@ -1,4 +1,4 @@
-import { createInvoicePdf } from '../lib/invoiceToPdf.ts';
+import { createInvoicePdf } from '../../lib/invoiceToPdf.ts';
 
 export async function onRequestPost(context: any) {
   const { request, env, params } = context;
