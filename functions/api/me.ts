@@ -26,13 +26,29 @@ function json(data: any, status = 200) {
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
+    // Check authorization header first for demo token
+    const authHeader = request.headers.get('Authorization');
+    
+    // PRIORITY: Always return demo customer data for demo-jwt-token
+    if (authHeader?.includes('demo-jwt-token')) {
+      return json({
+        id: 1,
+        email: 'demo@example.com',
+        name: 'Demo User',
+        role: 'customer',
+        createdAt: new Date().toISOString(),
+        isPremium: true,
+        extensionActivated: true,
+        totalSpent: 29.99,
+        totalOrders: 1,
+        isAuthenticated: true
+      });
+    }
+    
     // Get user ID from query params or headers
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId') || url.searchParams.get('id');
     const userEmail = url.searchParams.get('email');
-    
-    // Check authorization header for user info
-    const authHeader = request.headers.get('Authorization');
     let extractedUserId = userId;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
