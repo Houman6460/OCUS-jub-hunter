@@ -40,30 +40,54 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       const token = authHeader.substring(7);
       
       // Parse JWT-like token to extract user ID
-      if (token.startsWith('jwt-token-')) {
-        const parts = token.split('-');
-        if (parts.length >= 3) {
-          extractedUserId = parts[2]; // Extract user ID from jwt-token-{userId}-{timestamp}
+      try {
+        // Try to decode JWT token (basic base64 decode of payload)
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          // Standard JWT format: header.payload.signature
+          const payload = JSON.parse(atob(parts[1]));
+          if (payload.id) {
+            extractedUserId = payload.id.toString();
+          } else if (payload.userId) {
+            extractedUserId = payload.userId.toString();
+          } else if (payload.sub) {
+            extractedUserId = payload.sub.toString();
+          }
         }
-      } else if (token === 'demo-jwt-token') {
-        extractedUserId = '1'; // Demo user ID
+      } catch (e) {
+        console.log('Failed to parse JWT token, trying other formats');
       }
       
-      // Fallback: if no userId from params, use token directly
-      if (!extractedUserId && token) {
+      // Fallback patterns
+      if (!extractedUserId) {
+        if (token.startsWith('jwt-token-')) {
+          const parts = token.split('-');
+          if (parts.length >= 3) {
+            extractedUserId = parts[2]; // Extract user ID from jwt-token-{userId}-{timestamp}
+          }
+        } else if (token === 'demo-jwt-token') {
+          extractedUserId = '1'; // Demo user ID
+        } else if (token.startsWith('customer-')) {
+          // Handle customer-{id} format
+          extractedUserId = token.split('-')[1];
+        }
+      }
+      
+      // Final fallback: if no userId from params, try to use token as ID if it's numeric
+      if (!extractedUserId && token && /^\d+$/.test(token)) {
         extractedUserId = token;
       }
     }
     
     console.log('API /me called with:', { userId, userEmail, extractedUserId, authHeader: authHeader ? 'present' : 'none' });
 
-    // If no user identification provided, return a default guest user
+    // If no user identification provided, return a default fallback user
     if (!extractedUserId && !userEmail) {
       return json({
-        id: 0,
-        email: 'guest@example.com',
-        name: 'Guest User',
-        role: 'guest',
+        id: null,
+        email: 'unknown@example.com',
+        name: 'Unknown User',
+        role: 'customer',
         createdAt: new Date().toISOString(),
         isAuthenticated: false
       });
