@@ -107,20 +107,22 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }
 
       // 2. Create order record
+      const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const orderResult = await env.DB.prepare(`
         INSERT INTO orders (
           user_id, customer_email, customer_name, 
-          final_amount, currency, status, payment_method,
+          original_amount, final_amount, currency, status, payment_method,
           payment_intent_id, download_token, created_at, completed_at
-        ) VALUES (?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
       `).bind(
         finalCustomerId,
         customerEmail,
         customerName || customerEmail,
         amount,
+        amount,
         currency.toLowerCase(),
         paymentIntentId,
-        `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        downloadToken,
         now,
         now
       ).run();
@@ -142,8 +144,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       await env.DB.prepare(`
         INSERT INTO invoices (
           invoice_number, customer_id, order_id, customer_email, customer_name,
-          amount, currency, status, invoice_date, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?)
+          amount, currency, status, invoice_date, paid_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
       `).bind(
         invoiceNumber,
         finalCustomerId,
@@ -152,6 +154,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         customerName || customerEmail,
         amount,
         currency,
+        now,
         now,
         now
       ).run();

@@ -54,6 +54,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         extractedUserId = token;
       }
     }
+    
+    console.log('API /me called with:', { userId, userEmail, extractedUserId, authHeader: authHeader ? 'present' : 'none' });
 
     // If no user identification provided, return a default guest user
     if (!extractedUserId && !userEmail) {
@@ -89,18 +91,26 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         // Try customers table first with different column name variations
         try {
           const customerResult = await env.DB.prepare(`
-            SELECT id, email, name, 'customer' as role, created_at 
+            SELECT id, email, name, 'customer' as role, created_at, 
+                   is_activated, extension_activated, subscription_status 
             FROM customers WHERE id = ?
           `).bind(parseInt(extractedUserId)).first();
-          user = customerResult as unknown as User;
+          if (customerResult) {
+            user = customerResult as unknown as User;
+            console.log('Found customer by ID:', user.id);
+          }
         } catch (e) {
+          console.log('Customers table query failed:', e);
           // Try with different column names if first attempt fails
           try {
             const customerResult = await env.DB.prepare(`
               SELECT id, email, name, 'customer' as role, createdAt as created_at 
               FROM customers WHERE id = ?
             `).bind(parseInt(extractedUserId)).first();
-            user = customerResult as unknown as User;
+            if (customerResult) {
+              user = customerResult as unknown as User;
+              console.log('Found customer by ID (alt schema):', user.id);
+            }
           } catch (e2) {
             console.log('Customers table query failed, trying users table');
           }
@@ -108,17 +118,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       } else if (userEmail) {
         try {
           const customerResult = await env.DB.prepare(`
-            SELECT id, email, name, 'customer' as role, created_at 
+            SELECT id, email, name, 'customer' as role, created_at,
+                   is_activated, extension_activated, subscription_status 
             FROM customers WHERE email = ?
           `).bind(userEmail).first();
-          user = customerResult as unknown as User;
+          if (customerResult) {
+            user = customerResult as unknown as User;
+            console.log('Found customer by email:', user.email);
+          }
         } catch (e) {
+          console.log('Customer email query failed:', e);
           try {
             const customerResult = await env.DB.prepare(`
               SELECT id, email, name, 'customer' as role, createdAt as created_at 
               FROM customers WHERE email = ?
             `).bind(userEmail).first();
-            user = customerResult as unknown as User;
+            if (customerResult) {
+              user = customerResult as unknown as User;
+              console.log('Found customer by email (alt schema):', user.email);
+            }
           } catch (e2) {
             console.log('Customers table query failed, trying users table');
           }
@@ -178,15 +196,22 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         });
       }
 
-      // Return user profile
-      return json({
+      // Return user profile with additional customer info
+      const userProfile = {
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role || 'customer',
         createdAt: user.created_at || new Date().toISOString(),
-        isAuthenticated: true
-      });
+        isAuthenticated: true,
+        // Add customer-specific fields if available
+        isActivated: (user as any).is_activated || false,
+        extensionActivated: (user as any).extension_activated || false,
+        subscriptionStatus: (user as any).subscription_status || 'inactive'
+      };
+      
+      console.log('Returning user profile:', userProfile);
+      return json(userProfile);
 
     } catch (dbError: any) {
       console.error('Database error in /api/me:', dbError);

@@ -65,11 +65,10 @@ async function initializeInvoicesTable(db: any) {
         due_date TEXT,
         paid_at TEXT,
         notes TEXT,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (customer_id) REFERENCES customers(id),
-        FOREIGN KEY (order_id) REFERENCES orders(id)
+        created_at TEXT NOT NULL
       )
     `).run();
+    console.log('Invoices table initialized successfully');
   } catch (error) {
     console.error('Failed to initialize invoices table:', error);
   }
@@ -104,32 +103,38 @@ export const onRequestGet = async ({ request, env }: { request: Request; env: En
 
     // If no invoices exist, create a demo invoice for testing
     if (invoices.length === 0 && customerId) {
-      const now = new Date().toISOString();
-      const demoInvoiceNumber = `INV-${new Date().getFullYear()}-000001`;
-      
-      await env.DB.prepare(`
-        INSERT INTO invoices (
-          invoice_number, customer_id, customer_email, customer_name,
-          amount, currency, status, invoice_date, paid_at, notes, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        demoInvoiceNumber,
-        parseInt(customerId),
-        'demo@example.com',
-        'Demo Customer',
-        49.99,
-        'USD',
-        'paid',
-        now,
-        now,
-        'Demo invoice for testing',
-        now
-      ).run();
+      try {
+        const now = new Date().toISOString();
+        const demoInvoiceNumber = `INV-${new Date().getFullYear()}-000001`;
+        
+        await env.DB.prepare(`
+          INSERT INTO invoices (
+            invoice_number, customer_id, customer_email, customer_name,
+            amount, currency, status, invoice_date, paid_at, notes, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          demoInvoiceNumber,
+          parseInt(customerId),
+          'demo@example.com',
+          'Demo Customer',
+          49.99,
+          'USD',
+          'paid',
+          now,
+          now,
+          'Demo invoice for testing',
+          now
+        ).run();
 
-      // Fetch the updated list
-      const updatedResult = await env.DB.prepare(query).bind(...params).all();
-      const updatedInvoices = (updatedResult.results as unknown as Invoice[]) || [];
-      return json(updatedInvoices.map(mapToUi));
+        // Fetch the updated list
+        const updatedResult = await env.DB.prepare(query).bind(...params).all();
+        const updatedInvoices = (updatedResult.results as unknown as Invoice[]) || [];
+        return json(updatedInvoices.map(mapToUi));
+      } catch (demoError) {
+        console.error('Failed to create demo invoice:', demoError);
+        // Return empty array if demo creation fails
+        return json([]);
+      }
     }
 
     return json(invoices.map(mapToUi));
