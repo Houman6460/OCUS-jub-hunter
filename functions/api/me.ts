@@ -124,11 +124,72 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         )
       `).run();
 
-      // Insert demo customer if it doesn't exist
+      const now = new Date().toISOString();
+
+      // Insert demo customer if not exists
+      const demoCustomer = await env.DB.prepare(`
+        INSERT OR IGNORE INTO customers (id, email, name, is_premium, extension_activated, total_spent, total_orders, created_at)
+        VALUES (1, 'demo@example.com', 'Demo User', 1, 1, 29.99, 1, ?)
+      `).bind(now).run();
+
+      // Create invoices table and demo invoice
       await env.DB.prepare(`
-        INSERT OR IGNORE INTO customers (id, email, name, is_premium, extension_activated, total_spent, total_orders)
-        VALUES (1, 'demo@example.com', 'Demo User', 1, 1, 29.99, 1)
+        CREATE TABLE IF NOT EXISTS invoices (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          invoice_number TEXT UNIQUE NOT NULL,
+          customer_id INTEGER NOT NULL,
+          order_id INTEGER,
+          customer_email TEXT NOT NULL,
+          customer_name TEXT NOT NULL,
+          amount DECIMAL(10,2) NOT NULL,
+          currency TEXT DEFAULT 'USD' NOT NULL,
+          status TEXT DEFAULT 'issued' NOT NULL,
+          invoice_date TEXT NOT NULL,
+          due_date TEXT,
+          paid_at TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL
+        )
       `).run();
+
+      // Insert demo invoice
+      await env.DB.prepare(`
+        INSERT OR IGNORE INTO invoices (
+          id, invoice_number, customer_id, customer_email, customer_name,
+          amount, currency, status, invoice_date, paid_at, notes, created_at
+        ) VALUES (1, 'INV-2025-000001', 1, 'demo@example.com', 'Demo User', 29.99, 'USD', 'paid', ?, ?, 'Premium extension purchase', ?)
+      `).bind(now, now, now).run();
+
+      // Create orders table and demo order
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS orders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          customer_email TEXT NOT NULL,
+          customer_name TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          original_amount DECIMAL(10,2) NOT NULL,
+          final_amount DECIMAL(10,2) NOT NULL,
+          currency TEXT DEFAULT 'USD' NOT NULL,
+          status TEXT DEFAULT 'pending' NOT NULL,
+          payment_method TEXT,
+          download_token TEXT,
+          download_count INTEGER DEFAULT 0,
+          max_downloads INTEGER DEFAULT 3,
+          activation_code TEXT,
+          created_at TEXT NOT NULL,
+          completed_at TEXT
+        )
+      `).run();
+
+      // Insert demo order
+      await env.DB.prepare(`
+        INSERT OR IGNORE INTO orders (
+          id, user_id, customer_email, customer_name, product_id,
+          original_amount, final_amount, currency, status, payment_method,
+          download_token, activation_code, created_at, completed_at
+        ) VALUES (1, 1, 'demo@example.com', 'Demo User', 'premium-extension', 29.99, 29.99, 'USD', 'completed', 'stripe', 'demo-download-token', 'demo-activation-code', ?, ?)
+      `).bind(now, now).run();
 
       // Try multiple table and column combinations to handle different schema versions
       if (extractedUserId) {
