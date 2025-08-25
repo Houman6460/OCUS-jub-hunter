@@ -1,6 +1,7 @@
 name = "ocus-job-hunter"
 compatibility_date = "2025-08-14"
 pages_build_output_dir = "dist/public"
+compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
 binding = "DB"
