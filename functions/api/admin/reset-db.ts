@@ -1,4 +1,8 @@
--- D1 Database Schema for OCUS Ticket System
+// functions/api/admin/reset-db.ts
+import type { PagesFunction } from '@cloudflare/workers-types';
+import { Env } from '../../../lib/context';
+
+const SCHEMA_SQL = `-- D1 Database Schema for OCUS Ticket System
 -- Run: wrangler d1 execute ocus-tickets --file=./functions/schema.sql
 
 -- Drop existing tables if they exist (for development)
@@ -138,7 +142,6 @@ CREATE TABLE IF NOT EXISTS orders (
   FOREIGN KEY (productId) REFERENCES products(id)
 );
 
--- Users Table
 -- Customers Table (renamed from users for clarity)
 CREATE TABLE IF NOT EXISTS customers (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,15 +161,6 @@ CREATE TABLE IF NOT EXISTS customers (
 
 -- Create a view for backward compatibility if 'users' is still used elsewhere
 CREATE VIEW IF NOT EXISTS users AS SELECT * FROM customers;
-
--- Dashboard Features Table
-CREATE TABLE IF NOT EXISTS dashboard_features (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  feature_key TEXT NOT NULL UNIQUE,
-  is_enabled BOOLEAN NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
 
 CREATE TABLE IF NOT EXISTS activation_codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -218,3 +212,48 @@ CREATE INDEX IF NOT EXISTS idx_customers_active ON customers(isActive);
 CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices(customerId);
 CREATE INDEX IF NOT EXISTS idx_invoices_order_id ON invoices(orderId);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customerId);
+`;
+
+function toD1Batch(db: D1Database, sql: string): D1PreparedStatement[] {
+    return sql.split(';').filter(query => query.trim() !== '').map(query => db.prepare(query));
+}
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+    const { request, env } = context;
+
+    // Simple security check for development
+    const adminSecret = request.headers.get('X-Admin-Secret');
+    if (adminSecret !== 'ocus-power-secret') { // Use a more secure secret in production
+        return new Response('Unauthorized', { status: 401 });
+    }
+
+    try {
+        if (!env.DB) {
+            return new Response('Database not available', { status: 500 });
+        }
+        const statements = toD1Batch(env.DB, SCHEMA_SQL);
+        await env.DB.batch(statements);
+        
+        return new Response('Database reset and initialized successfully.', {
+            status: 200,
+            headers: { 'Content-Type': 'text/plain' },
+        });
+    } catch (error: any) {
+        console.error('Database reset failed:', error);
+        return new Response(`Database reset failed: ${error.message}`, {
+            status: 500,
+            headers: { 'Content-Type': 'text/plain' },
+        });
+    }
+};
+
+export const onRequestOptions: PagesFunction = async () => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Secret',
+      },
+    });
+};

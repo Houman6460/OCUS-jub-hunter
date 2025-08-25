@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import registerRoutes from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -42,12 +42,12 @@ app.use((req, res, next) => {
 
 (async () => {
   // Initialize dashboard features on startup
-  try {
-    const { storage } = await import("./storage");
-    await storage.initializeDashboardFeatures();
-  } catch (error) {
-    console.warn('Failed to initialize dashboard features:', error);
-  }
+  // try {
+  //   const { storage } = await import("./storage");
+  //   await storage.initializeDashboardFeatures();
+  // } catch (error) {
+  //   console.warn('Failed to initialize dashboard features:', error);
+  // }
   
   const server = await registerRoutes(app);
 

@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import multer from "multer";
@@ -24,9 +24,11 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { v4 as uuidv4 } from "uuid";
 import crypto from "crypto";
-import fs from 'fs';
 import cors from 'cors';
 import { generateInvoicePDF } from './invoicePdfService';
+import { existsSync, createReadStream } from 'fs';
+import { promises as fsp } from 'fs';
+import * as fsSync from 'fs';
 
 // Dynamic Stripe setup - use database keys if available, fallback to env
 let stripe: Stripe | null = null;
@@ -98,7 +100,7 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit (reduced for security)
     files: 3 // Maximum 3 files
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     // Only allow safe image types
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedTypes.includes(file.mimetype)) {
@@ -109,7 +111,59 @@ const upload = multer({
   }
 });
 
-export async function registerRoutes(app: Express): Promise<Server> {
+async function createStripeCheckoutSession(stripe: Stripe, plan: string, customerId: string, successUrl: string, cancelUrl: string) {
+  const priceId = plan === 'premium' ? process.env.STRIPE_PREMIUM_PRICE_ID : process.env.STRIPE_BASIC_PRICE_ID;
+
+  if (!priceId) {
+    throw new Error('Price ID not configured');
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    mode: 'subscription',
+    customer: customerId,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+  });
+
+  return session;
+}
+
+export default async function defineRoutes(app: Express, storage: any, db: any): Promise<Server> {
+  const server = createServer(app);
+
+  // In development, add an endpoint to reset the database for easier testing.
+  if (process.env.NODE_ENV === 'development') {
+    app.post('/api/admin/reset-db', async (req: Request, res: Response) => {
+      // Basic security check for development environment
+      const secret = req.headers['x-admin-secret'];
+      if (secret !== 'ocus-power-secret') {
+        return res.status(403).send('Forbidden: Invalid admin secret.');
+      }
+
+      try {
+        console.log('Attempting to reset database...');
+        const schemaPath = './functions/schema.sql'; // Path is relative to project root
+                const script = await fsp.readFile(schemaPath, 'utf8');
+        
+        // better-sqlite3's exec method can run multi-statement SQL scripts.
+        db.exec(script);
+        
+        console.log('Database has been successfully reset and initialized.');
+        res.status(200).send('Database reset successfully.');
+      } catch (error) {
+        console.error('Failed to reset database:', error);
+        res.status(500).send('Error resetting database.');
+      }
+    });
+  }
+
   // Rate limiting with different limits for different endpoints
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -117,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     message: { error: "Too many authentication attempts, try again later." },
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '127.0.0.1'
+    skip: (req: Request) => process.env.NODE_ENV === 'development' && req.ip === '127.0.0.1'
   });
 
   const generalLimiter = rateLimit({
@@ -126,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     message: { error: "Too many requests, please try again later." },
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => process.env.NODE_ENV === 'development' && req.ip === '127.0.0.1'
+    skip: (req: Request) => process.env.NODE_ENV === 'development' && req.ip === '127.0.0.1'
   });
 
   const uploadLimiter = rateLimit({
@@ -138,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication middleware for admin routes
-  const requireAdmin = async (req: any, res: any, next: any) => {
+  const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
     // If session-based admin is present, allow
     if (req.isAuthenticated?.() && req.user?.isAdmin) {
       return next();
@@ -164,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Authentication middleware for user routes  
-  const requireAuth = (req: any, res: any, next: any) => {
+  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -172,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Health check endpoints for deployment and monitoring
-  app.get('/health', (req, res) => {
+  app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({ 
       status: 'healthy',
       service: 'OCUS Job Hunter',
@@ -183,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API health check
-  app.get('/api/health', (req, res) => {
+  app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ 
       status: 'ok',
       service: 'OCUS Job Hunter API',
@@ -194,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Lightweight system health stub (no DB dependencies)
   // This endpoint is used by the automation UI to avoid 404s during development
-  app.get('/api/system-health', (req, res) => {
+  app.get('/api/system-health', (req: Request, res: Response) => {
     try {
       res.status(200).json({
         ok: true,
@@ -213,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Recovery stub endpoint to simulate recovery flows in development
   // Accepts optional query parameter: action=localhost|chrome|server
-  app.get('/api/recovery', (req, res) => {
+  app.get('/api/recovery', (req: Request, res: Response) => {
     const action = (req.query.action as string) || 'unknown';
     const id = uuidv4();
     res.status(200).json({
@@ -226,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SEO Settings Management API with comprehensive image upload support
-  app.get('/api/admin/seo-settings', requireAdmin, async (req, res) => {
+  app.get('/api/admin/seo-settings', requireAdmin, async (req: Request, res: Response) => {
     try {
       const seoSettings = await storage.getSeoSettings();
       res.json(seoSettings || {});
@@ -241,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     { name: 'customOgImage', maxCount: 1 },
     { name: 'customLogo', maxCount: 1 },
     { name: 'customFavicon', maxCount: 1 }
-  ]), async (req, res) => {
+  ]), async (req: Request, res: Response) => {
     try {
       console.log('=== SEO SETTINGS UPLOAD DEBUG (FormData) ===');
       console.log('Content-Type:', req.headers['content-type']);
@@ -316,7 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SEO Settings JSON-only updates (for text changes without file uploads)
-  app.patch('/api/admin/seo-settings', requireAdmin, async (req, res) => {
+  app.patch('/api/admin/seo-settings', requireAdmin, async (req: Request, res: Response) => {
     try {
       console.log('=== SEO SETTINGS JSON UPDATE DEBUG ===');
       console.log('Content-Type:', req.headers['content-type']);
@@ -348,11 +402,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Deployment health check endpoints commonly used by platforms
-  app.get('/status', (req, res) => {
+  app.get('/status', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok' });
   });
 
-  app.get('/ping', (req, res) => {
+  app.get('/ping', (req: Request, res: Response) => {
     res.status(200).send('pong');
   });
 
@@ -395,7 +449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }))
 
   // Input sanitization middleware
-  const sanitizeInput = (req: any, res: any, next: any) => {
+  const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
     // Sanitize string inputs to prevent XSS
     const sanitizeObject = (obj: any): any => {
       if (typeof obj === 'string') {
@@ -446,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await reinitializeStrategies();
 
   // Add routes for checking strategy status
-  app.get("/api/auth-strategies/status", async (req, res) => {
+  app.get("/api/auth-strategies/status", async (req: Request, res: Response) => {
     try {
       const authSettings = await storage.getAuthSettings();
       const strategies = {
@@ -473,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google credentials JSON upload
-  app.post("/api/admin/upload-google-credentials", upload.single('credentials'), async (req, res) => {
+  app.post("/api/admin/upload-google-credentials", upload.single('credentials'), async (req: Request, res: Response) => {
     try {
       console.log('Upload request received:', {
         hasFile: !!req.file,
@@ -535,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth Settings routes
-  app.get("/api/auth-settings", async (req, res) => {
+  app.get("/api/auth-settings", async (req: Request, res: Response) => {
     try {
       const authSettings = await storage.getAuthSettings();
 
@@ -569,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-specific auth settings endpoint (includes non-sensitive data)
-  app.get("/api/admin/auth-settings", async (req, res) => {
+  app.get("/api/admin/auth-settings", async (req: Request, res: Response) => {
     try {
       const authSettings = await storage.getAuthSettings();
 
@@ -620,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/auth-settings", async (req, res) => {
+  app.put("/api/admin/auth-settings", async (req: Request, res: Response) => {
     try {
       const updates = req.body;
 
@@ -670,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin and Customer Login Routes
-  app.post("/api/admin/login", authLimiter, async (req, res) => {
+  app.post("/api/admin/login", authLimiter, async (req: Request, res: Response) => {
     try {
       const { username, email, password, recaptchaToken } = req.body;
 
@@ -778,7 +832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin credentials update endpoint
-  app.post("/api/admin/update-credentials", authLimiter, async (req, res) => {
+  app.post("/api/admin/update-credentials", authLimiter, async (req: Request, res: Response) => {
     try {
       const { currentUsername, currentEmail, currentPassword, newUsername, newEmail, newPassword } = req.body;
 
@@ -790,7 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const storedPassword = await storage.getSetting('demo_admin_password');
       const currentStoredPassword = storedPassword?.value || 'demo123';
 
-      // For demo admin, check current credentials  
+      // For demo admin, check current credentials
       if ((currentUsername === 'demo_admin' || currentEmail === 'info@logoland.se') && currentPassword === currentStoredPassword) {
         const responseMessage = [];
 
@@ -811,40 +865,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           responseMessage.push("Password updated successfully");
         }
+        // TODO: Add logic to update email for demo admin if newEmail is provided
 
-        if (newUsername || newEmail) {
-          responseMessage.push(`Email would be updated to: ${newEmail || newUsername}`);
+        return res.json({ success: true, message: responseMessage.join(', ') });
+      } else {
+        // Check if it's a database admin user
+        const user = await storage.getUserByUsername(currentUsername);
+        if (user && user.isAdmin && await bcrypt.compare(currentPassword, user.password)) {
+          const updates: any = {};
+
+          if (newUsername && newUsername !== currentUsername) {
+            updates.username = newUsername;
+          }
+
+          if (newPassword) {
+            updates.password = await bcrypt.hash(newPassword, 10);
+          }
+
+          if (Object.keys(updates).length > 0) {
+            // Update user in database
+            await db.update(users)
+              .set(updates)
+              .where(eq(users.id, user.id));
+          }
+
+          return res.json({ success: true, message: "Admin credentials updated successfully" });
         }
-
-        return res.json({ 
-          success: true, 
-          message: responseMessage.length > 0 
-            ? responseMessage.join(', ') 
-            : "Credentials verified successfully"
-        });
-      }
-
-      // Check if it's a database admin user
-      const user = await storage.getUserByUsername(currentUsername);
-      if (user && user.isAdmin && await bcrypt.compare(currentPassword, user.password)) {
-        const updates: any = {};
-
-        if (newUsername && newUsername !== currentUsername) {
-          updates.username = newUsername;
-        }
-
-        if (newPassword) {
-          updates.password = await bcrypt.hash(newPassword, 10);
-        }
-
-        if (Object.keys(updates).length > 0) {
-          // Update user in database
-          await db.update(users)
-            .set(updates)
-            .where(eq(users.id, user.id));
-        }
-
-        return res.json({ success: true, message: "Admin credentials updated successfully" });
       }
 
       return res.status(401).json({ message: "Invalid current credentials" });
@@ -854,7 +900,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customer/login", authLimiter, async (req, res) => {
+
+  app.post("/api/customer/login", authLimiter, async (req: Request, res: Response) => {
     try {
       const { email, password, recaptchaToken } = req.body;
 
@@ -919,7 +966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User-authenticated payment intent creation (for dashboard purchases)
-  app.post("/api/create-user-payment-intent", async (req, res) => {
+  app.post("/api/create-user-payment-intent", async (req: Request, res: Response) => {
     try {
       // This would normally check authentication, but for now we'll use basic validation
       const userId = req.headers['user-id'] || req.body.userId;
@@ -982,7 +1029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Check current authenticated user's premium purchase status
-  app.get("/api/me/purchase-status", requireAuth, async (req, res) => {
+  app.get("/api/me/purchase-status", requireAuth, async (req: Request, res: Response) => {
     try {
       if (!(req.user as any)?.id) {
         return res.status(401).json({ message: "Authentication required" });
@@ -1014,19 +1061,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Add secure user profile endpoints
   // Get current user profile
-  app.get("/api/me", requireAuth, async (req, res) => {
+  app.get("/api/me", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!(req.user as any)?.id) {
-        return res.status(401).json({ message: "Authentication required" });
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
       }
-
-      // Return user data without password
-      const user = await storage.getUser((req.user as any).id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const { password, ...safeUser } = user;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...safeUser } = req.user as any;
       res.json(safeUser);
     } catch (error: any) {
       console.error('Failed to get user profile:', error);
@@ -1035,7 +1076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current user orders
-  app.get("/api/me/orders", requireAuth, async (req, res) => {
+  app.get("/api/me/orders", requireAuth, async (req: Request, res: Response) => {
     try {
       if (!(req.user as any)?.id) {
         return res.status(401).json({ message: "Authentication required" });
@@ -1049,18 +1090,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User-specific payment intent creation for dashboard purchases
-  app.post("/api/user/create-payment-intent", async (req, res) => {
-    try {
-      const { amount } = req.body;
-    } catch (error: any) {
-      console.error('Failed to get user downloads:', error);
-      res.status(500).json({ message: "Failed to get downloads: " + error.message });
-    }
-  });
 
   // User-specific payment intent creation for dashboard purchases
-  app.post("/api/user/create-payment-intent", async (req, res) => {
+  app.post("/api/user/create-payment-intent", async (req: Request, res: Response) => {
     try {
       const { amount } = req.body;
 
@@ -1130,7 +1162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customer registration route
-  app.post("/api/customer/register", authLimiter, async (req, res) => {
+  app.post("/api/customer/register", authLimiter, async (req: Request, res: Response) => {
     try {
       const { email, password, name, recaptchaToken } = req.body;
 
@@ -1203,7 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
 
   // Social auth callbacks
-  app.get('/api/auth/google/callback', (req, res, next) => {
+  app.get('/api/auth/google/callback', (req: Request, res: Response, next: NextFunction) => {
     console.log('Google OAuth callback received:', {
       query: req.query,
       hasCode: !!req.query.code,
@@ -1246,37 +1278,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/facebook/callback',
     passport.authenticate('facebook', { failureRedirect: '/login' }),
-    (req, res) => {
+    (req: Request, res: Response) => {
       res.redirect('/dashboard');
     }
   );
 
   app.get('/api/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
-    (req, res) => {
+    (req: Request, res: Response) => {
       res.redirect('/dashboard');
     }
   );
 
   // Authentication check endpoint
-  app.get("/api/auth/check", (req, res) => {
+  app.get("/api/auth/check", (req: Request, res: Response) => {
     res.json({ authenticated: !!req.user, user: req.user });
   });
   // PayPal routes
-  app.get("/api/paypal/setup", async (req, res) => {
+  app.get("/api/paypal/setup", async (req: Request, res: Response) => {
     await loadPaypalDefault(req, res);
   });
 
-  app.post("/api/paypal/order", async (req, res) => {
+  app.post("/api/paypal/order", async (req: Request, res: Response) => {
     await createPaypalOrder(req, res);
   });
 
-  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
+  app.post("/api/paypal/order/:orderID/capture", async (req: Request, res: Response) => {
     await capturePaypalOrder(req, res);
   });
 
   // Settings routes
-  app.get("/api/settings", async (req, res) => {
+  app.get("/api/settings", async (req: Request, res: Response) => {
     try {
       const settings = await storage.getAllSettings();
       const settingsMap = settings.reduce((acc, setting) => {
@@ -1289,7 +1321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/settings/:key", async (req, res) => {
+  app.put("/api/settings/:key", async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
       const { value } = req.body;
@@ -1307,7 +1339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Coupon routes
-  app.post("/api/coupons", async (req, res) => {
+  app.post("/api/coupons", async (req: Request, res: Response) => {
     try {
       const { code, discountType, discountValue, usageLimit, expiresAt } = req.body;
 
@@ -1338,7 +1370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/coupons", async (req, res) => {
+  app.get("/api/coupons", async (req: Request, res: Response) => {
     try {
       const coupons = await storage.getAllCoupons();
       res.json(coupons);
@@ -1348,7 +1380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete coupon
-  app.delete("/api/coupons/:id", async (req, res) => {
+  app.delete("/api/coupons/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteCoupon(id);
@@ -1359,7 +1391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update product price (admin only)
-  app.put("/api/settings/product_price", async (req, res) => {
+  app.put("/api/settings/product_price", async (req: Request, res: Response) => {
     try {
       const { value } = req.body;
       const schema = z.object({
@@ -1382,7 +1414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update dual pricing for products
-  app.put("/api/admin/pricing", async (req, res) => {
+  app.put("/api/admin/pricing", async (req: Request, res: Response) => {
     try {
       const { price, beforePrice } = req.body;
 
@@ -1412,7 +1444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current product pricing
-  app.get("/api/products/pricing", async (req, res) => {
+  app.get("/api/products/pricing", async (req: Request, res: Response) => {
     try {
       const product = await storage.getCurrentProduct();
       res.json(product);
@@ -1422,7 +1454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/validate-coupon", async (req, res) => {
+  app.post("/api/validate-coupon", async (req: Request, res: Response) => {
     try {
       const { code, orderAmount } = req.body;
 
@@ -1476,7 +1508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe payment route
-  app.post("/api/create-payment-intent", async (req, res) => {
+  app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
       const { amount, customerEmail, customerName, couponCode, originalAmount, discountAmount, referralCode } = req.body;
 
@@ -1555,7 +1587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe webhook for payment confirmation
-  app.post("/api/stripe/webhook", async (req, res) => {
+  app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -1638,7 +1670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe payment completion (manual trigger)
-  app.post("/api/complete-stripe-payment", async (req, res) => {
+  app.post("/api/complete-stripe-payment", async (req: Request, res: Response) => {
     try {
       const { paymentIntentId, customerEmail, customerName } = req.body;
       
@@ -1732,7 +1764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PayPal payment completion
-  app.post("/api/complete-paypal-payment", async (req, res) => {
+  app.post("/api/complete-paypal-payment", async (req: Request, res: Response) => {
     try {
       const { orderID, customerEmail, customerName, amount, referralCode } = req.body;
 
@@ -1758,7 +1790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Generate activation key for PayPal order
+      // Generate activation key for the order
       const activationKey = `OCUS-${Date.now()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
       await storage.createActivationKey({
         activationKey: activationKey,
@@ -1767,16 +1799,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true
       });
 
+      // Send confirmation email
       await emailService.sendPurchaseConfirmation(order, activationKey);
-      res.json({ success: true, orderId: order.id });
+
+      res.json({ 
+        success: true, 
+        orderId: order.id,
+        activationKey: activationKey
+      });
     } catch (error: any) {
       console.error('PayPal payment completion failed:', error);
       res.status(500).json({ message: error.message });
     }
   });
+}
+
 
   // Deprecated: Validate activation key for Chrome extension (HTTP 410 Gone)
-  app.post("/api/validate-activation-key", async (req, res) => {
+    app.post("/api/validate-activation-key", async (req: Request, res: Response) => {
     res.status(410).json({ 
       valid: false, 
       message: "Activation system has been deprecated. Please contact support for assistance." 
@@ -1784,7 +1824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Premium device validation for single-device restriction
-  app.post("/api/premium/validate-device", async (req, res) => {
+    app.post("/api/premium/validate-device", async (req: Request, res: Response) => {
     try {
       const { userId, deviceFingerprint, extensionId } = req.body;
       
@@ -5451,7 +5491,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
     }
   });
 
-  app.get("/api/invoices/:id/pdf", async (req, res) => {
+  app.get("/api/invoices/:id/pdf", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const invoice = await storage.getInvoice(parseInt(id));
@@ -5473,7 +5513,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
     }
   });
 
-  app.get("/api/invoice-settings", async (req, res) => {
+  app.get("/api/invoice-settings", async (req: Request, res: Response) => {
     try {
       const settings = await storage.getInvoiceSettings();
       res.json(settings || {});
@@ -5483,7 +5523,7 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
     }
   });
 
-  app.put("/api/invoice-settings", async (req, res) => {
+  app.put("/api/invoice-settings", async (req: Request, res: Response) => {
     try {
       const settings = await storage.updateInvoiceSettings(req.body);
       res.json(settings);
@@ -5493,5 +5533,5 @@ Answer questions about features, installation, pricing, and troubleshooting. Be 
     }
   });
 
-  return httpServer;
+  return server;
 }
