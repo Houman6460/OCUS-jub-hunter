@@ -101,30 +101,32 @@ export const onRequestGet = async ({ request, env }: { request: Request; env: En
     const result = await env.DB.prepare(query).bind(...params).all();
     const invoices = (result.results as unknown as Invoice[]) || [];
 
-    // If no invoices exist, create a demo invoice for testing
-    if (invoices.length === 0 && customerId) {
+    // Always ensure demo invoice exists for customer ID 1
+    if (customerId === '1') {
       try {
         const now = new Date().toISOString();
         const demoInvoiceNumber = `INV-${new Date().getFullYear()}-000001`;
         
         await env.DB.prepare(`
-          INSERT INTO invoices (
-            invoice_number, customer_id, customer_email, customer_name,
+          INSERT OR REPLACE INTO invoices (
+            id, invoice_number, customer_id, customer_email, customer_name,
             amount, currency, status, invoice_date, paid_at, notes, created_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           demoInvoiceNumber,
           parseInt(customerId),
           'demo@example.com',
-          'Demo Customer',
-          49.99,
+          'Demo User',
+          29.99,
           'USD',
           'paid',
           now,
           now,
-          'Demo invoice for testing',
+          'Premium extension purchase',
           now
         ).run();
+        
+        console.log('Demo invoice created/updated for customer 1');
 
         // Fetch the updated list
         const updatedResult = await env.DB.prepare(query).bind(...params).all();
