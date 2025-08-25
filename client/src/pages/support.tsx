@@ -175,40 +175,22 @@ export default function Support() {
     enabled: !!user
   });
 
-  // Fetch ticket messages
-  const { data: messages = [] } = useQuery({
-    queryKey: ['/api/tickets', selectedTicket?.id, 'messages'],
+  // Fetch ticket details and messages
+  const { data: selectedTicketDetails } = useQuery({
+    queryKey: ['/api/tickets', selectedTicket?.id],
     queryFn: async () => {
-      if (!user) {
-        console.error('No user available for fetching messages');
-        return [];
+      if (!selectedTicket) return null;
+      const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}`);
+      const data = response.json ? await response.json() : response;
+      if (data.success) {
+        return data.ticket;
       }
-      console.log('Fetching messages for ticket:', selectedTicket?.id, 'user:', user);
-      // Server derives role/email from session; call without client-provided flags
-      let data: any = [];
-      try {
-        const response = await apiRequest('GET', `/api/tickets/${selectedTicket!.id}/messages`);
-        data = response.json ? await response.json() : response;
-      } catch (err: any) {
-        // Treat 404 (no messages yet or store reset) as empty list
-        if (typeof err?.message === 'string' && err.message.startsWith('404:')) {
-          return [];
-        }
-        throw err;
-      }
-      // Normalize message fields for rendering
-      return Array.isArray(data)
-        ? data.map((m: any) => ({
-            ...m,
-            message: m.message ?? m.content,
-            created_at: m.created_at ?? m.createdAt,
-            is_from_customer: m.is_from_customer ?? (typeof m.isAdmin === 'boolean' ? !m.isAdmin : m.is_from_customer),
-            sender_name: m.sender_name ?? m.authorName ?? m.sender,
-          }))
-        : [];
+      return null;
     },
-    enabled: !!selectedTicket && !!user
+    enabled: !!selectedTicket
   });
+
+  const messages = selectedTicketDetails?.messages || [];
 
   // Create ticket mutation
   const createTicketMutation = useMutation({
@@ -246,14 +228,14 @@ export default function Support() {
       console.log('Sending message with user data:', { email: user.email, name: user.name, isAdmin: user.isAdmin });
       
       // Send both keys to be compatible with either backend expectation
-      const requestData = { content: data.content, message: data.content };
-      const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, requestData);
+      const requestData = { message: data.content };
+      const response = await apiRequest('POST', `/api/tickets/${data.ticketId}`, requestData);
       return response.json ? await response.json() : response;
     },
     onSuccess: () => {
       setNewMessage('');
       setAttachments([]);
-      queryClient.invalidateQueries({ queryKey: ['/api/tickets', selectedTicket?.id, 'messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets', selectedTicket?.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
       toast({ title: "Message sent successfully" });
     },

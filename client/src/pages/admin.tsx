@@ -132,37 +132,32 @@ function TicketManagementTab() {
   });
 
   // Fetch messages for selected ticket
-  const { data: messages, isLoading: messagesLoading } = useQuery({
-    queryKey: [`/api/tickets/${selectedTicket?.id}/messages`],
+  const { data: selectedTicketDetails, isLoading: messagesLoading } = useQuery({
+    queryKey: [`/api/tickets`, selectedTicket?.id],
     queryFn: async () => {
-      if (!selectedTicket) return [];
-      let data: any = [];
-      try {
-        const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}/messages`);
-        data = await response.json();
-      } catch (err: any) {
-        if (typeof err?.message === 'string' && err.message.startsWith('404:')) {
-          return [];
-        }
-        throw err;
-      }
-      // Normalize message fields for admin UI
-      return Array.isArray(data)
-        ? data.map((m: any) => ({
+      if (!selectedTicket) return null;
+      const response = await apiRequest('GET', `/api/tickets/${selectedTicket.id}?isAdmin=true`);
+      const data = await response.json();
+      if (data.success) {
+        // Normalize message fields for admin UI
+        const ticket = data.ticket;
+        if (ticket.messages && Array.isArray(ticket.messages)) {
+          ticket.messages = ticket.messages.map((m: any) => ({
             ...m,
             content: m.content ?? m.message,
-            isAdmin: typeof m.isAdmin === 'boolean'
-              ? m.isAdmin
-              : (typeof m.isFromCustomer === 'boolean'
-                ? !m.isFromCustomer
-                : (typeof m.is_from_customer === 'boolean' ? !m.is_from_customer : false)),
-            authorName: m.authorName ?? m.senderName ?? m.sender_name ?? m.sender,
+            isAdmin: typeof m.isAdmin === 'boolean' ? m.isAdmin : !m.is_from_customer,
+            authorName: m.authorName ?? m.sender_name,
             createdAt: m.createdAt ?? m.created_at,
-          }))
-        : [];
+          }));
+        }
+        return ticket;
+      }
+      return null;
     },
     enabled: !!selectedTicket
   });
+
+  const messages = selectedTicketDetails?.messages || [];
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -170,9 +165,8 @@ function TicketManagementTab() {
       const hasAttachments = !!(data.attachments && data.attachments.length > 0);
       // Prefer JSON for Express compatibility when there are no attachments
       if (!hasAttachments) {
-        const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, {
-          content: data.content,
-          isAdmin: true,
+        const response = await apiRequest('POST', `/api/tickets/${data.ticketId}?isAdmin=true`, {
+          message: data.content,
         });
         const json = await response.json();
         if (json && json.success === false) {
@@ -183,12 +177,11 @@ function TicketManagementTab() {
 
       // Fall back to multipart only when attachments are present (Cloudflare-compatible)
       const formData = new FormData();
-      formData.append('content', data.content || '');
-      formData.append('isAdmin', 'true');
+      formData.append('message', data.content || '');
       data.attachments?.forEach((file, index) => {
         formData.append(`attachment_${index}`, file);
       });
-      const response = await apiRequest('POST', `/api/tickets/${data.ticketId}/messages`, formData);
+      const response = await apiRequest('POST', `/api/tickets/${data.ticketId}?isAdmin=true`, formData);
       const json = await response.json();
       if (json && json.success === false) {
         throw new Error(json.message || 'Failed to send message');
@@ -198,7 +191,7 @@ function TicketManagementTab() {
     onSuccess: () => {
       setNewMessage('');
       setAttachments([]);
-      queryClient.invalidateQueries({ queryKey: [`/api/tickets/${selectedTicket?.id}/messages`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/tickets`, selectedTicket?.id] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
       toast({ title: "Message sent successfully" });
     },
@@ -208,7 +201,7 @@ function TicketManagementTab() {
         toast({ title: "Conversation unavailable", description: "This ticket no longer exists on the server. Reloading your tickets.", variant: "destructive" });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/tickets'] });
         if (selectedTicket?.id) {
-          queryClient.invalidateQueries({ queryKey: [`/api/tickets/${selectedTicket.id}/messages`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/tickets`, selectedTicket.id] });
         }
         return;
       }

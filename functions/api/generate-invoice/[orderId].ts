@@ -1,3 +1,5 @@
+import { createInvoicePdf } from '../lib/invoiceToPdf';
+
 export async function onRequestPost(context: any) {
   const { request, env, params } = context;
   const orderId = params.orderId;
@@ -88,14 +90,43 @@ export async function onRequestPost(context: any) {
       .run();
 
     if (!invoiceResult.success) {
-      throw new Error('Failed to create invoice');
+      throw new Error('Failed to create invoice in DB');
     }
+
+    const newInvoiceId = invoiceResult.meta.last_row_id;
+
+    // --- PDF Generation and Upload ---
+    const customerQuery = `SELECT * FROM customers WHERE id = ?`;
+    const customer = await env.DB.prepare(customerQuery).bind(orderResult.customer_id).first();
+
+    const itemsQuery = `SELECT * FROM order_items WHERE order_id = ?`;
+    const items = await env.DB.prepare(itemsQuery).bind(orderId).all();
+
+    const invoiceDataForPdf = {
+      invoice: { ...orderResult, id: newInvoiceId, invoice_number: invoiceNumber, invoice_date: now, status: 'paid', amount: orderResult.final_amount },
+      items: items.results,
+      customer: customer,
+    };
+
+    const pdfBuffer = await createInvoicePdf(invoiceDataForPdf);
+
+    const pdfFileName = `invoices/${invoiceNumber}.pdf`;
+    await env.R2_BUCKET.put(pdfFileName, pdfBuffer, {
+      httpMetadata: { contentType: 'application/pdf' },
+    });
+
+    const pdfUrl = `${env.R2_PUBLIC_URL}/${pdfFileName}`;
+
+    // Update invoice with PDF URL
+    const updateInvoiceQuery = `UPDATE invoices SET pdf_url = ? WHERE id = ?`;
+    await env.DB.prepare(updateInvoiceQuery).bind(pdfUrl, newInvoiceId).run();
 
     return new Response(JSON.stringify({ 
       success: true, 
-      invoiceId: invoiceResult.meta.last_row_id,
+      invoiceId: newInvoiceId,
       invoiceNumber: invoiceNumber,
-      message: 'Invoice created successfully' 
+      pdfUrl: pdfUrl,
+      message: 'Invoice created and PDF generated successfully' 
     }), {
       status: 201,
       headers: { 'Content-Type': 'application/json', ...corsHeaders }

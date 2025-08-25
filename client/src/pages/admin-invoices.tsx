@@ -31,16 +31,29 @@ interface InvoiceSettings {
 
 interface Invoice {
   id: number;
-  invoiceNumber: string;
-  orderId?: number;
-  customerName: string;
-  customerEmail: string;
-  invoiceDate: string;
-  dueDate: string;
-  totalAmount: string;
+  invoice_number: string;
+  order_id?: number;
+  customer_name: string;
+  customer_email: string;
+  invoice_date: string;
+  due_date: string;
+  total_amount: string;
   status: string;
-  createdAt: string;
+  pdf_url: string;
 }
+
+const fetchWithAuth = async (url: string) => {
+  const token = localStorage.getItem('session_token');
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+};
 
 export default function AdminInvoicesPage() {
   const { toast } = useToast();
@@ -50,12 +63,14 @@ export default function AdminInvoicesPage() {
   // Fetch invoice settings
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['/api/invoices/admin/settings'],
+    queryFn: () => fetchWithAuth('/api/invoices/admin/settings'),
     refetchInterval: false
   });
 
   // Fetch invoices list
-  const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    queryKey: ['/api/invoices/admin/list'],
+  const { data: invoices, isLoading: invoicesLoading } = useQuery<Invoice[]>({ 
+    queryKey: ['/api/admin/invoices'],
+    queryFn: () => fetchWithAuth('/api/admin/invoices'),
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
@@ -498,15 +513,15 @@ function InvoiceListCard({ invoices, isLoading }: { invoices: Invoice[]; isLoadi
               <tbody>
                 {invoices.map((invoice) => (
                   <tr key={invoice.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-mono">{invoice.invoiceNumber}</td>
+                    <td className="p-3 font-mono">{invoice.invoice_number}</td>
                     <td className="p-3">
                       <div>
-                        <div className="font-medium">{invoice.customerName}</div>
-                        <div className="text-sm text-gray-500">{invoice.customerEmail}</div>
+                        <div className="font-medium">{invoice.customer_name}</div>
+                        <div className="text-sm text-gray-500">{invoice.customer_email}</div>
                       </div>
                     </td>
-                    <td className="p-3 font-semibold">${invoice.totalAmount}</td>
-                    <td className="p-3">{new Date(invoice.invoiceDate).toLocaleDateString()}</td>
+                    <td className="p-3 font-semibold">${invoice.total_amount}</td>
+                    <td className="p-3">{new Date(invoice.invoice_date).toLocaleDateString()}</td>
                     <td className="p-3">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${
                         invoice.status === 'paid' 
@@ -519,22 +534,15 @@ function InvoiceListCard({ invoices, isLoading }: { invoices: Invoice[]; isLoadi
                       </span>
                     </td>
                     <td className="p-3">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(`/api/invoices/${invoice.id}/html`, '_blank')}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(`/api/invoices/${invoice.id}/download`, '_blank')}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!invoice.pdf_url}
+                        onClick={() => window.open(invoice.pdf_url, '_blank')}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
                     </td>
                   </tr>
                 ))}

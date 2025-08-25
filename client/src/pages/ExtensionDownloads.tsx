@@ -11,7 +11,7 @@ export default function ExtensionDownloads() {
   const handleDownload = async (version: 'trial' | 'premium') => {
     setDownloading(version);
     try {
-      const response = await fetch(`/api/download-extension/${version}`);
+      const response = await fetch(`/api/download-extension?version=${version}`);
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

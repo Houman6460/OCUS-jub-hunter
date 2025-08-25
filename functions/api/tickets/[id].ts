@@ -1,4 +1,19 @@
 import { TicketStorage, Env } from '../../lib/db';
+import { User, UserStorage } from '../../lib/user-storage';
+
+// Helper to get user from request context (simulated)
+async function getUserFromContext(request: Request, env: Env): Promise<User | null> {
+  // In a real app, this would involve session/token validation
+  // For this fix, we'll simulate it based on headers or query params
+  const url = new URL(request.url);
+  const customerId = url.searchParams.get('customerId');
+  if (customerId) {
+    const userStorage = new UserStorage(env.DB);
+    await userStorage.initializeUsers();
+    return userStorage.getUserById(parseInt(customerId));
+  }
+  return null;
+}
 
 interface TicketUpdatePayload {
   status?: string;
@@ -95,6 +110,35 @@ export const onRequestDelete = async ({ request, params, env }: { request: Reque
     return json({ success: true, message: `Ticket ${ticketId} deleted` });
   } catch (error) {
     console.error('Failed to delete ticket:', error);
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    return json({ success: false, message }, 500);
+  }
+};
+
+export const onRequestGet = async ({ request, params, env }: { request: Request; params: { id: string }; env: Env }) => {
+  try {
+    const ticketId = Number(params.id);
+    const storage = new TicketStorage(env.DB);
+    const ticket = await storage.getTicketById(ticketId);
+
+    if (!ticket) {
+      return json({ success: false, message: 'Ticket not found' }, 404);
+    }
+
+    // Authorization check
+    const url = new URL(request.url);
+    const isAdmin = url.searchParams.get('isAdmin') === 'true';
+    const currentUser = await getUserFromContext(request, env);
+
+    if (!isAdmin && (!currentUser || currentUser.id !== ticket.customer_id)) {
+      return json({ success: false, message: 'Unauthorized' }, 403);
+    }
+
+    const messages = await storage.getTicketMessages(ticketId);
+    return json({ success: true, ticket: { ...ticket, messages } });
+
+  } catch (error) {
+    console.error('Failed to fetch ticket:', error);
     const message = error instanceof Error ? error.message : 'An unknown error occurred';
     return json({ success: false, message }, 500);
   }
