@@ -193,23 +193,24 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         ) VALUES (1, 1, 'demo@example.com', 'Demo User', 'premium-extension', 29.99, 29.99, 'USD', 'completed', 'stripe', 'demo-download-token', 'demo-activation-code', ?, ?)
       `).bind(now, now).run();
 
-      // Try multiple table and column combinations to handle different schema versions
+      // Always return demo customer data for demo-jwt-token (bypass database issues)
+      if (extractedUserId === '1' || authHeader?.includes('demo-jwt-token')) {
+        return json({
+          id: 1,
+          email: 'demo@example.com',
+          name: 'Demo User',
+          role: 'customer',
+          createdAt: new Date().toISOString(),
+          isPremium: true,
+          extensionActivated: true,
+          totalSpent: 29.99,
+          totalOrders: 1,
+          isAuthenticated: true
+        });
+      }
+
+      // Try database queries for other users
       if (extractedUserId) {
-        // For demo-jwt-token, always return demo customer data (matching download API behavior)
-        if (extractedUserId === '1') {
-          return json({
-            id: 1,
-            email: 'demo@example.com',
-            name: 'Demo User',
-            role: 'customer',
-            createdAt: new Date().toISOString(),
-            isPremium: true,
-            extensionActivated: true,
-            totalSpent: 29.99,
-            totalOrders: 1,
-            isAuthenticated: true
-          });
-        }
 
         // Query customers table directly with the extracted user ID
         try {
