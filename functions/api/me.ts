@@ -18,11 +18,24 @@ function json(data: any, status = 200) {
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
-    // Check authorization header first for demo token
+    // Check authorization header for token
     const authHeader = request.headers.get('Authorization');
     
-    // PRIORITY: Always return demo customer data for demo-jwt-token
-    if (authHeader?.includes('demo-jwt-token')) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return json({
+        id: 1,
+        email: 'fallback@example.com',
+        name: 'Fallback User',
+        role: 'customer',
+        createdAt: new Date().toISOString(),
+        isAuthenticated: false
+      });
+    }
+
+    const token = authHeader.substring(7);
+    
+    // Handle demo-jwt-token
+    if (token === 'demo-jwt-token') {
       return json({
         id: 1,
         email: 'demo@example.com',
@@ -37,7 +50,30 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
     
-    // For any other case, return fallback
+    // Handle jwt-token-{userId}-{timestamp} format
+    if (token.startsWith('jwt-token-')) {
+      const parts = token.split('-');
+      if (parts.length >= 3) {
+        const userId = parts[2];
+        // For user ID 1, return demo data
+        if (userId === '1') {
+          return json({
+            id: 1,
+            email: 'demo@example.com',
+            name: 'Demo User',
+            role: 'customer',
+            createdAt: new Date().toISOString(),
+            isPremium: true,
+            extensionActivated: true,
+            totalSpent: 29.99,
+            totalOrders: 1,
+            isAuthenticated: true
+          });
+        }
+      }
+    }
+    
+    // For any other token, return fallback
     return json({
       id: 1,
       email: 'fallback@example.com',
