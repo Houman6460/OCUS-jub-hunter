@@ -75,7 +75,7 @@ export default function Dashboard() {
     const data = localStorage.getItem('customer_data');
     
     if (!token) {
-      navigate('/login');
+      navigate('/unified-login');
       return;
     }
 
@@ -91,7 +91,7 @@ export default function Dashboard() {
           if (response.status === 401) {
             localStorage.removeItem('customer_token');
             localStorage.removeItem('customer_data');
-            navigate('/login');
+            navigate('/unified-login');
           }
           throw new Error('Failed to fetch user data');
         }
@@ -132,7 +132,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('customer_token');
     localStorage.removeItem('customer_data');
-    navigate('/login');
+    navigate('/unified-login');
   };
 
   return (

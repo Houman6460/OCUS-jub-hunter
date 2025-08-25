@@ -38,7 +38,18 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       // Extract user ID from token if needed
       const token = authHeader.substring(7);
-      // For now, assume token contains user ID directly
+      
+      // Parse JWT-like token to extract user ID
+      if (token.startsWith('jwt-token-')) {
+        const parts = token.split('-');
+        if (parts.length >= 3) {
+          extractedUserId = parts[2]; // Extract user ID from jwt-token-{userId}-{timestamp}
+        }
+      } else if (token === 'demo-jwt-token') {
+        extractedUserId = '1'; // Demo user ID
+      }
+      
+      // Fallback: if no userId from params, use token directly
       if (!extractedUserId && token) {
         extractedUserId = token;
       }
