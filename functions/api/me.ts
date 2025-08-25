@@ -195,7 +195,23 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
       // Try multiple table and column combinations to handle different schema versions
       if (extractedUserId) {
-        // Try customers table first - simplified query
+        // For demo-jwt-token, always return demo customer data (matching download API behavior)
+        if (extractedUserId === '1') {
+          return json({
+            id: 1,
+            email: 'demo@example.com',
+            name: 'Demo User',
+            role: 'customer',
+            createdAt: new Date().toISOString(),
+            isPremium: true,
+            extensionActivated: true,
+            totalSpent: 29.99,
+            totalOrders: 1,
+            isAuthenticated: true
+          });
+        }
+
+        // Query customers table directly with the extracted user ID
         try {
           const customerResult = await env.DB.prepare(`
             SELECT id, email, name, created_at, is_premium, extension_activated, total_spent, total_orders
