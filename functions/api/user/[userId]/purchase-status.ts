@@ -26,9 +26,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // Get user email first
-    const userQuery = `SELECT email FROM users WHERE id = ?`;
-    const userResult = await context.env.DB.prepare(userQuery).bind(userId).first<UserEmail>();
+    // Get user email from customers table first, then users table as fallback
+    let userResult: UserEmail | null = null;
+    
+    // Try customers table first
+    const customerQuery = `SELECT email FROM customers WHERE id = ?`;
+    userResult = await context.env.DB.prepare(customerQuery).bind(userId).first<UserEmail>();
+    
+    // Fallback to users table if not found in customers
+    if (!userResult) {
+      const usersQuery = `SELECT email FROM users WHERE id = ?`;
+      userResult = await context.env.DB.prepare(usersQuery).bind(userId).first<UserEmail>();
+    }
     
     if (!userResult) {
       return new Response(JSON.stringify({ 
@@ -49,10 +58,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const statusQuery = `
       SELECT 
         COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
-        COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(final_amount as REAL) ELSE 0 END), 0) as totalSpent,
-        MAX(CASE WHEN status = 'completed' THEN created_at END) as lastPurchaseDate
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST("finalAmount" as REAL) ELSE 0 END), 0) as totalSpent,
+        MAX(CASE WHEN status = 'completed' THEN "createdAt" END) as lastPurchaseDate
       FROM orders 
-      WHERE (user_id = ? OR customer_email = ?)
+      WHERE ("userId" = ? OR "customerEmail" = ?)
     `;
 
     const statusResult = await context.env.DB.prepare(statusQuery).bind(userId, userResult.email).first<PurchaseStatus>();

@@ -57,36 +57,35 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     let user: User | null = null;
 
     try {
+      // First try customers table since that's the primary user table
       if (extractedUserId) {
-        // Try to get user by ID
-        const userResult = await env.DB.prepare(`
-          SELECT id, email, name, role, created_at 
-          FROM users WHERE id = ?
+        const customerResult = await env.DB.prepare(`
+          SELECT id, email, name, 'customer' as role, created_at 
+          FROM customers WHERE id = ?
         `).bind(parseInt(extractedUserId)).first();
-        user = userResult as unknown as User;
+        user = customerResult as unknown as User;
       } else if (userEmail) {
-        // Try to get user by email
-        const userResult = await env.DB.prepare(`
-          SELECT id, email, name, role, created_at 
-          FROM users WHERE email = ?
+        const customerResult = await env.DB.prepare(`
+          SELECT id, email, name, 'customer' as role, created_at 
+          FROM customers WHERE email = ?
         `).bind(userEmail).first();
-        user = userResult as unknown as User;
+        user = customerResult as unknown as User;
       }
 
+      // Fallback to users table if not found in customers
       if (!user) {
-        // Try customers table as fallback
         if (extractedUserId) {
-          const customerResult = await env.DB.prepare(`
-            SELECT id, email, name, 'customer' as role, created_at 
-            FROM customers WHERE id = ?
+          const userResult = await env.DB.prepare(`
+            SELECT id, email, username as name, 'admin' as role, created_at 
+            FROM users WHERE id = ?
           `).bind(parseInt(extractedUserId)).first();
-          user = customerResult as unknown as User;
+          user = userResult as unknown as User;
         } else if (userEmail) {
-          const customerResult = await env.DB.prepare(`
-            SELECT id, email, name, 'customer' as role, created_at 
-            FROM customers WHERE email = ?
+          const userResult = await env.DB.prepare(`
+            SELECT id, email, username as name, 'admin' as role, created_at 
+            FROM users WHERE email = ?
           `).bind(userEmail).first();
-          user = customerResult as unknown as User;
+          user = userResult as unknown as User;
         }
       }
 
