@@ -15,7 +15,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     const token = authHeader.substring(7);
     
     // Check if user has premium access
-    if (token === 'demo-jwt-token' || (token.startsWith('jwt-token-') && token.includes('-1-'))) {
+    if (token === 'demo-jwt-token' || (token.startsWith('jwt-token-') && token.split('-')[2] === '1')) {
       // Return a mock ZIP file for demo purposes
       const mockZipContent = new Uint8Array([
         0x50, 0x4B, 0x03, 0x04, // ZIP file signature

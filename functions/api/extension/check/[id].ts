@@ -33,7 +33,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
     const token = authHeader.substring(7);
     
     // Handle demo-jwt-token or jwt-token-1-* format
-    if (token === 'demo-jwt-token' || (token.startsWith('jwt-token-') && token.includes('-1-'))) {
+    if (token === 'demo-jwt-token' || (token.startsWith('jwt-token-') && token.split('-')[2] === '1')) {
       return json({
         canUse: true,
         reason: 'Premium access',
