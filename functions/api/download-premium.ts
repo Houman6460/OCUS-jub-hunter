@@ -68,7 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       if (customerId) {
         try {
           customer = await env.DB.prepare(`
-            SELECT id, email, name, is_activated, extension_activated, subscription_status 
+            SELECT id, email, name, is_premium, extension_activated, total_spent 
             FROM customers WHERE id = ?
           `).bind(customerId).first();
         } catch (e) {
@@ -77,7 +77,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       } else if (customerEmail) {
         try {
           customer = await env.DB.prepare(`
-            SELECT id, email, name, is_activated, extension_activated, subscription_status 
+            SELECT id, email, name, is_premium, extension_activated, total_spent 
             FROM customers WHERE email = ?
           `).bind(customerEmail).first();
         } catch (e) {
@@ -87,7 +87,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         // Find customer by activation code
         try {
           const codeResult = await env.DB.prepare(`
-            SELECT c.id, c.email, c.name, c.is_activated, c.extension_activated, c.subscription_status
+            SELECT c.id, c.email, c.name, c.is_premium, c.extension_activated, c.total_spent
             FROM customers c
             JOIN activation_codes ac ON c.id = ac.customer_id
             WHERE ac.code = ? AND ac.is_active = 1
@@ -106,18 +106,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }
 
       // Check if customer has premium access
-      const hasAccess = customer.is_activated && 
-                       customer.extension_activated && 
-                       customer.subscription_status === 'active';
+      const hasAccess = customer.is_premium && 
+                       customer.extension_activated;
 
       if (!hasAccess) {
         return json({
           success: false,
           message: 'Premium access not activated. Please complete your purchase first.',
           customerStatus: {
-            isActivated: customer.is_activated,
+            isPremium: customer.is_premium,
             extensionActivated: customer.extension_activated,
-            subscriptionStatus: customer.subscription_status
+            totalSpent: customer.total_spent
           }
         }, 403);
       }
@@ -132,9 +131,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         `).bind(customer.id).first();
         hasValidOrders = (orderCheck as any)?.orderCount > 0;
       } catch (e) {
-        console.log('Order check failed, assuming valid for activated customers');
-        // If order check fails but customer is activated, allow download
-        hasValidOrders = customer.is_activated && customer.extension_activated;
+        console.log('Order check failed, assuming valid for premium customers');
+        // If order check fails but customer is premium, allow download
+        hasValidOrders = customer.is_premium && customer.extension_activated;
       }
 
       if (!hasValidOrders) {
@@ -142,9 +141,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           success: false,
           message: 'No valid premium purchases found',
           customerStatus: {
-            isActivated: customer.is_activated,
+            isPremium: customer.is_premium,
             extensionActivated: customer.extension_activated,
-            subscriptionStatus: customer.subscription_status
+            totalSpent: customer.total_spent
           }
         }, 403);
       }
@@ -239,12 +238,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     if (customerId) {
       customer = await env.DB.prepare(`
-        SELECT id, email, name, is_activated, extension_activated, subscription_status 
+        SELECT id, email, name, is_premium, extension_activated, total_spent 
         FROM customers WHERE id = ?
       `).bind(parseInt(customerId)).first();
     } else if (customerEmail) {
       customer = await env.DB.prepare(`
-        SELECT id, email, name, is_activated, extension_activated, subscription_status 
+        SELECT id, email, name, is_premium, extension_activated, total_spent 
         FROM customers WHERE email = ?
       `).bind(customerEmail).first();
     }
@@ -253,9 +252,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       return json({ success: false, downloadEnabled: false, message: 'Customer not found' });
     }
 
-    const hasAccess = customer.is_activated && 
-                     customer.extension_activated && 
-                     customer.subscription_status === 'active';
+    const hasAccess = customer.is_premium && 
+                     customer.extension_activated;
 
     return json({
       success: true,
@@ -264,8 +262,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         id: customer.id,
         email: customer.email,
         name: customer.name,
-        subscriptionStatus: customer.subscription_status,
-        isActivated: customer.is_activated,
+        totalSpent: customer.total_spent,
+        isPremium: customer.is_premium,
         extensionActivated: customer.extension_activated
       }
     });
