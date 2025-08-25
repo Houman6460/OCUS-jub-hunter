@@ -14,7 +14,7 @@ function json(data: any, status = 200) {
 
 // This function will add the customer_id column to the tickets table.
 // It's designed to be run once.
-export const onRequestPost: PagesFunction<Env> = async ({ env }) => {
+export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   if (!env.DB) {
     return json({ success: false, message: 'Database not available' }, 500);
   }
@@ -55,7 +55,7 @@ export const onRequestOptions = async () => {
   return new Response(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
