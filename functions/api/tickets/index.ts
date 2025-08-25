@@ -119,7 +119,8 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     }
     const body = await request.json() as TicketPayload;
     const { title, description, category, priority, customerEmail, customerName, customerId } = body;
-    if (!title || !description || !customerEmail) {
+    const parsedCustomerId = customerId ? parseInt(customerId) : undefined;
+    if (!title || !description || !customerEmail || !parsedCustomerId) {
       return json({ success: false, message: 'Missing required fields' }, 400);
     }
 
@@ -133,11 +134,11 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     let finalCustomerName = customerName;
     
     // If we have customerId but no customerName, fetch from user storage
-    if (customerId && !customerName) {
+    if (parsedCustomerId && !customerName) {
       try {
         const userStorage = new UserStorage(env.DB as D1Database);
         await userStorage.initializeUsers();
-        const user = await userStorage.getUserById(parseInt(customerId));
+        const user = await userStorage.getUserById(parsedCustomerId);
         if (user) {
           finalCustomerName = user.name;
         }
@@ -147,6 +148,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     }
 
     const ticket = await storage.createTicket({
+      customer_id: parsedCustomerId,
       title,
       description,
       category: category || 'general',

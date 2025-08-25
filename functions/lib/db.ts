@@ -35,6 +35,7 @@ export interface Env {
 
 export interface Ticket {
   id: number;
+  customer_id: number;
   title: string;
   description: string;
   category: string;
@@ -87,17 +88,10 @@ export class TicketStorage {
 
   async getTicketsByCustomerId(customerId: number): Promise<Ticket[]> {
     try {
-      // First get the customer's email from the customers table
-      const customerResult = await this.db.prepare('SELECT email FROM customers WHERE id = ?')
+      const result = await this.db.prepare('SELECT * FROM tickets WHERE customer_id = ? ORDER BY created_at DESC')
         .bind(customerId)
-        .first();
-      
-      if (!customerResult) {
-        return [];
-      }
-      
-      const customerEmail = (customerResult as any).email;
-      return await this.getTicketsByCustomerEmail(customerEmail);
+        .all();
+      return result.results as Ticket[];
     } catch (error: any) {
       console.error('D1 getTicketsByCustomerId error:', error);
       throw new Error(`Database query failed: ${error.message}`);
@@ -112,14 +106,19 @@ export class TicketStorage {
   }
 
   async createTicket(ticket: Omit<Ticket, 'id' | 'created_at' | 'updated_at'>): Promise<Ticket> {
+    // Ensure customer_id is part of the ticket object for insertion
+    if (ticket.customer_id === undefined) {
+      throw new Error('customer_id is required to create a ticket.');
+    }
     const now = new Date().toISOString();
     
     try {
       const result = await this.db.prepare(`
-        INSERT INTO tickets (title, description, category, priority, status, customer_email, customer_name, assigned_to_user_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO tickets (customer_id, title, description, category, priority, status, customer_email, customer_name, assigned_to_user_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING *
       `).bind(
+        ticket.customer_id,
         ticket.title,
         ticket.description,
         ticket.category,
