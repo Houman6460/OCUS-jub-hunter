@@ -1,13 +1,21 @@
-// Simple in-memory invoice store (demo)
-function getInvoiceStore() {
-  const g: any = globalThis as any;
-  if (!g.__INVOICE_STORE__) {
-    g.__INVOICE_STORE__ = {
-      invoices: [] as any[],
-      seq: 1,
-    };
-  }
-  return g.__INVOICE_STORE__ as { invoices: any[]; seq: number };
+// D1 Database-based invoice system
+import { Env } from '../lib/context';
+
+interface Invoice {
+  id: number;
+  invoice_number: string;
+  customer_id: number;
+  order_id?: number;
+  customer_email: string;
+  customer_name: string;
+  amount: number;
+  currency: string;
+  status: string;
+  invoice_date: string;
+  due_date?: string;
+  paid_at?: string;
+  notes?: string;
+  created_at: string;
 }
 
 function json(data: any, status = 200) {
@@ -20,66 +28,120 @@ function json(data: any, status = 200) {
   });
 }
 
-// Map internal invoice to UI shape expected by client/src/components/admin/InvoiceManagement.tsx
-function mapToUi(inv: any) {
+// Map D1 invoice to UI shape expected by client
+function mapToUi(inv: Invoice) {
   return {
     id: inv.id,
-    invoiceNumber: inv.invoiceNumber,
-    customerId: inv.customerId,
-    customerName: inv.customerName,
-    customerEmail: inv.customerEmail,
-    invoiceDate: inv.invoiceDate,
-    dueDate: inv.dueDate,
-    subtotal: inv.subtotal,
-    totalAmount: inv.totalAmount,
-    currency: inv.currency,
+    invoiceNumber: inv.invoice_number,
+    customerId: inv.customer_id,
+    customerName: inv.customer_name,
+    customerEmail: inv.customer_email,
+    invoiceDate: inv.invoice_date,
+    dueDate: inv.due_date,
+    subtotal: inv.amount.toString(),
+    totalAmount: inv.amount.toString(),
+    currency: inv.currency.toUpperCase(),
     status: inv.status,
-    paidAt: inv.paidAt,
-    notes: inv.notes,
+    paidAt: inv.paid_at,
+    notes: inv.notes || '',
   };
 }
 
-export const onRequestGet = async ({ request }: any) => {
+// Initialize invoices table if it doesn't exist
+async function initializeInvoicesTable(db: any) {
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        invoice_number TEXT UNIQUE NOT NULL,
+        customer_id INTEGER NOT NULL,
+        order_id INTEGER,
+        customer_email TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        currency TEXT DEFAULT 'USD' NOT NULL,
+        status TEXT DEFAULT 'issued' NOT NULL,
+        invoice_date TEXT NOT NULL,
+        due_date TEXT,
+        paid_at TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (customer_id) REFERENCES customers(id),
+        FOREIGN KEY (order_id) REFERENCES orders(id)
+      )
+    `).run();
+  } catch (error) {
+    console.error('Failed to initialize invoices table:', error);
+  }
+}
+
+export const onRequestGet = async ({ request, env }: { request: Request; env: Env }) => {
   const url = new URL(request.url);
   const customerId = url.searchParams.get('customerId');
-  const store = getInvoiceStore();
+  const isAdmin = url.searchParams.get('isAdmin') === 'true';
 
-  // Seed with a demo invoice if empty to ensure UI has something to render
-  if (store.invoices.length === 0) {
-    const now = new Date();
-    const createdAt = now.toISOString();
-    const due = new Date(now.getTime() + 14 * 24 * 3600 * 1000).toISOString();
-    const demo = {
-      id: store.seq++,
-      invoiceNumber: 'INV-2024-001',
-      customerId: customerId || 'demo-customer-123',
-      customerName: 'Demo Customer',
-      customerEmail: 'demo@example.com',
-      invoiceDate: createdAt,
-      dueDate: due,
-      subtotal: '49.99',
-      totalAmount: '49.99',
-      currency: 'USD',
-      status: 'paid',
-      paidAt: createdAt,
-      notes: 'Thank you for your purchase.',
-      items: [
-        { productName: 'Premium Subscription - Monthly', description: '', quantity: 1, unitPrice: 49.99 },
-      ],
-    };
-    store.invoices.push(demo);
+  // Check if D1 database is available
+  if (!env.DB) {
+    console.error('D1 database not available');
+    return json({ error: 'Database not available' }, 500);
   }
 
-  let result = store.invoices;
-  if (customerId) {
-    result = result.filter((i) => i.customerId === customerId);
+  try {
+    // Initialize invoices table
+    await initializeInvoicesTable(env.DB);
+
+    let query = 'SELECT * FROM invoices ORDER BY created_at DESC';
+    let params: any[] = [];
+
+    if (!isAdmin && customerId) {
+      // Customer sees only their own invoices
+      query = 'SELECT * FROM invoices WHERE customer_id = ? ORDER BY created_at DESC';
+      params = [parseInt(customerId)];
+    }
+
+    const result = await env.DB.prepare(query).bind(...params).all();
+    const invoices = (result.results as unknown as Invoice[]) || [];
+
+    // If no invoices exist, create a demo invoice for testing
+    if (invoices.length === 0 && customerId) {
+      const now = new Date().toISOString();
+      const demoInvoiceNumber = `INV-${new Date().getFullYear()}-000001`;
+      
+      await env.DB.prepare(`
+        INSERT INTO invoices (
+          invoice_number, customer_id, customer_email, customer_name,
+          amount, currency, status, invoice_date, paid_at, notes, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        demoInvoiceNumber,
+        parseInt(customerId),
+        'demo@example.com',
+        'Demo Customer',
+        49.99,
+        'USD',
+        'paid',
+        now,
+        now,
+        'Demo invoice for testing',
+        now
+      ).run();
+
+      // Fetch the updated list
+      const updatedResult = await env.DB.prepare(query).bind(...params).all();
+      const updatedInvoices = (updatedResult.results as unknown as Invoice[]) || [];
+      return json(updatedInvoices.map(mapToUi));
+    }
+
+    return json(invoices.map(mapToUi));
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return json({ error: 'Database query failed', details: error.message }, 500);
   }
-  return json(result.map(mapToUi));
 };
 
-export const onRequestPost = async ({ request }: any) => {
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
-    const body = await request.json();
+    const body = await request.json() as any;
     const {
       customerId,
       customerName,
@@ -87,11 +149,20 @@ export const onRequestPost = async ({ request }: any) => {
       notes,
       items,
       currency = 'USD',
-    } = body || {};
+    } = body;
 
     if (!customerId || !customerName || !customerEmail || !Array.isArray(items) || items.length === 0) {
       return json({ success: false, message: 'Missing required fields' }, 400);
     }
+
+    // Check if D1 database is available
+    if (!env.DB) {
+      console.error('D1 database not available');
+      return json({ success: false, message: 'Database not available' }, 500);
+    }
+
+    // Initialize invoices table
+    await initializeInvoicesTable(env.DB);
 
     // Compute totals
     const subtotalNum = items.reduce((sum: number, it: any) => {
@@ -100,33 +171,46 @@ export const onRequestPost = async ({ request }: any) => {
       return sum + qty * price;
     }, 0);
 
-    const store = getInvoiceStore();
-    const id = store.seq++;
     const now = new Date();
     const invoiceDate = now.toISOString();
     const dueDate = new Date(now.getTime() + 14 * 24 * 3600 * 1000).toISOString();
-    const invoiceNumber = `INV-${now.getFullYear()}-${String(id).padStart(3, '0')}`;
+    
+    // Get next invoice number
+    const countResult = await env.DB.prepare('SELECT COUNT(*) as count FROM invoices').first();
+    const invoiceCount = (countResult as any)?.count || 0;
+    const invoiceNumber = `INV-${now.getFullYear()}-${String(invoiceCount + 1).padStart(6, '0')}`;
 
-    const inv = {
-      id,
+    // Insert invoice into database
+    const result = await env.DB.prepare(`
+      INSERT INTO invoices (
+        invoice_number, customer_id, customer_email, customer_name,
+        amount, currency, status, invoice_date, due_date, notes, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
       invoiceNumber,
-      customerId,
-      customerName,
+      parseInt(customerId),
       customerEmail,
+      customerName,
+      subtotalNum,
+      currency.toUpperCase(),
+      'issued',
       invoiceDate,
       dueDate,
-      subtotal: subtotalNum.toFixed(2),
-      totalAmount: subtotalNum.toFixed(2),
-      currency,
-      status: 'issued',
-      notes: notes || '',
-      items,
-    };
+      notes || '',
+      invoiceDate
+    ).run();
 
-    store.invoices.push(inv);
-    return json({ success: true, invoice: mapToUi(inv) }, 201);
-  } catch (e) {
-    return json({ success: false, message: 'Failed to create invoice' }, 500);
+    const invoiceId = result.meta?.last_row_id as number;
+
+    // Fetch the created invoice
+    const createdInvoice = await env.DB.prepare('SELECT * FROM invoices WHERE id = ?')
+      .bind(invoiceId)
+      .first() as unknown as Invoice;
+
+    return json({ success: true, invoice: mapToUi(createdInvoice) }, 201);
+  } catch (e: any) {
+    console.error('Failed to create invoice:', e);
+    return json({ success: false, message: 'Failed to create invoice', error: e.message }, 500);
   }
 };
 

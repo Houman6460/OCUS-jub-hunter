@@ -61,6 +61,7 @@ export const onRequestGet = async ({ request, env }: { request: Request; env: En
   const url = new URL(request.url);
   const isAdmin = url.searchParams.get('isAdmin') === 'true';
   const customerEmail = url.searchParams.get('customerEmail');
+  const customerId = url.searchParams.get('customerId');
 
   // Check if D1 database is available
   if (!env.DB) {
@@ -70,12 +71,22 @@ export const onRequestGet = async ({ request, env }: { request: Request; env: En
 
   try {
     const storage = new TicketStorage(env.DB);
-    let result;
-    if (!isAdmin && customerEmail) {
+    let result: any[] = [];
+    
+    if (isAdmin) {
+      // Admin sees all tickets
+      result = await storage.getAllTickets();
+    } else if (customerId) {
+      // Customer sees only their tickets by customer ID
+      result = await storage.getTicketsByCustomerId(parseInt(customerId));
+    } else if (customerEmail) {
+      // Fallback to email-based filtering
       result = await storage.getTicketsByCustomerEmail(customerEmail);
     } else {
-      result = await storage.getAllTickets();
+      // No identification provided - return empty array for security
+      result = [];
     }
+    
     return json(result);
   } catch (error: any) {
     console.error('Database error:', error);

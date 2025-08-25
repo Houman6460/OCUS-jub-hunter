@@ -493,10 +493,10 @@ export const announcementBadges = pgTable('announcement_badges', {
 export const extensionDownloads = pgTable("extension_downloads", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull().references(() => customers.id),
-  downloadToken: varchar("download_token", { length: 100 }).notNull().unique(),
-  downloadType: varchar("download_type", { length: 20 }).default("trial").notNull(), // trial, full
-  downloadedAt: timestamp("downloaded_at").defaultNow(),
-  ipAddress: text("ip_address"),
+  downloadToken: varchar("download_token", { length: 255 }).notNull().unique(),
+  downloadType: varchar("download_type", { length: 50 }).default("premium").notNull(), // premium, trial, etc.
+  downloadedAt: timestamp("downloaded_at").defaultNow().notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
   userAgent: text("user_agent"),
   downloadCount: integer("download_count").default(1).notNull(),
   maxDownloads: integer("max_downloads").default(3).notNull(),

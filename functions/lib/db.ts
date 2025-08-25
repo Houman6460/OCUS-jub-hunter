@@ -85,6 +85,25 @@ export class TicketStorage {
     }
   }
 
+  async getTicketsByCustomerId(customerId: number): Promise<Ticket[]> {
+    try {
+      // First get the customer's email from the customers table
+      const customerResult = await this.db.prepare('SELECT email FROM customers WHERE id = ?')
+        .bind(customerId)
+        .first();
+      
+      if (!customerResult) {
+        return [];
+      }
+      
+      const customerEmail = (customerResult as any).email;
+      return await this.getTicketsByCustomerEmail(customerEmail);
+    } catch (error: any) {
+      console.error('D1 getTicketsByCustomerId error:', error);
+      throw new Error(`Database query failed: ${error.message}`);
+    }
+  }
+
   async getTicketById(id: number): Promise<Ticket | null> {
     const result = await this.db.prepare('SELECT * FROM tickets WHERE id = ?')
       .bind(id)
