@@ -27,21 +27,20 @@ export const onRequestPost = async ({ request, env }: any) => {
     let user = await userStorage.validateUser(email, password);
     console.log('User validation result:', user ? 'found' : 'not found');
     
-    // If not found in users table, try customers table
+    // If not found in users table, try customers table and validate password from users table
     if (!user) {
       try {
-        const customerResult = await env.DB.prepare(`
-          SELECT id, email, name, 'customer' as role, created_at 
-          FROM customers WHERE email = ?
-        `).bind(email).first();
+        const userResult = await env.DB.prepare(`
+          SELECT u.id, u.email, u.name, u.role, u.created_at 
+          FROM users u WHERE u.email = ? AND u.password = ?
+        `).bind(email, password).first();
         
-        if (customerResult) {
-          // For customers table, we'll accept any password for now (or implement proper password checking)
-          user = customerResult as any;
-          console.log('Customer found in customers table');
+        if (userResult) {
+          user = userResult as any;
+          console.log('User found in users table with password match');
         }
       } catch (e) {
-        console.log('Customers table query failed:', e);
+        console.log('Users table query failed:', e);
       }
     }
     
