@@ -110,6 +110,26 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     let user: User | null = null;
 
     try {
+      // First, ensure the customers table exists and has test data
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS customers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          is_premium BOOLEAN DEFAULT 0,
+          extension_activated BOOLEAN DEFAULT 0,
+          total_spent DECIMAL(10,2) DEFAULT 0,
+          total_orders INTEGER DEFAULT 0
+        )
+      `).run();
+
+      // Insert demo customer if it doesn't exist
+      await env.DB.prepare(`
+        INSERT OR IGNORE INTO customers (id, email, name, is_premium, extension_activated, total_spent, total_orders)
+        VALUES (1, 'demo@example.com', 'Demo User', 1, 1, 29.99, 1)
+      `).run();
+
       // Try multiple table and column combinations to handle different schema versions
       if (extractedUserId) {
         // Try customers table first with different column name variations

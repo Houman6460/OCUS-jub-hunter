@@ -1,6 +1,6 @@
 import { json } from '@cloudflare/workers-types';
 
-export async function onRequestPost(context: any) {
+export async function onRequestGet(context: any) {
   const { env } = context;
   
   if (!env.DB) {
