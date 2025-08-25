@@ -253,7 +253,8 @@ export function UserPurchases() {
   const queryClient = useQueryClient();
 
   const handlePurchaseSuccess = () => {
-    // Refresh orders and invoices list after successful purchase
+    // Refresh all user-related data after successful purchase
+    queryClient.invalidateQueries({ queryKey: ['/api/me'] }); // For Account Status, Total Orders, etc.
     queryClient.invalidateQueries({ queryKey: ['/api/me/orders'] });
     queryClient.invalidateQueries({ queryKey: ['/api/me/invoices'] });
     toast({
