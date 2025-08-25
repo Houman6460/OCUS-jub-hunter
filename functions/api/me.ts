@@ -132,16 +132,48 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
       // Try multiple table and column combinations to handle different schema versions
       if (extractedUserId) {
-        // Try customers table first with different column name variations
+        // Try customers table first - simplified query
         try {
           const customerResult = await env.DB.prepare(`
-            SELECT id, email, name, 'customer' as role, created_at, 
-                   is_activated, extension_activated, subscription_status 
+            SELECT id, email, name, created_at, is_premium, extension_activated, total_spent, total_orders
             FROM customers WHERE id = ?
           `).bind(parseInt(extractedUserId)).first();
+          
           if (customerResult) {
-            user = customerResult as unknown as User;
-            console.log('Found customer by ID:', user.id);
+            console.log('Customer found in database:', customerResult);
+            return json({
+              id: customerResult.id,
+              email: customerResult.email,
+              name: customerResult.name,
+              role: 'customer',
+              createdAt: customerResult.created_at,
+              isPremium: Boolean(customerResult.is_premium),
+              extensionActivated: Boolean(customerResult.extension_activated),
+              totalSpent: customerResult.total_spent || 0,
+              totalOrders: customerResult.total_orders || 0,
+              isAuthenticated: true
+            });
+          } else {
+            console.log('No customer found with ID:', extractedUserId);
+          }
+        } catch (e) {
+          console.error('Customer query failed:', e);
+        }
+        
+        // Fallback: try users table
+        try {
+          const userResult = await env.DB.prepare(`
+            SELECT id, email, name, role, created_at FROM users WHERE id = ?
+          `).bind(parseInt(extractedUserId)).first();
+          if (userResult) {
+            return json({
+              id: userResult.id,
+              email: userResult.email,
+              name: userResult.name,
+              role: userResult.role || 'customer',
+              createdAt: userResult.created_at,
+              isAuthenticated: true
+            });
           }
         } catch (e) {
           console.log('Customers table query failed:', e);
