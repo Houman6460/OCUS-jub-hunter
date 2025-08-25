@@ -1,6 +1,6 @@
 // functions/api/admin/reset-db.ts
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { Env } from '../../../lib/context';
+import { Env } from '../../lib/context';
 
 const SCHEMA_SQL = `-- D1 Database Schema for OCUS Ticket System
 -- Run: wrangler d1 execute ocus-tickets --file=./functions/schema.sql
