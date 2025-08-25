@@ -1,3 +1,5 @@
+import type { PagesFunction } from '@cloudflare/workers-types';
+
 interface Env {
   DB: D1Database;
 }
@@ -43,17 +45,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // Get purchase status from orders
+    // Get purchase status from orders - try both user_id and customerEmail
     const statusQuery = `
       SELECT 
         COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
-        SUM(CASE WHEN status = 'completed' THEN CAST(finalAmount as REAL) ELSE 0 END) as totalSpent,
-        MAX(CASE WHEN status = 'completed' THEN createdAt END) as lastPurchaseDate
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN CAST(final_amount as REAL) ELSE 0 END), 0) as totalSpent,
+        MAX(CASE WHEN status = 'completed' THEN created_at END) as lastPurchaseDate
       FROM orders 
-      WHERE customerEmail = ?
+      WHERE (user_id = ? OR customer_email = ?)
     `;
 
-    const statusResult = await context.env.DB.prepare(statusQuery).bind(userResult.email).first<PurchaseStatus>();
+    const statusResult = await context.env.DB.prepare(statusQuery).bind(userId, userResult.email).first<PurchaseStatus>();
     
     const hasPurchased = (statusResult?.completedOrders || 0) > 0;
     const totalSpent = (statusResult?.totalSpent || 0).toFixed(2);
