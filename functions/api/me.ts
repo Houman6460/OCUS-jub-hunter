@@ -55,6 +55,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       const parts = token.split('-');
       if (parts.length >= 3) {
         const userId = parts[2];
+        console.log('Parsed userId from token:', userId, 'from token:', token);
         // For user ID 1, return demo data
         if (userId === '1') {
           return json({
