@@ -129,15 +129,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const invoiceNumber = `INV-${new Date().getFullYear()}-${String(orderId).padStart(6, '0')}`;
       const invoiceResult = await env.DB.prepare(`
         INSERT INTO invoices (
-          invoiceNumber, orderId, customerId, amount, currency, 
-          status, invoiceDate, paidAt, createdAt
-        ) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?, ?)
+          invoice_number, order_id, customer_id, amount, currency,
+          tax_amount, status, invoice_date, paid_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         invoiceNumber,
         orderId,
         finalCustomerId,
         purchaseCompleteRequest.amount,
-        purchaseCompleteRequest.currency.toLowerCase(),
+        purchaseCompleteRequest.currency.toUpperCase(),
+        0,
+        'paid',
         now,
         now,
         now

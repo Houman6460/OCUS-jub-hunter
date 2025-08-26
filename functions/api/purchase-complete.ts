@@ -186,15 +186,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       const invoiceResult = await env.DB.prepare(`
         INSERT INTO invoices (
-          invoiceNumber, orderId, customerId, amount, currency, 
-          status, invoiceDate, paidAt, createdAt
-        ) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?, ?)
+          invoice_number, order_id, customer_id, amount, currency,
+          tax_amount, status, invoice_date, paid_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         invoiceNumber,
         orderId,
         finalCustomerId,
         amount,
-        currency.toLowerCase(),
+        currency.toUpperCase(),
+        0,
+        'paid',
         now,
         now,
         now
