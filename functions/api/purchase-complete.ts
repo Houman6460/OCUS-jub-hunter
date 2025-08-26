@@ -53,14 +53,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       // 1. Update or create customer record with premium access
       let finalCustomerId = customerId;
       
+      // First update users table (for registered users)
+      if (customerEmail) {
+        await env.DB.prepare(`
+          UPDATE users 
+          SET is_premium = 1,
+              extension_activated = 1,
+              premium_activated_at = ?
+          WHERE email = ?
+        `).bind(now, customerEmail).run();
+      }
+      
       if (customerId) {
         // Update existing customer
         await env.DB.prepare(`
           UPDATE customers 
-          SET isActive = 1,
+          SET is_premium = 1,
               extension_activated = 1,
-              isPremium = 1,
-              updatedAt = ?
+              updated_at = ?
           WHERE id = ?
         `).bind(now, customerId).run();
       } else {
@@ -73,19 +83,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           finalCustomerId = (existingCustomer as any).id;
           await env.DB.prepare(`
             UPDATE customers 
-            SET isActive = 1,
+            SET is_premium = 1,
                 extension_activated = 1,
-                isPremium = 1,
-                updatedAt = ?
+                updated_at = ?
             WHERE id = ?
           `).bind(now, finalCustomerId).run();
         } else {
           // Create new customer
           const result = await env.DB.prepare(`
             INSERT INTO customers (
-              email, name, isActive, extension_activated, 
-              isPremium, createdAt, updatedAt
-            ) VALUES (?, ?, 1, 1, 1, ?, ?)
+              email, name, is_premium, extension_activated, 
+              created_at, updated_at
+            ) VALUES (?, ?, 1, 1, ?, ?)
           `).bind(
             customerEmail, 
             customerName || customerEmail, 
@@ -101,9 +110,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const orderResult = await env.DB.prepare(`
         INSERT INTO orders (
-          customerId, customerEmail, customerName, 
-          originalAmount, finalAmount, currency, status, paymentMethod,
-          paymentIntentId, downloadToken, createdAt, completedAt
+          customer_id, customer_email, customer_name, 
+          original_amount, final_amount, currency, status, payment_method,
+          payment_intent_id, download_token, created_at, completed_at
         ) VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
       `).bind(
         finalCustomerId,
@@ -134,8 +143,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       await env.DB.prepare(`
         INSERT INTO invoices (
-          invoiceNumber, customerId, orderId, amount, currency, 
-          status, invoiceDate, paidAt, createdAt
+          invoice_number, customer_id, order_id, amount, currency, 
+          status, invoice_date, paid_at, created_at
         ) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?, ?)
       `).bind(
         invoiceNumber,
