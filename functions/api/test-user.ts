@@ -12,10 +12,10 @@ function json(data: any, status = 200) {
   });
 }
 
-export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
-    const url = new URL(request.url);
-    const email = url.searchParams.get('email') || 'heshmat@gmail.com';
+    const body = await request.json() as { email?: string };
+    const email = body.email || 'heshmat@gmail.com';
 
     if (!env.DB) {
       return json({ success: false, message: 'Database not available' }, 500);
