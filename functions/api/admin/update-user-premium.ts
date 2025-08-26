@@ -1,49 +1,135 @@
-// Cloudflare Pages Function: /api/admin/update-user-premium
-// Updates user premium status for testing
-
-import type { PagesFunction } from '@cloudflare/workers-types';
-import { Env } from '../../lib/context';
-
-function json(data: any, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
-}
-
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+// Fix premium activation for all users who have completed purchases
+export const onRequestPost = async ({ request, env }: any) => {
   try {
-    const body = await request.json() as { userId: number; isPremium: boolean };
-    const { userId, isPremium } = body;
-
-    if (!env.DB) {
-      return json({ success: false, message: 'Database not available' }, 500);
+    const body = await request.json() as { email?: string; adminKey?: string };
+    const { email, adminKey } = body;
+    
+    // Simple admin check
+    if (adminKey !== 'fix-premium-2024') {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Invalid admin key'
+      }), {
+        status: 403,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
-    const now = new Date().toISOString();
+    if (!env.DB) {
+      return new Response(JSON.stringify({ success: false, message: 'Database not available' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
 
-    // Update users table
-    await env.DB.prepare(`
-      UPDATE users 
-      SET is_premium = ?,
-          extension_activated = ?,
-          premium_activated_at = ?
-      WHERE id = ?
-    `).bind(isPremium ? 1 : 0, isPremium ? 1 : 0, isPremium ? now : null, userId).run();
+    const results = {
+      usersFixed: 0,
+      customersFixed: 0,
+      errors: []
+    };
 
-    return json({ 
+    // Fix specific user if email provided, otherwise fix all
+    if (email) {
+      // Fix specific user
+      const user = await env.DB.prepare(`
+        SELECT u.id, u.email, COUNT(o.id) as orderCount, SUM(o.final_amount) as totalPaid
+        FROM users u
+        LEFT JOIN orders o ON u.email = o.customer_email AND o.status = 'completed' AND o.final_amount > 0
+        WHERE u.email = ?
+        GROUP BY u.id, u.email
+      `).bind(email).first();
+
+      if (user && user.orderCount > 0) {
+        await env.DB.prepare(`
+          UPDATE users 
+          SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
+          WHERE id = ?
+        `).bind(user.id).run();
+        results.usersFixed++;
+      }
+
+      // Also check customers table
+      const customer = await env.DB.prepare(`
+        SELECT c.id, c.email, COUNT(o.id) as orderCount, SUM(o.final_amount) as totalPaid
+        FROM customers c
+        LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'completed' AND o.final_amount > 0
+        WHERE c.email = ?
+        GROUP BY c.id, c.email
+      `).bind(email).first();
+
+      if (customer && customer.orderCount > 0) {
+        await env.DB.prepare(`
+          UPDATE customers 
+          SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
+          WHERE id = ?
+        `).bind(customer.id).run();
+        results.customersFixed++;
+      }
+    } else {
+      // Fix all users with completed orders
+      const usersToFix = await env.DB.prepare(`
+        SELECT DISTINCT u.id, u.email
+        FROM users u
+        JOIN orders o ON u.email = o.customer_email
+        WHERE o.status = 'completed' AND o.final_amount > 0
+        AND (u.is_premium != 1 OR u.extension_activated != 1)
+      `).all();
+
+      for (const user of usersToFix.results || []) {
+        await env.DB.prepare(`
+          UPDATE users 
+          SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
+          WHERE id = ?
+        `).bind(user.id).run();
+        results.usersFixed++;
+      }
+
+      const customersToFix = await env.DB.prepare(`
+        SELECT DISTINCT c.id, c.email
+        FROM customers c
+        JOIN orders o ON c.id = o.customer_id
+        WHERE o.status = 'completed' AND o.final_amount > 0
+        AND (c.is_premium != 1 OR c.extension_activated != 1)
+      `).all();
+
+      for (const customer of customersToFix.results || []) {
+        await env.DB.prepare(`
+          UPDATE customers 
+          SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
+          WHERE id = ?
+        `).bind(customer.id).run();
+        results.customersFixed++;
+      }
+    }
+
+    return new Response(JSON.stringify({ 
       success: true, 
-      message: `User ${userId} premium status updated to ${isPremium}` 
+      message: `Premium activation fix completed`,
+      results
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
 
   } catch (error: any) {
-    console.error('Error updating user premium status:', error);
-    return json({ 
+    console.error('Error fixing premium activation:', error);
+    return new Response(JSON.stringify({ 
       success: false, 
       message: error.message 
-    }, 500);
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 };
