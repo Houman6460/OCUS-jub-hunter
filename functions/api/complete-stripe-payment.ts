@@ -72,21 +72,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         await env.DB.prepare(`
           UPDATE customers 
           SET is_premium = 1,
-              extension_activated = 1,
-              updated_at = ?
+              extension_activated = 1
           WHERE id = ?
-        `).bind(now, finalCustomerId).run();
+        `).bind(finalCustomerId).run();
       } else {
         // Create new customer record
         const result = await env.DB.prepare(`
           INSERT INTO customers (
             email, name, is_premium, extension_activated, 
-            created_at, updated_at
-          ) VALUES (?, ?, 1, 1, ?, ?)
+            created_at
+          ) VALUES (?, ?, 1, 1, ?)
         `).bind(
           customerEmail, 
           customerName || customerEmail, 
-          now, 
           now
         ).run();
         
