@@ -68,17 +68,41 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     const now = new Date().toISOString();
 
+    console.log('Registering user:', email, 'with password length:', password.length);
+
+    // Check if user already exists
+    const existingUser = await env.DB.prepare(`
+      SELECT id FROM users WHERE email = ?
+    `).bind(email).first();
+
+    if (existingUser) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'User already exists'
+      }), {
+        status: 400,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     // Insert user into users table
     const userResult = await env.DB.prepare(`
       INSERT INTO users (email, password, name, role, created_at)
       VALUES (?, ?, ?, 'customer', ?)
     `).bind(email, password, name, now).run();
 
+    console.log('User inserted with ID:', userResult.meta.last_row_id);
+
     // Insert customer into customers table
     const customerResult = await env.DB.prepare(`
       INSERT INTO customers (email, name, created_at)
       VALUES (?, ?, ?)
     `).bind(email, name, now).run();
+
+    console.log('Customer inserted with ID:', customerResult.meta.last_row_id);
 
     return new Response(JSON.stringify({
       success: true,
