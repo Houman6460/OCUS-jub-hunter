@@ -14,10 +14,10 @@ function json(data: any, status = 200) {
   });
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
-    const body = await request.json() as { email: string };
-    const { email } = body;
+    const url = new URL(request.url);
+    const email = url.searchParams.get('email');
 
     if (!email) {
       return json({ success: false, message: 'Email required' }, 400);
