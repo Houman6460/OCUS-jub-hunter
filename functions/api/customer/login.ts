@@ -40,6 +40,7 @@ export const onRequestPost = async ({ request, env }: any) => {
     // Check for user in users table (for registered customers)
     let user = null;
     try {
+      console.log('Querying users table for email:', email);
       const userResult = await env.DB.prepare(`
         SELECT id, email, name, role, created_at 
         FROM users WHERE email = ? AND password = ?
@@ -47,28 +48,24 @@ export const onRequestPost = async ({ request, env }: any) => {
       
       if (userResult) {
         user = userResult as any;
-        console.log('User found in users table with password match');
+        console.log('User found in users table with password match:', user.email);
+      } else {
+        console.log('No user found with matching email and password in users table');
+        
+        // Check if user exists with email only (to see if password is wrong)
+        const emailOnlyResult = await env.DB.prepare(`
+          SELECT id, email, name, role, created_at 
+          FROM users WHERE email = ?
+        `).bind(email).first();
+        
+        if (emailOnlyResult) {
+          console.log('User exists with this email but password mismatch');
+        } else {
+          console.log('No user found with this email in users table');
+        }
       }
     } catch (e) {
       console.log('Users table query failed:', e);
-    }
-    
-    // If not found in users table, try customers table (for legacy customers)
-    if (!user) {
-      try {
-        const customerResult = await env.DB.prepare(`
-          SELECT id, email, name, 'customer' as role, createdAt as created_at
-          FROM customers WHERE email = ?
-        `).bind(email).first();
-        
-        if (customerResult) {
-          // For customers table, we don't have password validation yet
-          // This is for legacy customers who might not have passwords set
-          console.log('Customer found in customers table');
-        }
-      } catch (e) {
-        console.log('Customers table query failed:', e);
-      }
     }
     
     if (user) {
