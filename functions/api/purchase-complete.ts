@@ -57,15 +57,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         // Update existing customer
         await env.DB.prepare(`
           UPDATE customers 
-          SET is_activated = true,
-              extension_activated = true,
-              subscription_status = 'active',
-              total_spent = total_spent + ?,
-              total_orders = total_orders + 1,
-              last_order_date = ?,
-              updated_at = ?
+          SET isActive = 1,
+              extension_activated = 1,
+              isPremium = 1,
+              updatedAt = ?
           WHERE id = ?
-        `).bind(amount, now, now, customerId).run();
+        `).bind(now, customerId).run();
       } else {
         // Find customer by email or create new one
         const existingCustomer = await env.DB.prepare(`
@@ -76,28 +73,22 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           finalCustomerId = (existingCustomer as any).id;
           await env.DB.prepare(`
             UPDATE customers 
-            SET is_activated = true,
-                extension_activated = true,
-                subscription_status = 'active',
-                total_spent = total_spent + ?,
-                total_orders = total_orders + 1,
-                last_order_date = ?,
-                updated_at = ?
+            SET isActive = 1,
+                extension_activated = 1,
+                isPremium = 1,
+                updatedAt = ?
             WHERE id = ?
-          `).bind(amount, now, now, finalCustomerId).run();
+          `).bind(now, finalCustomerId).run();
         } else {
           // Create new customer
           const result = await env.DB.prepare(`
             INSERT INTO customers (
-              email, name, is_activated, extension_activated, 
-              subscription_status, total_spent, total_orders, 
-              last_order_date, created_at, updated_at
-            ) VALUES (?, ?, true, true, 'active', ?, 1, ?, ?, ?)
+              email, name, isActive, extension_activated, 
+              isPremium, createdAt, updatedAt
+            ) VALUES (?, ?, 1, 1, 1, ?, ?)
           `).bind(
             customerEmail, 
             customerName || customerEmail, 
-            amount, 
-            now, 
             now, 
             now
           ).run();
@@ -110,9 +101,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const orderResult = await env.DB.prepare(`
         INSERT INTO orders (
-          user_id, customer_email, customer_name, 
-          original_amount, final_amount, currency, status, payment_method,
-          payment_intent_id, download_token, created_at, completed_at
+          customerId, customerEmail, customerName, 
+          originalAmount, finalAmount, currency, status, paymentMethod,
+          paymentIntentId, downloadToken, createdAt, completedAt
         ) VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
       `).bind(
         finalCustomerId,
@@ -134,26 +125,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       await env.DB.prepare(`
         INSERT INTO activation_codes (
-          code, customer_id, order_id, user_id, is_active, created_at
-        ) VALUES (?, ?, ?, ?, true, ?)
-      `).bind(activationCode, finalCustomerId, orderId, finalCustomerId, now).run();
+          code, order_id, is_used, created_at
+        ) VALUES (?, ?, 0, ?)
+      `).bind(activationCode, orderId, now).run();
 
       // 4. Create invoice record
       const invoiceNumber = `INV-${new Date().getFullYear()}-${String(orderId).padStart(6, '0')}`;
       
       await env.DB.prepare(`
         INSERT INTO invoices (
-          invoice_number, customer_id, order_id, customer_email, customer_name,
-          amount, currency, status, invoice_date, paid_at, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
+          invoiceNumber, customerId, orderId, amount, currency, 
+          status, invoiceDate, paidAt, createdAt
+        ) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?, ?)
       `).bind(
         invoiceNumber,
         finalCustomerId,
         orderId,
-        customerEmail,
-        customerName || customerEmail,
         amount,
-        currency,
+        currency.toLowerCase(),
         now,
         now,
         now
