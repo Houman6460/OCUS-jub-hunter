@@ -71,13 +71,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             return json({ error: 'Customer not found' }, 404);
           }
 
-          // Get invoices for this customer
+          // Get invoices for this customer with exact paid amounts
           const invoices = await env.DB.prepare(`
             SELECT 
               i.id,
               i.invoiceNumber as invoice_number,
               i.orderId as order_id,
-              i.amount,
+              o.finalAmount as amount,
               i.currency,
               i.taxAmount as tax_amount,
               i.status,
