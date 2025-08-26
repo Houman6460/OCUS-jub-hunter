@@ -12,7 +12,7 @@ export default function ExtensionDownloads() {
     setDownloading(version);
     try {
       // Get auth token from localStorage
-      const token = localStorage.getItem('customer_token') || localStorage.getItem('user_token') || 'demo-jwt-token';
+      const token = localStorage.getItem('customer_token') || localStorage.getItem('admin_token') || 'demo-jwt-token';
       
       const response = await fetch(`/api/download-extension/${version}`, {
         headers: {

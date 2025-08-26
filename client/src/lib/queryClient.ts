@@ -51,8 +51,8 @@ export async function apiRequest(
   }
 
   // Add authentication token if available
-  const userToken = localStorage.getItem('user_token');
-  if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/') || url.includes('/api/tickets') || url.includes('/api/admin/'))) {
+  const userToken = localStorage.getItem('customer_token') || localStorage.getItem('admin_token');
+  if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/') || url.includes('/api/tickets') || url.includes('/api/admin/') || url.includes('/api/download-extension/') || url.includes('/api/me/') || url.includes('/api/user/'))) {
     headers.Authorization = `Bearer ${userToken}`;
   }
 
@@ -95,8 +95,8 @@ export const getQueryFn: <T>(options: {
     const headers: Record<string, string> = {};
 
     // Add authentication token if available
-    const userToken = localStorage.getItem('user_token');
-    if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/') || url.includes('/api/tickets') || url.includes('/api/admin/'))) {
+    const userToken = localStorage.getItem('customer_token') || localStorage.getItem('admin_token');
+    if (userToken && (url.includes('/api/customer/') || url.includes('/api/auth/') || url.includes('/api/affiliate/') || url.includes('/api/tickets') || url.includes('/api/admin/') || url.includes('/api/download-extension/') || url.includes('/api/me/') || url.includes('/api/user/'))) {
       headers.Authorization = `Bearer ${userToken}`;
     }
 

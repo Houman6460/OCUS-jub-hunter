@@ -59,7 +59,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
         try {
           const customer = await env.DB.prepare(`
-            SELECT id, email, name, is_premium, extension_activated, total_spent, created_at
+            SELECT id, email, name, isPremium, extension_activated, createdAt
             FROM customers WHERE id = ?
           `).bind(parseInt(userId)).first();
 
@@ -69,10 +69,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               email: customer.email,
               name: customer.name,
               role: 'customer',
-              createdAt: customer.created_at,
-              isPremium: customer.is_premium,
+              createdAt: customer.createdAt,
+              isPremium: customer.isPremium,
               extensionActivated: customer.extension_activated,
-              totalSpent: customer.total_spent || 0,
               isAuthenticated: true
             });
           }

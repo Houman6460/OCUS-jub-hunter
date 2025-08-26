@@ -42,13 +42,65 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
       });
     }
     
-    // For other users, return no purchases
-    return json({
-      hasPurchased: false,
-      totalSpent: '0.00',
-      completedOrders: 0,
-      lastPurchaseDate: null
-    });
+    // Check database for real customer purchases
+    if (!env.DB) {
+      return json({
+        hasPurchased: false,
+        totalSpent: '0.00',
+        completedOrders: 0,
+        lastPurchaseDate: null
+      });
+    }
+
+    try {
+      // Check if customer exists and has purchases
+      const customer = await env.DB.prepare(`
+        SELECT id, extension_activated, isPremium
+        FROM customers WHERE id = ?
+      `).bind(parseInt(userId)).first();
+
+      if (!customer) {
+        return json({
+          hasPurchased: false,
+          totalSpent: '0.00',
+          completedOrders: 0,
+          lastPurchaseDate: null
+        });
+      }
+
+      // Check completed orders
+      const orderStats = await env.DB.prepare(`
+        SELECT COUNT(*) as completedOrders, 
+               SUM(finalAmount) as totalPaid,
+               MAX(completedAt) as lastPurchaseDate
+        FROM orders 
+        WHERE customerId = ? AND status = 'completed' AND finalAmount > 0
+      `).bind(parseInt(userId)).first();
+
+      const completedOrders = Number(orderStats?.completedOrders || 0);
+      const totalPaid = String(orderStats?.totalPaid || '0.00');
+      const lastPurchaseDate = orderStats?.lastPurchaseDate;
+
+      const hasPurchased = customer.extension_activated && 
+                          completedOrders > 0 && 
+                          parseFloat(totalPaid) > 0;
+
+      return json({
+        hasPurchased,
+        totalSpent: totalPaid,
+        completedOrders,
+        lastPurchaseDate: lastPurchaseDate ? new Date(String(lastPurchaseDate)).getTime() : null
+      });
+
+    } catch (dbError) {
+      console.error('Database error in purchase-status:', dbError);
+      return json({
+        hasPurchased: false,
+        totalSpent: '0.00',
+        completedOrders: 0,
+        lastPurchaseDate: null
+      });
+    }
     
   } catch (error: any) {
     return json({ 
