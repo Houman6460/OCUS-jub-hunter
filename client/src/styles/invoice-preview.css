@@ -1,0 +1,41 @@
+/* Invoice Preview Styles */
+.invoice-preview {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.invoice-header {
+  border-bottom: 3px solid var(--primary-color);
+}
+
+.invoice-company-name {
+  color: var(--primary-color);
+}
+
+.invoice-company-address {
+  color: var(--secondary-color);
+}
+
+.invoice-title {
+  color: var(--primary-color);
+}
+
+.invoice-section-title {
+  color: var(--primary-color);
+}
+
+.invoice-table-header {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.invoice-item-description {
+  color: var(--secondary-color);
+}
+
+.invoice-total {
+  background-color: var(--primary-color);
+}
+
+.invoice-footer {
+  color: var(--secondary-color);
+}

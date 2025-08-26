@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { FileText, Download, Eye, Palette, Settings, Upload, X } from 'lucide-react';
+import { FileText, Download, Eye, Palette, Settings, Upload, X, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import "@/styles/invoice-preview.css";
 
 interface InvoiceSettings {
   id: number;
@@ -247,8 +248,10 @@ function InvoiceSettingsCard({ settings, isLoading }: { settings: InvoiceSetting
                   <button
                     onClick={() => setCompanyLogo('')}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    title="Remove company logo"
+                    aria-label="Remove company logo"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3 h-4" />
                   </button>
                 </div>
               )}
@@ -256,6 +259,8 @@ function InvoiceSettingsCard({ settings, isLoading }: { settings: InvoiceSetting
                 <input
                   type="file"
                   id="logo"
+                  title="Upload company logo"
+                  aria-label="Upload company logo file"
                   accept="image/*"
                   onChange={handleLogoUpload}
                   className="hidden"
@@ -570,18 +575,24 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-lg p-6 bg-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
+        <div 
+          className="border rounded-lg p-6 bg-white invoice-preview" 
+          style={{ 
+            '--primary-color': settings.primaryColor, 
+            '--secondary-color': settings.secondaryColor 
+          } as React.CSSProperties}
+        >
           {/* Header */}
-          <div className="flex justify-between items-start mb-8 pb-4" style={{ borderBottom: `3px solid ${settings.primaryColor}` }}>
+          <div className="flex justify-between items-start mb-8 pb-4 invoice-header">
             <div>
               {settings.companyLogo && (
                 <img src={settings.companyLogo} alt={settings.companyName} className="max-h-12 mb-3" />
               )}
-              <h1 className="text-xl font-bold" style={{ color: settings.primaryColor }}>
+              <h1 className="text-xl font-bold invoice-company-name">
                 {settings.companyName}
               </h1>
               {settings.companyAddress && (
-                <div className="text-sm" style={{ color: settings.secondaryColor }}>
+                <div className="text-sm invoice-company-address">
                   {settings.companyAddress.split('\n').map((line, i) => (
                     <div key={i}>{line}</div>
                   ))}
@@ -589,7 +600,7 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
               )}
             </div>
             <div className="text-right">
-              <h2 className="text-2xl font-bold" style={{ color: settings.primaryColor }}>
+              <h2 className="text-2xl font-bold invoice-title">
                 INVOICE
               </h2>
               <p className="font-mono">{settings.invoicePrefix}-2025-0001</p>
@@ -599,12 +610,12 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
           {/* Sample Invoice Content */}
           <div className="grid grid-cols-2 gap-8 mb-6 p-4 bg-gray-50 rounded">
             <div>
-              <h3 className="font-semibold mb-2" style={{ color: settings.primaryColor }}>Bill To:</h3>
+              <h3 className="font-semibold mb-2 invoice-section-title">Bill To:</h3>
               <p><strong>John Doe</strong></p>
               <p>john.doe@example.com</p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2" style={{ color: settings.primaryColor }}>Invoice Details:</h3>
+              <h3 className="font-semibold mb-2 invoice-section-title">Invoice Details:</h3>
               <p><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
               <p><strong>Due:</strong> {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
             </div>
@@ -613,7 +624,7 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
           {/* Sample Items */}
           <table className="w-full border-collapse mb-6">
             <thead>
-              <tr style={{ backgroundColor: settings.primaryColor, color: 'white' }}>
+              <tr className="invoice-table-header">
                 <th className="text-left p-3">Description</th>
                 <th className="text-center p-3">Qty</th>
                 <th className="text-right p-3">Price</th>
@@ -625,7 +636,7 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
                 <td className="p-3">
                   <strong>OCUS Job Hunter Chrome Extension</strong>
                   <br />
-                  <small style={{ color: settings.secondaryColor }}>Premium photography job hunting tool</small>
+                  <small className="invoice-item-description">Premium photography job hunting tool</small>
                 </td>
                 <td className="text-center p-3">1</td>
                 <td className="text-right p-3">$29.99</td>
@@ -636,14 +647,14 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
 
           {/* Total */}
           <div className="w-48 ml-auto">
-            <div className="p-3 text-right font-bold text-white" style={{ backgroundColor: settings.primaryColor }}>
+            <div className="p-3 text-right font-bold text-white invoice-total">
               TOTAL: $29.99
             </div>
           </div>
 
           {/* Footer */}
           {settings.footerText && (
-            <div className="mt-6 pt-4 border-t text-center text-sm" style={{ color: settings.secondaryColor }}>
+            <div className="mt-6 pt-4 border-t text-center text-sm invoice-footer">
               {settings.footerText}
             </div>
           )}

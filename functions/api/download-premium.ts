@@ -105,11 +105,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         }, 404);
       }
 
-      // Check if customer has premium access
-      const hasAccess = customer.is_premium && 
-                       customer.extension_activated;
+      // Check if customer has premium access AND valid paid orders
+      const hasBasicAccess = customer.is_premium && customer.extension_activated;
 
-      if (!hasAccess) {
+      if (!hasBasicAccess) {
         return json({
           success: false,
           message: 'Premium access not activated. Please complete your purchase first.',
@@ -121,29 +120,31 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         }, 403);
       }
 
-      // Check if customer has valid orders (with fallback)
+      // CRITICAL: Verify customer has completed orders with actual payment
       let hasValidOrders = false;
       try {
         const orderCheck = await env.DB.prepare(`
-          SELECT COUNT(*) as orderCount 
+          SELECT COUNT(*) as orderCount, SUM(final_amount) as totalPaid
           FROM orders 
-          WHERE user_id = ? AND status = 'completed'
+          WHERE user_id = ? AND status = 'completed' AND final_amount > 0
         `).bind(customer.id).first();
-        hasValidOrders = (orderCheck as any)?.orderCount > 0;
+        
+        hasValidOrders = (orderCheck as any)?.orderCount > 0 && 
+                        parseFloat((orderCheck as any)?.totalPaid || '0') > 0;
       } catch (e) {
-        console.log('Order check failed, assuming valid for premium customers');
-        // If order check fails but customer is premium, allow download
-        hasValidOrders = customer.is_premium && customer.extension_activated;
+        console.log('Order check failed - denying access for security');
+        hasValidOrders = false; // Fail secure - no fallback for premium access
       }
 
       if (!hasValidOrders) {
         return json({
           success: false,
-          message: 'No valid premium purchases found',
+          message: 'No valid premium purchases found. Premium download requires completed payment.',
           customerStatus: {
             isPremium: customer.is_premium,
             extensionActivated: customer.extension_activated,
-            totalSpent: customer.total_spent
+            totalSpent: customer.total_spent,
+            requiresPayment: true
           }
         }, 403);
       }
