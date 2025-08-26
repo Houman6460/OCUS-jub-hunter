@@ -55,13 +55,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       // First update users table (for registered users)
       if (customerEmail) {
-        await env.DB.prepare(`
+        const userUpdateResult = await env.DB.prepare(`
           UPDATE users 
           SET is_premium = 1,
               extension_activated = 1,
               premium_activated_at = ?
           WHERE email = ?
         `).bind(now, customerEmail).run();
+        
+        console.log('User table update result for', customerEmail, ':', userUpdateResult);
+        
+        // If no user was updated, we need to ensure we have a customer ID for orders/invoices
+        if (userUpdateResult.meta?.changes === 0) {
+          console.log('No user found with email', customerEmail, 'in users table');
+        }
       }
       
       if (customerId) {
@@ -106,7 +113,43 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         }
       }
 
-      // 2. Create order record
+      // 2. Ensure we have a customer ID for orders/invoices
+      if (!finalCustomerId) {
+        // Find or create customer record for users who don't have a customer ID
+        const existingCustomer = await env.DB.prepare(`
+          SELECT id FROM customers WHERE email = ?
+        `).bind(customerEmail).first();
+
+        if (existingCustomer) {
+          finalCustomerId = (existingCustomer as any).id;
+          await env.DB.prepare(`
+            UPDATE customers 
+            SET is_premium = 1,
+                extension_activated = 1,
+                updated_at = ?
+            WHERE id = ?
+          `).bind(now, finalCustomerId).run();
+        } else {
+          // Create new customer record
+          const result = await env.DB.prepare(`
+            INSERT INTO customers (
+              email, name, is_premium, extension_activated, 
+              created_at, updated_at
+            ) VALUES (?, ?, 1, 1, ?, ?)
+          `).bind(
+            customerEmail, 
+            customerName || customerEmail, 
+            now, 
+            now
+          ).run();
+          
+          finalCustomerId = result.meta?.last_row_id as number;
+        }
+      }
+
+      console.log('Final customer ID for orders/invoices:', finalCustomerId);
+
+      // 3. Create order record
       const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const orderResult = await env.DB.prepare(`
         INSERT INTO orders (
@@ -129,7 +172,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
       const orderId = orderResult.meta?.last_row_id as number;
 
-      // 3. Generate activation code for the extension
+      // 4. Generate activation code for the extension
       const activationCode = `OCUS_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       
       await env.DB.prepare(`
@@ -138,10 +181,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         ) VALUES (?, ?, 0, ?)
       `).bind(activationCode, orderId, now).run();
 
-      // 4. Create invoice record
+      // 5. Create invoice record
       const invoiceNumber = `INV-${new Date().getFullYear()}-${String(orderId).padStart(6, '0')}`;
       
-      await env.DB.prepare(`
+      const invoiceResult = await env.DB.prepare(`
         INSERT INTO invoices (
           invoice_number, customer_id, order_id, amount, currency, 
           status, invoice_date, paid_at, created_at
@@ -156,6 +199,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         now,
         now
       ).run();
+
+      console.log('Invoice created:', {
+        invoiceNumber,
+        customerId: finalCustomerId,
+        orderId,
+        amount,
+        invoiceResult: invoiceResult.meta
+      });
 
       // 5. Log the purchase completion
       console.log('Purchase completed successfully:', {
