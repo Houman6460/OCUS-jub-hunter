@@ -23,10 +23,15 @@ function json(data: any, status = 200) {
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const body = await request.json() as DownloadRequest;
-    const { customerId, customerEmail, activationCode } = body;
+    const { customerId, customerEmail, activationCode, email } = body;
+    const finalEmail = customerEmail || email;
 
-    if (!customerId && !customerEmail && !activationCode) {
-      return json({ success: false, message: 'Customer identification required' }, 400);
+    // Customer identification - require at least one method
+    if (!customerId && !finalEmail && !activationCode) {
+      return json({
+        success: false,
+        message: 'Customer identification required'
+      }, 400);
     }
 
     // Check if D1 database is available
@@ -74,12 +79,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         } catch (e) {
           console.log('Customer query failed, trying fallback');
         }
-      } else if (customerEmail) {
+      } else if (finalEmail) {
         try {
           customer = await env.DB.prepare(`
             SELECT id, email, name, is_premium, extension_activated, total_spent 
             FROM customers WHERE email = ?
-          `).bind(customerEmail).first();
+          `).bind(finalEmail).first();
         } catch (e) {
           console.log('Customer email query failed, trying fallback');
         }
