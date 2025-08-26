@@ -1,24 +1,17 @@
 // Simple test endpoint to check user data
-import type { PagesFunction } from '@cloudflare/workers-types';
-import { Env } from '../lib/context';
-
-function json(data: any, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
-}
-
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost = async ({ request, env }: any) => {
   try {
     const body = await request.json() as { email?: string };
     const email = body.email || 'heshmat@gmail.com';
 
     if (!env.DB) {
-      return json({ success: false, message: 'Database not available' }, 500);
+      return new Response(JSON.stringify({ success: false, message: 'Database not available' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
     // Check users table
@@ -44,7 +37,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       FROM orders WHERE customer_id = ?
     `).bind(customer.id).all() : { results: [] };
 
-    return json({
+    return new Response(JSON.stringify({
       success: true,
       email,
       user,
@@ -61,13 +54,24 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         totalOrdersFromEmail: ordersUserQuery.results?.length || 0,
         totalOrdersFromCustomerId: ordersCustomerQuery.results?.length || 0
       }
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
 
   } catch (error: any) {
     console.error('Error checking user data:', error);
-    return json({ 
+    return new Response(JSON.stringify({ 
       success: false, 
       message: error.message 
-    }, 500);
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 };
