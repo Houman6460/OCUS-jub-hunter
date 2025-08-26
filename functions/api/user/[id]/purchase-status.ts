@@ -53,13 +53,35 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
     }
 
     try {
-      // Check if customer exists and has purchases
-      const customer = await env.DB.prepare(`
-        SELECT id, extension_activated, isPremium
-        FROM customers WHERE id = ?
+      // First check users table (for registered customers)
+      const user = await env.DB.prepare(`
+        SELECT id, extension_activated, is_premium
+        FROM users WHERE id = ?
       `).bind(parseInt(userId)).first();
 
-      if (!customer) {
+      let customer = null;
+      let hasPremiumStatus = false;
+      let hasExtensionActivated = false;
+
+      if (user) {
+        hasPremiumStatus = user.is_premium === 1;
+        hasExtensionActivated = user.extension_activated === 1;
+        console.log('User found:', userId, 'Premium:', hasPremiumStatus, 'Extension:', hasExtensionActivated);
+      } else {
+        // Fallback to customers table
+        customer = await env.DB.prepare(`
+          SELECT id, extension_activated, is_premium
+          FROM customers WHERE id = ?
+        `).bind(parseInt(userId)).first();
+
+        if (customer) {
+          hasPremiumStatus = customer.is_premium === 1;
+          hasExtensionActivated = customer.extension_activated === 1;
+          console.log('Customer found:', userId, 'Premium:', hasPremiumStatus, 'Extension:', hasExtensionActivated);
+        }
+      }
+
+      if (!user && !customer) {
         return json({
           hasPurchased: false,
           totalSpent: '0.00',
@@ -68,22 +90,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
         });
       }
 
-      // Check completed orders
+      // Check completed orders with correct column names
       const orderStats = await env.DB.prepare(`
         SELECT COUNT(*) as completedOrders, 
-               SUM(finalAmount) as totalPaid,
-               MAX(completedAt) as lastPurchaseDate
+               SUM(final_amount) as totalPaid,
+               MAX(completed_at) as lastPurchaseDate
         FROM orders 
-        WHERE customerId = ? AND status = 'completed' AND finalAmount > 0
+        WHERE customer_id = ? AND status = 'completed' AND final_amount > 0
       `).bind(parseInt(userId)).first();
 
       const completedOrders = Number(orderStats?.completedOrders || 0);
       const totalPaid = String(orderStats?.totalPaid || '0.00');
       const lastPurchaseDate = orderStats?.lastPurchaseDate;
 
-      const hasPurchased = customer.extension_activated && 
-                          completedOrders > 0 && 
-                          parseFloat(totalPaid) > 0;
+      const hasPurchased = hasPremiumStatus && hasExtensionActivated;
 
       return json({
         hasPurchased,
