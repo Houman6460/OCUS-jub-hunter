@@ -1,5 +1,3 @@
-import { UserStorage } from '../../lib/user-storage';
-
 export const onRequestPost = async ({ request, env }: any) => {
   try {
     const { email, password, recaptchaToken } = await request.json();
@@ -20,27 +18,37 @@ export const onRequestPost = async ({ request, env }: any) => {
       });
     }
     
-    const userStorage = new UserStorage(env.DB);
-    await userStorage.initializeUsers();
+    // Check for user in users table (for registered customers)
+    let user = null;
+    try {
+      const userResult = await env.DB.prepare(`
+        SELECT id, email, name, role, created_at 
+        FROM users WHERE email = ? AND password = ?
+      `).bind(email, password).first();
+      
+      if (userResult) {
+        user = userResult as any;
+        console.log('User found in users table with password match');
+      }
+    } catch (e) {
+      console.log('Users table query failed:', e);
+    }
     
-    // Try to validate user from database first
-    let user = await userStorage.validateUser(email, password);
-    console.log('User validation result:', user ? 'found' : 'not found');
-    
-    // If not found in users table, try customers table and validate password from users table
+    // If not found in users table, try customers table (for legacy customers)
     if (!user) {
       try {
-        const userResult = await env.DB.prepare(`
-          SELECT u.id, u.email, u.name, u.role, u.created_at 
-          FROM users u WHERE u.email = ? AND u.password = ?
-        `).bind(email, password).first();
+        const customerResult = await env.DB.prepare(`
+          SELECT id, email, name, 'customer' as role, createdAt as created_at
+          FROM customers WHERE email = ?
+        `).bind(email).first();
         
-        if (userResult) {
-          user = userResult as any;
-          console.log('User found in users table with password match');
+        if (customerResult) {
+          // For customers table, we don't have password validation yet
+          // This is for legacy customers who might not have passwords set
+          console.log('Customer found in customers table');
         }
       } catch (e) {
-        console.log('Users table query failed:', e);
+        console.log('Customers table query failed:', e);
       }
     }
     
