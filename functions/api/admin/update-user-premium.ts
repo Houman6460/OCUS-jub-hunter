@@ -36,40 +36,48 @@ export const onRequestPost = async ({ request, env }: any) => {
 
     // Fix specific user if email provided, otherwise fix all
     if (email) {
-      // Fix specific user
+      // Check if user exists in users table
       const user = await env.DB.prepare(`
-        SELECT u.id, u.email, COALESCE(COUNT(o.id), 0) as orderCount, COALESCE(SUM(o.final_amount), 0) as totalPaid
-        FROM users u
-        LEFT JOIN orders o ON u.email = o.customer_email AND o.status = 'completed' AND o.final_amount > 0
-        WHERE u.email = ?
-        GROUP BY u.id, u.email
+        SELECT id, email, is_premium, extension_activated FROM users WHERE email = ?
       `).bind(email).first();
 
-      if (user && user.orderCount > 0) {
-        await env.DB.prepare(`
-          UPDATE users 
-          SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
-          WHERE id = ?
-        `).bind(user.id).run();
-        results.usersFixed++;
+      if (user) {
+        // Check if user has completed orders
+        const userOrders = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM orders 
+          WHERE customer_email = ? AND status = 'completed' AND final_amount > 0
+        `).bind(email).first();
+
+        if (userOrders && userOrders.count > 0) {
+          await env.DB.prepare(`
+            UPDATE users 
+            SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
+            WHERE id = ?
+          `).bind(user.id).run();
+          results.usersFixed++;
+        }
       }
 
-      // Also check customers table
+      // Check if customer exists in customers table
       const customer = await env.DB.prepare(`
-        SELECT c.id, c.email, COALESCE(COUNT(o.id), 0) as orderCount, COALESCE(SUM(o.final_amount), 0) as totalPaid
-        FROM customers c
-        LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'completed' AND o.final_amount > 0
-        WHERE c.email = ?
-        GROUP BY c.id, c.email
+        SELECT id, email, is_premium, extension_activated FROM customers WHERE email = ?
       `).bind(email).first();
 
-      if (customer && customer.orderCount > 0) {
-        await env.DB.prepare(`
-          UPDATE customers 
-          SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
-          WHERE id = ?
-        `).bind(customer.id).run();
-        results.customersFixed++;
+      if (customer) {
+        // Check if customer has completed orders
+        const customerOrders = await env.DB.prepare(`
+          SELECT COUNT(*) as count FROM orders 
+          WHERE customer_id = ? AND status = 'completed' AND final_amount > 0
+        `).bind(customer.id).first();
+
+        if (customerOrders && customerOrders.count > 0) {
+          await env.DB.prepare(`
+            UPDATE customers 
+            SET is_premium = 1, extension_activated = 1, premium_activated_at = datetime('now')
+            WHERE id = ?
+          `).bind(customer.id).run();
+          results.customersFixed++;
+        }
       }
     } else {
       // Fix all users with completed orders
