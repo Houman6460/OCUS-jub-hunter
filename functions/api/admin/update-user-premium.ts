@@ -38,7 +38,7 @@ export const onRequestPost = async ({ request, env }: any) => {
     if (email) {
       // Fix specific user
       const user = await env.DB.prepare(`
-        SELECT u.id, u.email, COUNT(o.id) as orderCount, SUM(o.final_amount) as totalPaid
+        SELECT u.id, u.email, COALESCE(COUNT(o.id), 0) as orderCount, COALESCE(SUM(o.final_amount), 0) as totalPaid
         FROM users u
         LEFT JOIN orders o ON u.email = o.customer_email AND o.status = 'completed' AND o.final_amount > 0
         WHERE u.email = ?
@@ -56,7 +56,7 @@ export const onRequestPost = async ({ request, env }: any) => {
 
       // Also check customers table
       const customer = await env.DB.prepare(`
-        SELECT c.id, c.email, COUNT(o.id) as orderCount, SUM(o.final_amount) as totalPaid
+        SELECT c.id, c.email, COALESCE(COUNT(o.id), 0) as orderCount, COALESCE(SUM(o.final_amount), 0) as totalPaid
         FROM customers c
         LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'completed' AND o.final_amount > 0
         WHERE c.email = ?
