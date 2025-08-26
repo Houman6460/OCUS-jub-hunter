@@ -22,14 +22,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     const authHeader = request.headers.get('Authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return json({
-        id: 1,
-        email: 'fallback@example.com',
-        name: 'Fallback User',
-        role: 'customer',
-        createdAt: new Date().toISOString(),
-        isAuthenticated: false
-      });
+      return json({ 
+        error: 'Unauthorized' 
+      }, 401);
     }
 
     const token = authHeader.substring(7);
@@ -56,33 +51,41 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       if (parts.length >= 3) {
         const userId = parts[2];
         console.log('Parsed userId from token:', userId, 'from token:', token);
-        // For user ID 1, return demo data
-        if (userId === '1') {
-          return json({
-            id: 1,
-            email: 'demo@example.com',
-            name: 'Demo User',
-            role: 'customer',
-            createdAt: new Date().toISOString(),
-            isPremium: true,
-            extensionActivated: true,
-            totalSpent: 29.99,
-            totalOrders: 1,
-            isAuthenticated: true
-          });
+        
+        // Check database for real user data
+        if (!env.DB) {
+          return json({ error: 'Database not available' }, 500);
+        }
+
+        try {
+          const customer = await env.DB.prepare(`
+            SELECT id, email, name, is_premium, extension_activated, total_spent, created_at
+            FROM customers WHERE id = ?
+          `).bind(parseInt(userId)).first();
+
+          if (customer) {
+            return json({
+              id: customer.id,
+              email: customer.email,
+              name: customer.name,
+              role: 'customer',
+              createdAt: customer.created_at,
+              isPremium: customer.is_premium,
+              extensionActivated: customer.extension_activated,
+              totalSpent: customer.total_spent || 0,
+              isAuthenticated: true
+            });
+          }
+        } catch (dbError) {
+          console.error('Database error in /api/me:', dbError);
         }
       }
     }
     
-    // For any other token, return fallback
-    return json({
-      id: 1,
-      email: 'fallback@example.com',
-      name: 'Fallback User',
-      role: 'customer',
-      createdAt: new Date().toISOString(),
-      isAuthenticated: false
-    });
+    // For any other token, return unauthorized
+    return json({ 
+      error: 'Invalid token' 
+    }, 401);
     
   } catch (error: any) {
     return json({ 
