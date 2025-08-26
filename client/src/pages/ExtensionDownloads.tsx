@@ -11,23 +11,39 @@ export default function ExtensionDownloads() {
   const handleDownload = async (version: 'trial' | 'premium') => {
     setDownloading(version);
     try {
-      const response = await fetch(`/api/download-extension/${version}`);
+      // Get auth token from localStorage
+      const token = localStorage.getItem('authToken') || 'demo-jwt-token';
+      
+      const response = await fetch(`/api/download-extension/${version}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `ocus-job-hunter-${version}-v1.0.0.zip`;
+        a.download = `ocus-job-hunter-${version}-v2.1.8-STABLE.zip`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        
+        // Show success message
+        if (version === 'premium') {
+          alert('Premium Version Downloaded - Latest premium extension (v2.1.8) with single-device license and unlimited access downloaded successfully!');
+        } else {
+          alert('Trial Version Downloaded - Latest trial extension (v2.1.8) with improved "Tests Available" display downloaded successfully!');
+        }
       } else {
-        throw new Error('Download failed');
+        throw new Error(`Download failed: ${response.status}`);
       }
     } catch (error) {
       console.error('Download error:', error instanceof Error ? error.message : error);
-      alert('Download failed. Please try again.');
+      alert(`Download failed: ${error instanceof Error ? error.message : 'Please try again.'}`);
     } finally {
       setDownloading(null);
     }

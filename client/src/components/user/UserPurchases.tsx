@@ -455,26 +455,28 @@ export function UserPurchases() {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('GET', `/api/me/download-extension/premium`);
+                            const response = await apiRequest('GET', '/api/download-extension/premium');
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = 'ocus-job-hunter-premium-v2.1.9-STABLE.zip';
+                              a.download = 'ocus-job-hunter-premium-v2.1.8-STABLE.zip';
                               document.body.appendChild(a);
                               a.click();
                               window.URL.revokeObjectURL(url);
                               document.body.removeChild(a);
                               toast({
-                                title: 'Download Started',
-                                description: 'Premium extension download has started.',
+                                title: 'Premium Version Downloaded',
+                                description: 'Latest premium extension (v2.1.8) with single-device license and unlimited access downloaded successfully!',
                               });
+                            } else {
+                              throw new Error('Download failed');
                             }
                           } catch (e) {
                             toast({
-                              title: 'Download Failed',
-                              description: 'Failed to download premium extension.',
+                              title: 'Error',
+                              description: 'Failed to download premium extension',
                               variant: 'destructive',
                             });
                           }
@@ -489,17 +491,23 @@ export function UserPurchases() {
                       <Button
                         onClick={async () => {
                           try {
-                            const response = await apiRequest('GET', `/api/me/download-extension/trial`);
+                            const response = await apiRequest('GET', '/api/download-extension/trial');
                             if (response.ok) {
                               const blob = await response.blob();
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = 'ocus-job-hunter-trial-v2.1.9-STABLE.zip';
+                              a.download = 'ocus-job-hunter-trial-v2.1.8-STABLE.zip';
                               document.body.appendChild(a);
                               a.click();
                               window.URL.revokeObjectURL(url);
                               document.body.removeChild(a);
+                              toast({
+                                title: 'Trial Version Downloaded',
+                                description: 'Latest trial extension (v2.1.8) with improved "Tests Available" display downloaded successfully!',
+                              });
+                            } else {
+                              throw new Error('Download failed');
                             }
                           } catch (e) {
                             toast({
