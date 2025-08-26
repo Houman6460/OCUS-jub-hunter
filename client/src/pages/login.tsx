@@ -108,6 +108,7 @@ export default function Login() {
     },
     onSuccess: (data) => {
       localStorage.setItem('customer_token', data.token);
+      localStorage.setItem('customer_data', JSON.stringify(data.user));
       setIsAuthenticated(true);
       setUserType("customer");
       toast({
@@ -149,6 +150,9 @@ export default function Login() {
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
     localStorage.removeItem('customer_token');
+    localStorage.removeItem('customer_data');
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_data');
     setIsAuthenticated(false);
     setUserType(null);
     setAdminEmail("");
