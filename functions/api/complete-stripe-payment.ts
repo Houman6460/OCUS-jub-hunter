@@ -121,22 +121,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       await env.DB.prepare(`
         INSERT INTO activation_codes (
-          code, order_id, is_used, created_at
-        ) VALUES (?, ?, 0, ?)
+          code, order_id, created_at
+        ) VALUES (?, ?, ?)
       `).bind(activationCode, orderId, now).run();
 
       // Create invoice record
       const invoiceNumber = `INV-${new Date().getFullYear()}-${String(orderId).padStart(6, '0')}`;
-      
-      await env.DB.prepare(`
+      const invoiceResult = await env.DB.prepare(`
         INSERT INTO invoices (
-          invoice_number, customer_id, order_id, amount, currency, 
-          status, invoice_date, paid_at, created_at
+          invoiceNumber, orderId, customerId, amount, currency, 
+          status, invoiceDate, paidAt, createdAt
         ) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?, ?)
       `).bind(
         invoiceNumber,
-        finalCustomerId,
         orderId,
+        finalCustomerId,
         purchaseCompleteRequest.amount,
         purchaseCompleteRequest.currency.toLowerCase(),
         now,

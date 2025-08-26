@@ -177,8 +177,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       await env.DB.prepare(`
         INSERT INTO activation_codes (
-          code, order_id, is_used, created_at
-        ) VALUES (?, ?, 0, ?)
+          code, order_id, created_at
+        ) VALUES (?, ?, ?)
       `).bind(activationCode, orderId, now).run();
 
       // 5. Create invoice record
@@ -186,13 +186,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       
       const invoiceResult = await env.DB.prepare(`
         INSERT INTO invoices (
-          invoice_number, customer_id, order_id, amount, currency, 
-          status, invoice_date, paid_at, created_at
+          invoiceNumber, orderId, customerId, amount, currency, 
+          status, invoiceDate, paidAt, createdAt
         ) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?, ?)
       `).bind(
         invoiceNumber,
-        finalCustomerId,
         orderId,
+        finalCustomerId,
         amount,
         currency.toLowerCase(),
         now,
