@@ -58,8 +58,28 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         }
 
         try {
+          // First try users table (for registered users)
+          const user = await env.DB.prepare(`
+            SELECT id, email, name, role, created_at, is_premium, extension_activated
+            FROM users WHERE id = ?
+          `).bind(parseInt(userId)).first();
+
+          if (user) {
+            return json({
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role || 'customer',
+              createdAt: user.created_at,
+              isPremium: user.is_premium || false,
+              extensionActivated: user.extension_activated || false,
+              isAuthenticated: true
+            });
+          }
+
+          // Fallback to customers table (for legacy users)
           const customer = await env.DB.prepare(`
-            SELECT id, email, name, isPremium, extension_activated, createdAt
+            SELECT id, email, name, is_premium, extension_activated, created_at
             FROM customers WHERE id = ?
           `).bind(parseInt(userId)).first();
 
@@ -69,9 +89,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               email: customer.email,
               name: customer.name,
               role: 'customer',
-              createdAt: customer.createdAt,
-              isPremium: customer.isPremium,
-              extensionActivated: customer.extension_activated,
+              createdAt: customer.created_at,
+              isPremium: customer.is_premium || false,
+              extensionActivated: customer.extension_activated || false,
               isAuthenticated: true
             });
           }
