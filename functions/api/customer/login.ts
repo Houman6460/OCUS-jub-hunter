@@ -41,28 +41,45 @@ export const onRequestPost = async ({ request, env }: any) => {
     let user = null;
     try {
       console.log('Querying users table for email:', email);
-      const userResult = await env.DB.prepare(`
-        SELECT id, email, name, role, created_at 
-        FROM users WHERE email = ? AND password = ?
-      `).bind(email, password).first();
       
-      if (userResult) {
-        user = userResult as any;
-        console.log('User found in users table with password match:', user.email);
-      } else {
-        console.log('No user found with matching email and password in users table');
+      // First check if user exists with email only
+      const emailOnlyResult = await env.DB.prepare(`
+        SELECT id, email, name, role, created_at, password
+        FROM users WHERE email = ?
+      `).bind(email).first();
+      
+      if (emailOnlyResult) {
+        console.log('User found with email:', email);
+        console.log('Stored password starts with:', emailOnlyResult.password?.substring(0, 10));
+        console.log('Input password:', password);
         
-        // Check if user exists with email only (to see if password is wrong)
-        const emailOnlyResult = await env.DB.prepare(`
-          SELECT id, email, name, role, created_at 
-          FROM users WHERE email = ?
-        `).bind(email).first();
-        
-        if (emailOnlyResult) {
-          console.log('User exists with this email but password mismatch');
+        // Check if password is hashed (bcrypt starts with $2b$)
+        if (emailOnlyResult.password?.startsWith('$2b$')) {
+          console.log('Password is hashed, implementing bcrypt comparison');
+          try {
+            // Import bcrypt for password comparison
+            const bcrypt = await import('bcryptjs');
+            const isMatch = await bcrypt.compare(password, emailOnlyResult.password);
+            if (isMatch) {
+              user = emailOnlyResult as any;
+              console.log('Bcrypt password match for user:', user.email);
+            } else {
+              console.log('Bcrypt password mismatch');
+            }
+          } catch (bcryptError) {
+            console.log('Bcrypt comparison failed:', bcryptError);
+          }
         } else {
-          console.log('No user found with this email in users table');
+          // Plain text password comparison (for demo users)
+          if (emailOnlyResult.password === password) {
+            user = emailOnlyResult as any;
+            console.log('Plain text password match for user:', user.email);
+          } else {
+            console.log('Plain text password mismatch');
+          }
         }
+      } else {
+        console.log('No user found with this email in users table');
       }
     } catch (e) {
       console.log('Users table query failed:', e);
