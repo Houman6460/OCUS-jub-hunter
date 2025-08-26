@@ -145,6 +145,31 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         console.log('Fallback to premium flags:', hasValidOrders);
       }
 
+      // Additional fallback: if customer has premium flags but order check failed,
+      // check if they have orders by email instead of customer_id
+      if (!hasValidOrders && customer.is_premium && customer.extension_activated) {
+        try {
+          const emailOrderCheck = await env.DB.prepare(`
+            SELECT COUNT(*) as orderCount, SUM(final_amount) as totalPaid
+            FROM orders 
+            WHERE customer_email = ? AND status = 'completed' AND final_amount > 0
+          `).bind(customer.email).first();
+          
+          hasValidOrders = (emailOrderCheck as any)?.orderCount > 0 && 
+                          parseFloat((emailOrderCheck as any)?.totalPaid || '0') > 0;
+          
+          console.log('Email-based order check for', customer.email, ':', {
+            orderCount: (emailOrderCheck as any)?.orderCount,
+            totalPaid: (emailOrderCheck as any)?.totalPaid,
+            hasValidOrders
+          });
+        } catch (emailCheckError) {
+          console.log('Email order check failed:', emailCheckError);
+          // Final fallback: trust the premium flags if they're set
+          hasValidOrders = customer.is_premium && customer.extension_activated;
+        }
+      }
+
       if (!hasValidOrders) {
         return json({
           success: false,
