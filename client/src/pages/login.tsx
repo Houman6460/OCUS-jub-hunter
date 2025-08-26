@@ -141,8 +141,8 @@ export default function Login() {
       setAdminEmail("info@logoland.se");
       setAdminPassword("demo123");
     } else {
-      setCustomerEmail("customer@demo.com");
-      setCustomerPassword("customer123");
+      setCustomerEmail("demo@example.com");
+      setCustomerPassword("demo123");
     }
   };
 
@@ -246,7 +246,7 @@ export default function Login() {
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     required
-                    placeholder="customer@demo.com"
+                    placeholder="demo@example.com"
                   />
                 </div>
                 
@@ -494,7 +494,7 @@ export default function Login() {
             <h4 className="font-medium text-sm mb-2">Demo Credentials:</h4>
             <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
               <p><strong>Admin:</strong> info@logoland.se / demo123</p>
-              <p><strong>Customer:</strong> customer@demo.com / customer123</p>
+              <p><strong>Customer:</strong> demo@example.com / demo123</p>
             </div>
           </div>
         </CardContent>
