@@ -51,9 +51,31 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     // Check if Stripe is enabled and configured
     if (!settings.stripeEnabled || !settings.stripeSecretKey) {
+      console.error('Stripe configuration missing:', {
+        stripeEnabled: settings.stripeEnabled,
+        hasSecretKey: !!settings.stripeSecretKey,
+        hasPublicKey: !!settings.stripePublicKey
+      });
+      
       return new Response(JSON.stringify({
         success: false,
-        error: 'Payment processing not configured'
+        error: 'Payment processing not configured. Please contact support.',
+        details: 'Stripe payment gateway is not properly configured'
+      }), {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        } as HeadersInit
+      });
+    }
+
+    // Validate Stripe keys format
+    if (!settings.stripeSecretKey.startsWith('sk_')) {
+      console.error('Invalid Stripe secret key format');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid payment configuration'
       }), {
         status: 503,
         headers: {

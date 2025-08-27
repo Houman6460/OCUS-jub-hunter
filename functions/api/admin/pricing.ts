@@ -2,16 +2,36 @@ export async function onRequestGet(context: any) {
   const { env } = context;
   
   try {
+    // Check if database is available
+    if (!env.DB) {
+      console.error('Database not available, returning default pricing');
+      return new Response(JSON.stringify({
+        id: 1,
+        name: "OCUS Job Hunter Extension",
+        price: "29.99",
+        beforePrice: null
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        }
+      });
+    }
+
     // Fetch the current product pricing from D1 database
-    const selectQuery = `SELECT * FROM products WHERE id = 1 AND isActive = 1`;
+    const selectQuery = `SELECT * FROM products WHERE id = 1 AND is_active = 1`;
     const result = await env.DB.prepare(selectQuery).first();
 
     if (!result) {
       // Return default pricing if no product found
+      console.log('No product found in database, returning default pricing');
       return new Response(JSON.stringify({
         id: 1,
         name: "OCUS Job Hunter Extension",
-        price: "250.00",
+        price: "29.99",
         beforePrice: null
       }), {
         status: 200,

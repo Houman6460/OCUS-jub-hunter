@@ -139,13 +139,27 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
   // Fetch client secret when dialog opens
   React.useEffect(() => {
     if (open && !clientSecret) {
+      console.log('Initializing payment flow...');
+      
       apiRequest('GET', '/api/admin/pricing')
-        .then((response) => response.json())
-        .then((pricingData) => {
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(`Pricing API failed: ${response.status} ${response.statusText}`);
+          }
+          const pricingData = await response.json();
+          console.log('Pricing data received:', pricingData);
+          
           const priceAmount = parseFloat(pricingData.price);
           const priceCurrency = 'eur';
+          
+          if (isNaN(priceAmount) || priceAmount <= 0) {
+            throw new Error(`Invalid price received: ${pricingData.price}`);
+          }
+          
           setAmount(priceAmount);
           setCurrency(priceCurrency);
+          
+          console.log('Creating payment intent with amount:', priceAmount);
           return apiRequest('POST', '/api/create-user-payment-intent', {
             amount: priceAmount,
             currency: priceCurrency,
@@ -155,21 +169,43 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
           });
         })
         .then(async (response) => {
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Payment intent creation failed:', errorData);
+            throw new Error(errorData.error || `Payment intent API failed: ${response.status}`);
+          }
+          
           const data = await response.json();
+          console.log('Payment intent created successfully:', { hasClientSecret: !!data.clientSecret, hasPublishableKey: !!data.publishableKey });
+          
+          if (!data.success) {
+            throw new Error(data.error || 'Payment intent creation failed');
+          }
+          
+          if (!data.clientSecret || !data.publishableKey) {
+            throw new Error('Missing client secret or publishable key in response');
+          }
+          
           setClientSecret(data.clientSecret);
           setStripePublishableKey(data.publishableKey);
           
           if (data.publishableKey && !stripePromise) {
+            console.log('Loading Stripe with publishable key');
             stripePromise = loadStripe(data.publishableKey);
           }
         })
         .catch((error) => {
-          console.error('Error creating payment intent:', error instanceof Error ? error.message : error);
+          console.error('Payment initialization error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          
           toast({
-            title: "Error",
-            description: "Failed to initialize payment. Please try again.",
+            title: "Payment Initialization Failed",
+            description: `${errorMessage}. Please check payment configuration or try again later.`,
             variant: "destructive",
           });
+          
+          // Reset dialog state on error
+          setOpen(false);
         });
     }
   }, [open, clientSecret, toast]);
