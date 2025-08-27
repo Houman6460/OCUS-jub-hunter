@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, Eye, ReceiptText } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Invoice {
   id: number;
@@ -19,8 +18,7 @@ interface Invoice {
 }
 
 export default function UserInvoicesPage() {
-  const { t } = useLanguage();
-  
+    
   const [customer, setCustomer] = useState<any>(null);
 
   useEffect(() => {
@@ -37,7 +35,7 @@ export default function UserInvoicesPage() {
   const customerId = customer?.id;
 
   // Fetch user's invoices
-  const { data: invoices, isLoading } = useQuery({
+  const { data: invoices, isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/invoices/customer', customerId],
     queryFn: async () => {
       if (!customerId) return [];
@@ -166,7 +164,7 @@ export default function UserInvoicesPage() {
                   {invoice.status === 'paid' && (
                     <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-2 text-green-800">
-                        <Receipt className="w-4 h-4" />
+                        <ReceiptText className="w-4 h-4" />
                         <span className="text-sm font-medium">
                           Payment received - Thank you for your purchase!
                         </span>

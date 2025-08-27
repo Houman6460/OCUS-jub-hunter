@@ -6,11 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { fetchWithAuth } from "@/lib/api";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Download, Eye, Palette, Settings, Upload, X, Loader2, ReceiptText } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { FileText, Download, Eye, Palette, Settings, Upload, X, ReceiptText } from 'lucide-react';
 import "@/styles/invoice-preview.css";
 
 interface InvoiceSettings {
@@ -45,20 +42,25 @@ interface Invoice {
 }
 
 export default function AdminInvoicesPage() {
-  const { toast } = useToast();
-  const { t } = useLanguage();
-  const queryClient = useQueryClient();
 
   // Fetch invoice settings
-  const { data: settings, isLoading: settingsLoading } = useQuery({
-    queryKey: ['/api/invoices/admin/settings'],
-    refetchInterval: false
+  const { data: settings, isLoading: isLoadingSettings } = useQuery<InvoiceSettings>({
+    queryKey: ['invoice-settings'],
+    queryFn: () => fetch('/api/invoices/settings').then(res => res.json()),
   });
 
   // Fetch invoices list
-  const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    queryKey: ['/api/invoices/admin/list'],
+  const { data: invoices, isLoading: isLoadingInvoices } = useQuery<Invoice[]>({
+    queryKey: ['admin-invoices'],
+    queryFn: () => fetch('/api/invoices/admin/list').then(res => res.json()),
     refetchInterval: 30000 // Refresh every 30 seconds
+  });
+
+  // Fetch invoice preview data
+  const { data: invoicePreviewData, isLoading: isLoadingPreview } = useQuery<InvoiceSettings>({
+    queryKey: ['invoice-preview'],
+    queryFn: () => fetch('/api/invoices/settings').then(res => res.json()),
+    refetchOnWindowFocus: false,
   });
 
   return (
@@ -81,12 +83,12 @@ export default function AdminInvoicesPage() {
 
           {/* Invoice Design Settings */}
           <TabsContent value="settings" className="space-y-6">
-            <InvoiceSettingsCard settings={settings} isLoading={settingsLoading} />
+            <InvoiceSettingsCard settings={settings} isLoading={isLoadingSettings} />
           </TabsContent>
 
           {/* Invoice List */}
           <TabsContent value="invoices" className="space-y-6">
-            <InvoiceListCard invoices={invoices} isLoading={invoicesLoading} />
+            <InvoiceListCard invoices={invoices} isLoading={isLoadingInvoices} />
           </TabsContent>
 
           {/* Preview */}
