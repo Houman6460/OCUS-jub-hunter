@@ -120,9 +120,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
       // 4. Create invoice
       finalBatch.push(env.DB.prepare(`
-        INSERT INTO invoices (order_id, invoice_number, customer_id, customer_email, customer_name, amount, currency, status, invoice_date, due_date, paid_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
-      `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, customerName || customerEmail, purchaseCompleteRequest.amount, purchaseCompleteRequest.currency.toLowerCase(), now, now, now));
+        INSERT INTO invoices (order_id, invoice_number, customer_id, customer_name, customer_email, 
+                             invoice_date, due_date, subtotal, tax_amount, discount_amount, 
+                             total_amount, currency, status, paid_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
+      `).bind(orderId, invoiceNumber, finalCustomerId, customerName || customerEmail, customerEmail, 
+               now, now, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, 
+               purchaseCompleteRequest.currency, now, now, now));
       
       console.log('Running final batch for activation code and invoice...');
       await env.DB.batch(finalBatch);
