@@ -71,29 +71,29 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             return json({ error: 'Customer not found' }, 404);
           }
 
-          // Get invoices for this customer with exact paid amounts
+          // Get invoices for this customer using email match
           const invoices = await env.DB.prepare(`
             SELECT 
               i.id,
-              i.invoiceNumber as invoice_number,
-              i.orderId as order_id,
-              o.finalAmount as amount,
+              i.invoice_number,
+              i.order_id,
+              o.final_amount as amount,
               i.currency,
-              i.taxAmount as tax_amount,
+              i.tax_amount,
               i.status,
-              i.invoiceDate as invoice_date,
-              i.dueDate as due_date,
-              i.paidAt as paid_at,
-              i.createdAt as created_at,
-              o.customerName as customer_name,
-              o.customerEmail as customer_email,
-              o.paymentMethod as payment_method,
+              i.invoice_date,
+              i.due_date,
+              i.paid_at,
+              i.created_at,
+              o.customer_name,
+              o.customer_email,
+              o.payment_method,
               'premium-extension' as product_id
             FROM invoices i
-            LEFT JOIN orders o ON i.orderId = o.id
-            WHERE i.customerId = ?
-            ORDER BY i.createdAt DESC
-          `).bind(parseInt(userId)).all();
+            LEFT JOIN orders o ON i.order_id = o.id
+            WHERE o.customer_email = ?
+            ORDER BY i.created_at DESC
+          `).bind(customer.email).all();
 
           return json(invoices.results || []);
 

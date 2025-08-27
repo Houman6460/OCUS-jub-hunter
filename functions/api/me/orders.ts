@@ -71,7 +71,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             return json({ error: 'Customer not found' }, 404);
           }
 
-          // Get orders for this customer
+          // Get orders for this customer using email instead of customer_id
           const orders = await env.DB.prepare(`
             SELECT 
               id,
@@ -89,9 +89,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               created_at as createdAt,
               completed_at as completedAt
             FROM orders
-            WHERE customer_id = ?
+            WHERE customer_email = ?
             ORDER BY created_at DESC
-          `).bind(parseInt(userId)).all();
+          `).bind(customer.email).all();
 
           return json(orders.results || []);
 
