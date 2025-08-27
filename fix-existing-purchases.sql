@@ -1,12 +1,12 @@
 -- SQL script to fix existing purchase records and update premium status
 -- Run each query separately in your D1 database console
 
--- First, update customers table for users with completed orders
+-- First, update customers table for users with completed orders (using email match)
 UPDATE customers 
 SET is_premium = 1, 
     extension_activated = 1
-WHERE id IN (
-    SELECT DISTINCT customer_id 
+WHERE email IN (
+    SELECT DISTINCT customer_email 
     FROM orders 
     WHERE status = 'completed' AND final_amount > 0
 );
