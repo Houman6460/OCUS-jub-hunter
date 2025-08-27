@@ -101,7 +101,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       // For now, we accept the small risk between these inserts.
 
       const orderResult = await env.DB.prepare(`
-        INSERT INTO orders (customer_id, customer_email, customer_name, original_amount, final_amount, currency, status, payment_method, payment_intent_id, download_token, created_at, completed_at)
+        INSERT INTO orders (customerId, customerEmail, customerName, originalAmount, finalAmount, currency, status, paymentMethod, paymentIntentId, downloadToken, createdAt, completedAt)
         VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
       `).bind(finalCustomerId, customerEmail, customerName || customerEmail, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, purchaseCompleteRequest.currency.toLowerCase(), paymentIntentId, downloadToken, now, now).run();
 
@@ -115,14 +115,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const finalBatch = [];
       // 3. Create activation code
       finalBatch.push(env.DB.prepare(`
-        INSERT INTO activation_codes (code, order_id, created_at) VALUES (?, ?, ?)
+        INSERT INTO activation_codes (code, orderId, createdAt) VALUES (?, ?, ?)
       `).bind(activationCode, orderId, now));
 
       // 4. Create invoice
       finalBatch.push(env.DB.prepare(`
-        INSERT INTO invoices (order_id, invoice_number, customer_id, customer_name, customer_email, 
-                             invoice_date, due_date, subtotal, tax_amount, discount_amount, 
-                             total_amount, currency, status, paid_at, created_at, updated_at)
+        INSERT INTO invoices (orderId, invoiceNumber, customerId, customerName, customerEmail, 
+                             invoiceDate, dueDate, subtotal, taxAmount, discountAmount, 
+                             totalAmount, currency, status, paidAt, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
       `).bind(orderId, invoiceNumber, finalCustomerId, customerName || customerEmail, customerEmail, 
                now, now, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, 
