@@ -4,15 +4,14 @@
 -- First, update customers table for users with completed orders
 UPDATE customers 
 SET is_premium = 1, 
-    extension_activated = 1,
-    updated_at = CURRENT_TIMESTAMP
+    extension_activated = 1
 WHERE id IN (
     SELECT DISTINCT customer_id 
     FROM orders 
     WHERE status = 'completed' AND final_amount > 0
 );
 
--- Second, update users table for users with completed orders (by email)
+-- Second, update users table for users with completed orders (by email)  
 UPDATE users 
 SET is_premium = 1, 
     extension_activated = 1,
