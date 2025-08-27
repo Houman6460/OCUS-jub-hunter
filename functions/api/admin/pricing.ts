@@ -22,7 +22,7 @@ export async function onRequestGet(context: any) {
     }
 
     // Fetch the current product pricing from D1 database
-    const selectQuery = `SELECT * FROM products WHERE id = 1 AND is_active = 1`;
+    const selectQuery = `SELECT * FROM products WHERE id = 1 AND isActive = 1`;
     const result = await env.DB.prepare(selectQuery).first();
 
     if (!result) {
