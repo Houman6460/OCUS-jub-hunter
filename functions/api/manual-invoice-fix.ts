@@ -37,29 +37,65 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return json({ error: 'Database not available' }, 500);
     }
 
-    // 1. Find the latest order for the user
-    const latestOrder = await env.DB.prepare(
+    // 1. Find user and customer details
+    const user = await env.DB.prepare(`SELECT * FROM users WHERE email = ?`).bind(customerEmail).first<any>();
+    if (!user) {
+      return json({ error: 'User not found.' }, 404);
+    }
+
+    const customer = await env.DB.prepare(`SELECT * FROM customers WHERE email = ?`).bind(customerEmail).first<any>();
+    if (!customer) {
+      return json({ error: 'Customer not found.' }, 404);
+    }
+
+    // 2. Find the latest order for the user
+    let latestOrder = await env.DB.prepare(
       `SELECT * FROM orders WHERE customer_email = ? ORDER BY created_at DESC LIMIT 1`
     ).bind(customerEmail).first<any>();
 
+    let orderId;
+
     if (!latestOrder) {
-      return json({ error: 'No orders found for this user.' }, 404);
+      // 3. If no order exists, create one
+      console.log('No order found. Creating a new order for the user.');
+      const now = new Date().toISOString();
+      const orderResult = await env.DB.prepare(
+        `INSERT INTO orders (customer_id, customer_email, customer_name, original_amount, final_amount, currency, status, payment_method, payment_intent_id, created_at, completed_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?)`
+      ).bind(
+        customer.id,
+        customerEmail,
+        customer.name,
+        29.99, // Default amount
+        29.99, // Default amount
+        'usd',
+        `pi_manual_${Date.now()}`, // Placeholder payment intent
+        now,
+        now
+      ).run();
+      
+      orderId = orderResult.meta?.last_row_id;
+      if (!orderId) {
+        throw new Error('Failed to create manual order.');
+      }
+      console.log('Manual order created with ID:', orderId);
+    } else {
+      orderId = latestOrder.id;
     }
 
-    const orderId = latestOrder.id;
-
-    // 2. Check if an invoice already exists for this order
+    // 4. Check if an invoice already exists for this order
     const existingInvoice = await env.DB.prepare(
       `SELECT id FROM invoices WHERE order_id = ?`
     ).bind(orderId).first();
 
     if (existingInvoice) {
-      return json({ message: 'Invoice already exists for the latest order.', orderId }, 200);
+      return json({ message: 'Invoice already exists for the order.', orderId }, 200);
     }
 
-    // 3. Generate the missing invoice
+    // 5. Generate the missing invoice
     const now = new Date().toISOString();
     const invoiceNumber = `INV-${orderId}-${Date.now()}`;
+    const finalOrderDetails = latestOrder || { id: orderId, customer_id: customer.id, customer_email: customerEmail, customer_name: customer.name, final_amount: 29.99, currency: 'usd' };
 
     await env.DB.prepare(
       `INSERT INTO invoices (order_id, invoice_number, customer_id, customer_email, customer_name, amount, currency, status, invoice_date, due_date, paid_at)
@@ -67,11 +103,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     ).bind(
       orderId,
       invoiceNumber,
-      latestOrder.customer_id,
-      latestOrder.customer_email,
-      latestOrder.customer_name,
-      latestOrder.final_amount,
-      latestOrder.currency,
+      finalOrderDetails.customer_id,
+      finalOrderDetails.customer_email,
+      finalOrderDetails.customer_name,
+      finalOrderDetails.final_amount,
+      finalOrderDetails.currency,
       now, // invoice_date
       now, // due_date
       now  // paid_at
