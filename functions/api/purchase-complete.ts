@@ -48,6 +48,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     const now = new Date().toISOString();
+    const nowDate = new Date();
 
     try {
       // 1. Update or create customer record with premium access
@@ -59,9 +60,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           UPDATE users 
           SET is_premium = 1,
               extension_activated = 1,
-              premium_activated_at = ?
+              premium_activated_at = ?,
+              total_spent = COALESCE(total_spent, 0) + ?,
+              total_orders = COALESCE(total_orders, 0) + 1
           WHERE email = ?
-        `).bind(now, customerEmail).run();
+        `).bind(now, amount, customerEmail).run();
         
         console.log('User table update result for', customerEmail, ':', userUpdateResult);
         
@@ -77,9 +80,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           UPDATE customers 
           SET is_premium = 1,
               extension_activated = 1,
+              total_spent = COALESCE(total_spent, 0) + ?,
+              total_orders = COALESCE(total_orders, 0) + 1,
               updated_at = ?
           WHERE id = ?
-        `).bind(now, customerId).run();
+        `).bind(amount, now, customerId).run();
       } else {
         // Find customer by email or create new one
         const existingCustomer = await env.DB.prepare(`
@@ -126,19 +131,22 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             UPDATE customers 
             SET is_premium = 1,
                 extension_activated = 1,
+                total_spent = COALESCE(total_spent, 0) + ?,
+                total_orders = COALESCE(total_orders, 0) + 1,
                 updated_at = ?
             WHERE id = ?
-          `).bind(now, finalCustomerId).run();
+          `).bind(amount, now, finalCustomerId).run();
         } else {
           // Create new customer record
           const result = await env.DB.prepare(`
             INSERT INTO customers (
               email, name, is_premium, extension_activated, 
-              created_at, updated_at
-            ) VALUES (?, ?, 1, 1, ?, ?)
+              total_spent, total_orders, created_at, updated_at
+            ) VALUES (?, ?, 1, 1, ?, 1, ?, ?)
           `).bind(
             customerEmail, 
             customerName || customerEmail, 
+            amount,
             now, 
             now
           ).run();
@@ -181,9 +189,50 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         ) VALUES (?, ?, ?)
       `).bind(activationCode, orderId, now).run();
 
-      // Skip invoice creation for now due to schema conflicts
-      // Invoice will be generated via separate endpoint if needed
-      console.log('Skipping invoice creation due to schema conflicts');
+      // 5. Create invoice record
+      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      const invoiceDate = nowDate;
+      const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+      
+      const invoiceResult = await env.DB.prepare(`
+        INSERT INTO invoices (
+          invoice_number, order_id, customer_id, customer_name, customer_email,
+          invoice_date, due_date, subtotal, tax_amount, discount_amount, 
+          total_amount, currency, status, paid_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
+      `).bind(
+        invoiceNumber,
+        orderId,
+        finalCustomerId,
+        customerName || customerEmail,
+        customerEmail,
+        invoiceDate.toISOString(),
+        dueDate.toISOString(),
+        amount,
+        amount,
+        'USD',
+        invoiceDate.toISOString(),
+        invoiceDate.toISOString(),
+        invoiceDate.toISOString()
+      ).run();
+
+      const invoiceId = invoiceResult.meta?.last_row_id as number;
+
+      // 6. Create invoice item
+      await env.DB.prepare(`
+        INSERT INTO invoice_items (
+          invoice_id, product_name, description, quantity, unit_price, total_price, created_at
+        ) VALUES (?, ?, ?, 1, ?, ?, ?)
+      `).bind(
+        invoiceId,
+        'OCUS Job Hunter Premium',
+        'Premium access to OCUS Job Hunter extension with unlimited job applications',
+        amount,
+        amount,
+        invoiceDate.toISOString()
+      ).run();
+
+      console.log('Invoice created successfully:', { invoiceId, invoiceNumber });
 
       // 5. Log the purchase completion
       console.log('Purchase completed successfully:', {

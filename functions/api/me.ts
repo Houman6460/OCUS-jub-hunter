@@ -60,7 +60,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         try {
           // First try users table (for registered users)
           const user = await env.DB.prepare(`
-            SELECT id, email, name, role, created_at, is_premium, extension_activated
+            SELECT id, email, name, role, created_at, is_premium, extension_activated, 
+                   premium_activated_at, total_spent, total_orders
             FROM users WHERE id = ?
           `).bind(parseInt(userId)).first();
 
@@ -71,15 +72,19 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               name: user.name,
               role: user.role || 'customer',
               createdAt: user.created_at,
-              isPremium: user.is_premium || false,
-              extensionActivated: user.extension_activated || false,
+              isPremium: Boolean(user.is_premium),
+              extensionActivated: Boolean(user.extension_activated),
+              premiumActivatedAt: user.premium_activated_at,
+              totalSpent: parseFloat(String(user.total_spent || '0')),
+              totalOrders: parseInt(String(user.total_orders || '0')),
               isAuthenticated: true
             });
           }
 
           // Fallback to customers table (for legacy users)
           const customer = await env.DB.prepare(`
-            SELECT id, email, name, is_premium, extension_activated, created_at
+            SELECT id, email, name, is_premium, extension_activated, created_at,
+                   total_spent, total_orders
             FROM customers WHERE id = ?
           `).bind(parseInt(userId)).first();
 
@@ -90,8 +95,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               name: customer.name,
               role: 'customer',
               createdAt: customer.created_at,
-              isPremium: customer.is_premium || false,
-              extensionActivated: customer.extension_activated || false,
+              isPremium: Boolean(customer.is_premium),
+              extensionActivated: Boolean(customer.extension_activated),
+              totalSpent: parseFloat(String(customer.total_spent || '0')),
+              totalOrders: parseInt(String(customer.total_orders || '0')),
               isAuthenticated: true
             });
           }
