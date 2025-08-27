@@ -50,102 +50,83 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const now = new Date().toISOString();
 
     try {
-      // Update users table (for registered users)
-      const userUpdateResult = await env.DB.prepare(`
-        UPDATE users 
-        SET is_premium = 1,
-            extension_activated = 1,
-            premium_activated_at = ?
-        WHERE email = ?
-      `).bind(now, customerEmail).run();
-      
-      console.log('User table update result for', customerEmail, ':', userUpdateResult);
-      
-      // Ensure we have a customer ID for orders/invoices
-      let finalCustomerId = null;
-      const existingCustomer = await env.DB.prepare(`
-        SELECT id FROM customers WHERE email = ?
-      `).bind(customerEmail).first();
+      // Use a batch transaction to ensure all or nothing behavior
+      const existingCustomer = await env.DB.prepare(`SELECT id FROM customers WHERE email = ?`).bind(customerEmail).first<{ id: number }>();
+      const customerId = existingCustomer?.id;
 
-      if (existingCustomer) {
-        finalCustomerId = (existingCustomer as any).id;
-        await env.DB.prepare(`
-          UPDATE customers 
-          SET is_premium = 1,
-              extension_activated = 1
-          WHERE id = ?
-        `).bind(finalCustomerId).run();
+      const statements = [];
+
+      // 1. Update users table
+      statements.push(env.DB.prepare(`
+        UPDATE users 
+        SET is_premium = 1, extension_activated = 1, premium_activated_at = ?
+        WHERE email = ?
+      `).bind(now, customerEmail));
+
+      if (customerId) {
+        // 2. Update existing customer
+        statements.push(env.DB.prepare(`
+          UPDATE customers SET is_premium = 1, extension_activated = 1 WHERE id = ?
+        `).bind(customerId));
       } else {
-        // Create new customer record
-        const result = await env.DB.prepare(`
-          INSERT INTO customers (
-            email, name, is_premium, extension_activated, 
-            created_at
-          ) VALUES (?, ?, 1, 1, ?)
-        `).bind(
-          customerEmail, 
-          customerName || customerEmail, 
-          now
-        ).run();
-        
-        finalCustomerId = result.meta?.last_row_id as number;
+        // 2. Or create new customer
+        statements.push(env.DB.prepare(`
+          INSERT INTO customers (email, name, is_premium, extension_activated, created_at) 
+          VALUES (?, ?, 1, 1, ?)
+        `).bind(customerEmail, customerName || customerEmail, now));
       }
 
+      // The rest of the operations depend on the customerId, which we don't know before the batch runs.
+      // This is a limitation of D1 batch. We have to run the first part, get the ID, then run the second part.
+      // This is still better than no transaction at all.
+
+      console.log('Running initial batch for user and customer update...');
+      await env.DB.batch(statements);
+      console.log('User and customer tables updated successfully.');
+
+      // Get the customer ID (either existing or newly created)
+      const finalCustomer = await env.DB.prepare(`SELECT id FROM customers WHERE email = ?`).bind(customerEmail).first<{ id: number }>();
+      if (!finalCustomer) {
+        throw new Error('Failed to find or create customer record.');
+      }
+      const finalCustomerId = finalCustomer.id;
       console.log('Final customer ID for orders/invoices:', finalCustomerId);
 
-      // Create order record
+      // Now, create the order, activation code, and invoice in a second batch
       const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const orderResult = await env.DB.prepare(`
-        INSERT INTO orders (
-          customer_id, customer_email, customer_name, 
-          original_amount, final_amount, currency, status, payment_method,
-          payment_intent_id, download_token, created_at, completed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
-      `).bind(
-        finalCustomerId,
-        customerEmail,
-        customerName || customerEmail,
-        purchaseCompleteRequest.amount,
-        purchaseCompleteRequest.amount,
-        purchaseCompleteRequest.currency.toLowerCase(),
-        paymentIntentId,
-        downloadToken,
-        now,
-        now
-      ).run();
-
-      const orderId = orderResult.meta?.last_row_id as number;
-
-      // Generate activation code
       const activationCode = `OCUS_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       
-      await env.DB.prepare(`
-        INSERT INTO activation_codes (
-          code, order_id, created_at
-        ) VALUES (?, ?, ?)
-      `).bind(activationCode, orderId, now).run();
+      // We need the orderId for the invoice and activation code, which is also not available pre-batch.
+      // We will have to do these sequentially but can wrap them in a manual transaction if D1 supported it.
+      // For now, we accept the small risk between these inserts.
 
-      // Generate invoice
+      const orderResult = await env.DB.prepare(`
+        INSERT INTO orders (customer_id, customer_email, customer_name, original_amount, final_amount, currency, status, payment_method, payment_intent_id, download_token, created_at, completed_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
+      `).bind(finalCustomerId, customerEmail, customerName || customerEmail, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, purchaseCompleteRequest.currency.toLowerCase(), paymentIntentId, downloadToken, now, now).run();
+
+      const orderId = orderResult.meta?.last_row_id;
+      if (!orderId) {
+        throw new Error('Failed to create order, cannot retrieve order ID.');
+      }
+
       const invoiceNumber = `INV-${orderId}-${Date.now()}`;
-      await env.DB.prepare(`
-        INSERT INTO invoices (
-          order_id, invoice_number, customer_id, customer_email, customer_name,
-          amount, currency, status, invoice_date, due_date, paid_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
-      `).bind(
-        orderId,
-        invoiceNumber,
-        finalCustomerId,
-        customerEmail,
-        customerName || customerEmail,
-        purchaseCompleteRequest.amount,
-        purchaseCompleteRequest.currency.toLowerCase(),
-        now, // invoice_date
-        now, // due_date
-        now  // paid_at
-      ).run();
 
-      console.log('Invoice created successfully for order ID:', orderId);
+      const finalBatch = [];
+      // 3. Create activation code
+      finalBatch.push(env.DB.prepare(`
+        INSERT INTO activation_codes (code, order_id, created_at) VALUES (?, ?, ?)
+      `).bind(activationCode, orderId, now));
+
+      // 4. Create invoice
+      finalBatch.push(env.DB.prepare(`
+        INSERT INTO invoices (order_id, invoice_number, customer_id, customer_email, customer_name, amount, currency, status, invoice_date, due_date, paid_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
+      `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, customerName || customerEmail, purchaseCompleteRequest.amount, purchaseCompleteRequest.currency.toLowerCase(), now, now, now));
+      
+      console.log('Running final batch for activation code and invoice...');
+      await env.DB.batch(finalBatch);
+      console.log('Invoice and activation code created successfully for order ID:', orderId);
 
       console.log('Purchase completed successfully:', {
         customerId: finalCustomerId,
@@ -154,7 +135,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         activationCode
       });
     
-      // Return activation key for frontend compatibility
       return json({
         success: true,
         activationKey: activationCode,
