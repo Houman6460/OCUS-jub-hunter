@@ -49,13 +49,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     if (!customer) {
       console.log('No customer found. Creating a new customer record.');
       const customerResult = await env.DB.prepare(
-        `INSERT INTO customers (user_id, email, name, stripe_customer_id, created_at)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO customers (email, name, is_premium, extension_activated, created_at)
+         VALUES (?, ?, 1, 1, ?)`
       ).bind(
-        user.id,
         customerEmail,
-        user.name || 'N/A',
-        `cus_manual_${Date.now()}`,
+        user.name || customerEmail,
         new Date().toISOString()
       ).run();
 
