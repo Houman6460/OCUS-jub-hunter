@@ -71,26 +71,26 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             return json({ error: 'Customer not found' }, 404);
           }
 
-          // Get orders for this customer using email instead of customer_id
+          // Get orders for this customer using email match
           const orders = await env.DB.prepare(`
             SELECT 
               id,
-              customer_email as customerEmail,
-              customer_name as customerName,
-              original_amount as originalAmount,
-              final_amount as finalAmount,
+              customerEmail,
+              customerName,
+              originalAmount,
+              finalAmount,
               currency,
               status,
-              payment_method as paymentMethod,
-              download_token as downloadToken,
-              download_count as downloadCount,
-              max_downloads as maxDownloads,
-              activation_code as activationCode,
-              created_at as createdAt,
-              completed_at as completedAt
+              paymentMethod,
+              downloadToken,
+              downloadCount,
+              maxDownloads,
+              activationCode,
+              createdAt,
+              completedAt
             FROM orders
-            WHERE customer_email = ?
-            ORDER BY created_at DESC
+            WHERE customerEmail = ?
+            ORDER BY createdAt DESC
           `).bind(customer.email).all();
 
           return json(orders.results || []);

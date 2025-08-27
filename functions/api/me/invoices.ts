@@ -75,24 +75,24 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           const invoices = await env.DB.prepare(`
             SELECT 
               i.id,
-              i.invoice_number,
-              i.order_id,
-              o.final_amount as amount,
+              i.invoiceNumber as invoice_number,
+              i.orderId as order_id,
+              o.finalAmount as amount,
               i.currency,
-              i.tax_amount,
+              i.taxAmount as tax_amount,
               i.status,
-              i.invoice_date,
-              i.due_date,
-              i.paid_at,
-              i.created_at,
-              o.customer_name,
-              o.customer_email,
-              o.payment_method,
+              i.invoiceDate as invoice_date,
+              i.dueDate as due_date,
+              i.paidAt as paid_at,
+              i.createdAt as created_at,
+              o.customerName as customer_name,
+              o.customerEmail as customer_email,
+              o.paymentMethod as payment_method,
               'premium-extension' as product_id
             FROM invoices i
-            LEFT JOIN orders o ON i.order_id = o.id
-            WHERE o.customer_email = ?
-            ORDER BY i.created_at DESC
+            LEFT JOIN orders o ON i.orderId = o.id
+            WHERE o.customerEmail = ?
+            ORDER BY i.createdAt DESC
           `).bind(customer.email).all();
 
           return json(invoices.results || []);
