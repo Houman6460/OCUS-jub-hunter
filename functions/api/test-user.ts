@@ -1,3 +1,13 @@
+function json(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*' 
+    }
+  });
+}
+
 // Simple test endpoint to check user data
 export const onRequestPost = async ({ request, env }: any) => {
   try {
@@ -5,13 +15,7 @@ export const onRequestPost = async ({ request, env }: any) => {
     const email = body.email || 'heshmat@gmail.com';
 
     if (!env.DB) {
-      return new Response(JSON.stringify({ success: false, message: 'Database not available' }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
+      return json({ success: false, message: 'Database not available' }, 500);
     }
 
     // Check users table
@@ -37,7 +41,7 @@ export const onRequestPost = async ({ request, env }: any) => {
       FROM orders WHERE customer_id = ?
     `).bind(customer.id).all() : { results: [] };
 
-    return new Response(JSON.stringify({
+    return json({
       success: true,
       email,
       user,
@@ -54,24 +58,13 @@ export const onRequestPost = async ({ request, env }: any) => {
         totalOrdersFromEmail: ordersUserQuery.results?.length || 0,
         totalOrdersFromCustomerId: ordersCustomerQuery.results?.length || 0
       }
-    }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
     });
 
   } catch (error: any) {
     console.error('Error checking user data:', error);
-    return new Response(JSON.stringify({ 
+    return json({ 
       success: false, 
       message: error.message 
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+    }, 500);
   }
 };
