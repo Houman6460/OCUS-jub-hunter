@@ -125,25 +125,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
       // Verify completed orders for the account
       let hasValidOrders = false;
-      if (account.is_premium) {
-        // For premium users or customers, bypass the strict order check if they are flagged as premium
-        hasValidOrders = true;
-        console.log(`Premium account '${account.email}' granted access based on premium flag.`);
-      } else {
-        // For non-premium customers, perform the full order check
-        try {
-          const orderCheck = await env.DB.prepare(`
-            SELECT COUNT(*) as orderCount FROM orders 
-            WHERE (customer_id = ? OR customer_email = ?) AND status = 'completed' AND final_amount > 0
-          `).bind(account.id, account.email).first();
-          
-          hasValidOrders = (orderCheck as any)?.orderCount > 0;
-          console.log(`Order check for ${accountType} '${account.email}':`, { hasValidOrders });
-        } catch (e) {
-          console.log('Order check failed:', e);
-          // Fallback to premium flags if the check fails
-          hasValidOrders = account.is_premium && account.extension_activated;
-        }
+      // Always perform the full order check for any account
+      try {
+        const orderCheck = await env.DB.prepare(`
+          SELECT COUNT(*) as orderCount FROM orders 
+          WHERE (customer_id = ? OR customer_email = ?) AND status = 'completed' AND final_amount > 0
+        `).bind(account.id, account.email).first();
+        
+        hasValidOrders = (orderCheck as any)?.orderCount > 0;
+        console.log(`Order check for ${accountType} '${account.email}':`, { hasValidOrders });
+      } catch (e) {
+        console.log('Order check failed:', e);
+        // Fallback to premium flags if the check fails, but log it as an error condition
+        hasValidOrders = account.is_premium && account.extension_activated;
+        console.error('Database order check failed, falling back to premium flags. This should be investigated.', e);
       }
 
       if (!hasValidOrders) {

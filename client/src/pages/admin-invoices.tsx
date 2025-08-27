@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { fetchWithAuth } from "@/lib/api";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileText, Download, Eye, Palette, Settings, Upload, X, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Download, Eye, Palette, Settings, Upload, X, Loader2, ReceiptText } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import "@/styles/invoice-preview.css";
 
@@ -536,6 +537,23 @@ function InvoiceListCard({ invoices, isLoading }: { invoices: Invoice[]; isLoadi
                           size="sm"
                           variant="outline"
                           onClick={() => window.open(`/api/invoices/${invoice.id}/download`, '_blank')}
+                          title="Download Invoice"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`/api/invoices/${invoice.id}/receipt`, '_blank')}
+                          title="View Receipt"
+                        >
+                          <ReceiptText className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`/api/invoices/${invoice.id}/download-receipt`, '_blank')}
+                          title="Download Receipt"
                         >
                           <Download className="w-4 h-4" />
                         </Button>
@@ -553,6 +571,15 @@ function InvoiceListCard({ invoices, isLoading }: { invoices: Invoice[]; isLoadi
 }
 
 function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (previewRef.current && settings) {
+      previewRef.current.style.setProperty('--primary-color', settings.primaryColor);
+      previewRef.current.style.setProperty('--secondary-color', settings.secondaryColor);
+    }
+  }, [settings]);
+
   if (!settings) {
     return (
       <Card>
@@ -576,11 +603,8 @@ function InvoicePreviewCard({ settings }: { settings: InvoiceSettings }) {
       </CardHeader>
       <CardContent>
         <div 
-          className="border rounded-lg p-6 bg-white invoice-preview" 
-          style={{ 
-            '--primary-color': settings.primaryColor, 
-            '--secondary-color': settings.secondaryColor 
-          } as React.CSSProperties}
+          ref={previewRef}
+          className="border rounded-lg p-6 bg-white invoice-preview"
         >
           {/* Header */}
           <div className="flex justify-between items-start mb-8 pb-4 invoice-header">

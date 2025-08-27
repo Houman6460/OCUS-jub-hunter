@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Eye, Receipt } from 'lucide-react';
+import { FileText, Download, Eye, ReceiptText } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Invoice {
@@ -20,12 +21,33 @@ interface Invoice {
 export default function UserInvoicesPage() {
   const { t } = useLanguage();
   
-  // For demo purposes, use a dummy customer ID
-  const customerId = "demo-customer-123";
+  const [customer, setCustomer] = useState<any>(null);
+
+  useEffect(() => {
+    const customerData = localStorage.getItem('customer_data');
+    if (customerData) {
+      try {
+        setCustomer(JSON.parse(customerData));
+      } catch (error) {
+        console.error("Failed to parse customer data:", error);
+      }
+    }
+  }, []);
+
+  const customerId = customer?.id;
 
   // Fetch user's invoices
   const { data: invoices, isLoading } = useQuery({
     queryKey: ['/api/invoices/customer', customerId],
+    queryFn: async () => {
+      if (!customerId) return [];
+      const response = await fetch(`/api/invoices/customer?customerId=${customerId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch invoices');
+      }
+      return response.json();
+    },
+    enabled: !!customerId, // Only run the query if customerId is available
     refetchInterval: 30000
   });
 
@@ -105,71 +127,39 @@ export default function UserInvoicesPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(`/api/invoices/${invoice.id}/html`, '_blank')}
-                        className="flex items-center gap-2"
+                        title="View Invoice"
                       >
                         <Eye className="w-4 h-4" />
-                        View Invoice
                       </Button>
-                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/api/invoices/${invoice.id}/download`, '_blank')}
+                        title="Download Invoice"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="outline" 
                         size="sm"
                         onClick={() => window.open(`/api/invoices/${invoice.id}/receipt`, '_blank')}
-                        className="flex items-center gap-2"
+                        title="View Receipt"
                       >
-                        <Receipt className="w-4 h-4" />
-                        View Receipt
+                        <ReceiptText className="w-4 h-4" />
                       </Button>
-
-                      <div className="relative">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            // Show download menu
-                            const menu = document.getElementById(`download-menu-${invoice.id}`);
-                            if (menu) {
-                              menu.classList.toggle('hidden');
-                            }
-                          }}
-                          className="flex items-center gap-2"
-                        >
-                          <Download className="w-4 h-4" />
-                          Download
-                        </Button>
-                        
-                        <div 
-                          id={`download-menu-${invoice.id}`}
-                          className="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10"
-                        >
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                window.open(`/api/invoices/${invoice.id}/download`, '_blank');
-                                document.getElementById(`download-menu-${invoice.id}`)?.classList.add('hidden');
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              <FileText className="w-4 h-4 inline mr-2" />
-                              Download Invoice
-                            </button>
-                            <button
-                              onClick={() => {
-                                window.open(`/api/invoices/${invoice.id}/download-receipt`, '_blank');
-                                document.getElementById(`download-menu-${invoice.id}`)?.classList.add('hidden');
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              <Receipt className="w-4 h-4 inline mr-2" />
-                              Download Receipt
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <Button
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`/api/invoices/${invoice.id}/download-receipt`, '_blank')}
+                        title="Download Receipt"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
 

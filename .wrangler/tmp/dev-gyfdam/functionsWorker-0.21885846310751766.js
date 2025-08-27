@@ -335,8 +335,43 @@ var init_translate = __esm({
     }, "onRequestPost");
   }
 });
-var onRequestOptions2;
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
+  });
+}
+__name(json, "json");
 var onRequestGet;
+var init_list = __esm({
+  "api/invoices/admin/list.ts"() {
+    "use strict";
+    init_functionsRoutes_0_4590401186987789();
+    __name2(json, "json");
+    onRequestGet = /* @__PURE__ */ __name2(async ({ env }) => {
+      try {
+        const { results } = await env.DB.prepare(
+          "SELECT * FROM invoices ORDER BY invoiceDate DESC"
+        ).all();
+        if (!results) {
+          return json([]);
+        }
+        return json(results);
+      } catch (error) {
+        return json({
+          error: error.message
+        }, 500);
+      }
+    }, "onRequestGet");
+  }
+});
+var onRequestOptions2;
+var onRequestGet2;
 var onRequestPut;
 var onRequestDelete;
 var init_id = __esm({
@@ -354,7 +389,7 @@ var init_id = __esm({
         }
       });
     }, "onRequestOptions");
-    onRequestGet = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet2 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const settingsStorage = new SettingsStorage(context.env.DB);
         const badgeId = context.params.id;
@@ -513,7 +548,7 @@ var init_id = __esm({
   }
 });
 var onRequestOptions3;
-var onRequestGet2;
+var onRequestGet3;
 var onRequestPut2;
 var onRequestDelete2;
 var init_id2 = __esm({
@@ -531,7 +566,7 @@ var init_id2 = __esm({
         }
       });
     }, "onRequestOptions");
-    onRequestGet2 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet3 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const settingsStorage = new SettingsStorage(context.env.DB);
         const bannerId = context.params.id;
@@ -815,78 +850,6 @@ var init_orderId = __esm({
     __name2(onRequestPut4, "onRequestPut");
   }
 });
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization"
-    }
-  });
-}
-__name(json, "json");
-var onRequestGet3;
-var init_id3 = __esm({
-  "api/extension/check/[id].ts"() {
-    "use strict";
-    init_functionsRoutes_0_4590401186987789();
-    __name2(json, "json");
-    onRequestGet3 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
-      try {
-        const paramId = params.id;
-        const authHeader = request.headers.get("Authorization");
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json({ canUse: false, reason: "Not authenticated" });
-        }
-        const token = authHeader.substring(7);
-        if (token === "demo-jwt-token" && paramId === "1") {
-          return json({
-            canUse: true,
-            reason: "Premium access",
-            trialUsed: 0,
-            isBlocked: false
-          });
-        }
-        if (token.startsWith("jwt-token-")) {
-          const userIdFromToken = parseInt(token.split("-")[2], 10);
-          const userIdFromParam = parseInt(paramId, 10);
-          if (isNaN(userIdFromToken) || isNaN(userIdFromParam) || userIdFromToken !== userIdFromParam) {
-            return json({ canUse: false, reason: "Token mismatch" }, 403);
-          }
-          if (!env.DB) {
-            return json({ canUse: false, reason: "Database not available" }, 500);
-          }
-          const customer = await env.DB.prepare(
-            "SELECT extension_activated FROM customers WHERE id = ?"
-          ).bind(userIdFromParam).first();
-          if (customer && customer.extension_activated) {
-            return json({
-              canUse: true,
-              reason: "Premium access",
-              trialUsed: 0,
-              isBlocked: false
-            });
-          } else {
-            return json({
-              canUse: true,
-              reason: "Trial access",
-              trialUsed: 5,
-              // This could be dynamic in a real app
-              isBlocked: false
-            });
-          }
-        }
-        return json({ canUse: false, reason: "Invalid token" }, 401);
-      } catch (error) {
-        return json({
-          error: error.message
-        }, 500);
-      }
-    }, "onRequestGet");
-  }
-});
 function json2(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -900,21 +863,93 @@ function json2(data, status = 200) {
 }
 __name(json2, "json2");
 var onRequestGet4;
-var init_id4 = __esm({
-  "api/extension/downloads/[id].ts"() {
+var init_id3 = __esm({
+  "api/extension/check/[id].ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     __name2(json2, "json");
     onRequestGet4 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
       try {
+        const paramId = params.id;
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          return json2({ canUse: false, reason: "Not authenticated" });
+        }
+        const token = authHeader.substring(7);
+        if (token === "demo-jwt-token" && paramId === "1") {
+          return json2({
+            canUse: true,
+            reason: "Premium access",
+            trialUsed: 0,
+            isBlocked: false
+          });
+        }
+        if (token.startsWith("jwt-token-")) {
+          const userIdFromToken = parseInt(token.split("-")[2], 10);
+          const userIdFromParam = parseInt(paramId, 10);
+          if (isNaN(userIdFromToken) || isNaN(userIdFromParam) || userIdFromToken !== userIdFromParam) {
+            return json2({ canUse: false, reason: "Token mismatch" }, 403);
+          }
+          if (!env.DB) {
+            return json2({ canUse: false, reason: "Database not available" }, 500);
+          }
+          const customer = await env.DB.prepare(
+            "SELECT extension_activated FROM customers WHERE id = ?"
+          ).bind(userIdFromParam).first();
+          if (customer && customer.extension_activated) {
+            return json2({
+              canUse: true,
+              reason: "Premium access",
+              trialUsed: 0,
+              isBlocked: false
+            });
+          } else {
+            return json2({
+              canUse: true,
+              reason: "Trial access",
+              trialUsed: 5,
+              // This could be dynamic in a real app
+              isBlocked: false
+            });
+          }
+        }
+        return json2({ canUse: false, reason: "Invalid token" }, 401);
+      } catch (error) {
+        return json2({
+          error: error.message
+        }, 500);
+      }
+    }, "onRequestGet");
+  }
+});
+function json3(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
+  });
+}
+__name(json3, "json3");
+var onRequestGet5;
+var init_id4 = __esm({
+  "api/extension/downloads/[id].ts"() {
+    "use strict";
+    init_functionsRoutes_0_4590401186987789();
+    __name2(json3, "json");
+    onRequestGet5 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
+      try {
         const userId = params.id;
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json2([]);
+          return json3([]);
         }
         const token = authHeader.substring(7);
         if (token === "demo-jwt-token" || token.startsWith("jwt-token-") && token.split("-")[2] === "1") {
-          return json2([
+          return json3([
             {
               id: 1,
               downloadToken: "demo-download-token",
@@ -924,93 +959,423 @@ var init_id4 = __esm({
             }
           ]);
         }
-        return json2([]);
+        return json3([]);
       } catch (error) {
-        return json2({
+        return json3({
           error: error.message
         }, 500);
       }
     }, "onRequestGet");
   }
 });
-var onRequestGet5;
-var onRequestOptions5;
-var init_pdf = __esm({
-  "api/invoices/[id]/pdf.ts"() {
+function generateInvoiceHTML(invoice, order, settings) {
+  const company = settings.company || {
+    name: "OCUS Job Hunter",
+    address: "Digital Services Company",
+    email: "support@jobhunter.one",
+    website: "https://jobhunter.one"
+  };
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Invoice #${invoice.invoiceNumber}</title>
+      <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #eee; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .details { display: flex; justify-content: space-between; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; }
+        .totals { margin-top: 20px; text-align: right; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Invoice</h1>
+          <div>
+            <strong>${company.name}</strong><br>
+            ${company.address}<br>
+            ${company.email}
+          </div>
+        </div>
+        <div class="details">
+          <div>
+            <h3>Bill To:</h3>
+            ${order.customerName}<br>
+            ${order.customerEmail}
+          </div>
+          <div>
+            <h3>Invoice Details:</h3>
+            <strong>Invoice #:</strong> ${invoice.invoiceNumber}<br>
+            <strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${order.productName}</td>
+              <td>${order.finalAmount.toFixed(2)} ${order.currency}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="totals">
+          <h3>Total: ${order.finalAmount.toFixed(2)} ${order.currency}</h3>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+__name(generateInvoiceHTML, "generateInvoiceHTML");
+var onRequestGet6;
+var init_download = __esm({
+  "api/invoices/[id]/download.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet5 = /* @__PURE__ */ __name2(async ({ params }) => {
-      const invoiceId = params.id;
-      const pdfContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
->>
-endobj
-
-4 0 obj
-<<
-/Length 44
->>
-stream
-BT
-/F1 12 Tf
-100 700 Td
-(Invoice #${invoiceId}) Tj
-ET
-endstream
-endobj
-
-xref
-0 5
-0000000000 65535 f 
-0000000010 00000 n 
-0000000053 00000 n 
-0000000125 00000 n 
-0000000185 00000 n 
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-279
-%%EOF`;
-      return new Response(pdfContent, {
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="invoice-${invoiceId}.pdf"`,
-          "Access-Control-Allow-Origin": "*"
+    __name2(generateInvoiceHTML, "generateInvoiceHTML");
+    onRequestGet6 = /* @__PURE__ */ __name2(async ({ params, env }) => {
+      try {
+        const invoiceId = params.id;
+        if (!invoiceId) {
+          return new Response("Invoice ID is required", { status: 400 });
         }
-      });
+        const invoice = await env.DB.prepare("SELECT * FROM invoices WHERE id = ?").bind(invoiceId).first();
+        if (!invoice) return new Response("Invoice not found", { status: 404 });
+        const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(invoice.orderId).first();
+        if (!order) return new Response("Associated order not found", { status: 404 });
+        const settingsStmt = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind("invoice_settings").first();
+        const settings = settingsStmt ? JSON.parse(settingsStmt.value) : {};
+        const html = generateInvoiceHTML(invoice, order, settings);
+        return new Response(html, {
+          headers: {
+            "Content-Type": "text/html",
+            "Content-Disposition": `attachment; filename="invoice-${invoice.invoiceNumber}.html"`,
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (error) {
+        return new Response(`Error generating invoice: ${error.message}`, { status: 500 });
+      }
     }, "onRequestGet");
-    onRequestOptions5 = /* @__PURE__ */ __name2(async () => {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type"
+  }
+});
+function generateReceiptHTML(invoice, order, settings) {
+  const company = settings.company || {
+    name: "OCUS Job Hunter",
+    email: "support@jobhunter.one"
+  };
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Receipt for Invoice #${invoice.invoiceNumber}</title>
+      <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; }
+        .header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .details { margin-top: 20px; }
+        .summary { margin-top: 20px; }
+        .total-amount { font-size: 1.2em; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Payment Receipt</h1>
+        </div>
+        <div class="details">
+          <p><strong>Receipt #:</strong> RCPT-${invoice.id}</p>
+          <p><strong>Payment Date:</strong> ${new Date(order.completedAt).toLocaleDateString()}</p>
+          <p><strong>Paid To:</strong> ${company.name}</p>
+          <p><strong>Paid By:</strong> ${order.customerName}</p>
+        </div>
+        <div class="summary">
+          <h3>Summary</h3>
+          <p>Total Paid: <span class="total-amount">${order.finalAmount.toFixed(2)} ${order.currency}</span></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+__name(generateReceiptHTML, "generateReceiptHTML");
+var onRequestGet7;
+var init_download_receipt = __esm({
+  "api/invoices/[id]/download-receipt.ts"() {
+    "use strict";
+    init_functionsRoutes_0_4590401186987789();
+    __name2(generateReceiptHTML, "generateReceiptHTML");
+    onRequestGet7 = /* @__PURE__ */ __name2(async ({ params, env }) => {
+      try {
+        const invoiceId = params.id;
+        if (!invoiceId) {
+          return new Response("Invoice ID is required", { status: 400 });
         }
-      });
-    }, "onRequestOptions");
+        const invoice = await env.DB.prepare("SELECT * FROM invoices WHERE id = ?").bind(invoiceId).first();
+        if (!invoice) return new Response("Invoice not found", { status: 404 });
+        const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(invoice.orderId).first();
+        if (!order) return new Response("Associated order not found", { status: 404 });
+        const settingsStmt = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind("invoice_settings").first();
+        const settings = settingsStmt ? JSON.parse(settingsStmt.value) : {};
+        const html = generateReceiptHTML(invoice, order, settings);
+        return new Response(html, {
+          headers: {
+            "Content-Type": "text/html",
+            "Content-Disposition": `attachment; filename="receipt-${invoice.invoiceNumber}.html"`,
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (error) {
+        return new Response(`Error generating receipt: ${error.message}`, { status: 500 });
+      }
+    }, "onRequestGet");
+  }
+});
+function generateInvoiceHTML2(invoice, order, settings) {
+  const company = settings.company || {
+    name: "OCUS Job Hunter",
+    address: "Digital Services Company",
+    email: "support@jobhunter.one",
+    website: "https://jobhunter.one"
+  };
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Invoice #${invoice.invoiceNumber}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 20px auto; padding: 30px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .header h1 { font-size: 2.5em; color: #000; margin: 0; }
+        .header .company-details { text-align: right; font-size: 0.9em; color: #555; }
+        .details { display: flex; justify-content: space-between; margin-top: 30px; }
+        .details .customer-details, .details .invoice-details { font-size: 0.95em; }
+        .details h3 { margin-top: 0; font-size: 1.1em; color: #000; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th, td { padding: 12px 15px; text-align: left; }
+        thead { background-color: #f5f5f5; border-bottom: 2px solid #ddd; }
+        th { font-weight: 600; color: #333; }
+        tbody tr { border-bottom: 1px solid #eee; }
+        .totals { margin-top: 30px; text-align: right; }
+        .totals table { width: auto; float: right; }
+        .totals td { text-align: right; }
+        .totals .total-amount { font-size: 1.4em; font-weight: bold; color: #000; }
+        .footer { margin-top: 40px; text-align: center; font-size: 0.85em; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+        .status { font-size: 1.2em; font-weight: bold; padding: 8px 12px; border-radius: 6px; text-transform: uppercase; }
+        .status.paid { color: #28a745; background-color: #e9f7ec; }
+        .status.pending { color: #ffc107; background-color: #fff8e1; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Invoice</h1>
+          <div class="company-details">
+            <strong>${company.name}</strong><br>
+            ${company.address}<br>
+            ${company.email}<br>
+            ${company.website}
+          </div>
+        </div>
+        <div class="details">
+          <div class="customer-details">
+            <h3>Bill To:</h3>
+            <strong>${order.customerName}</strong><br>
+            ${order.customerEmail}
+          </div>
+          <div class="invoice-details">
+            <h3>Invoice Details:</h3>
+            <strong>Invoice #:</strong> ${invoice.invoiceNumber}<br>
+            <strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}<br>
+            <strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}<br>
+            <strong>Status:</strong> <span class="status ${invoice.status.toLowerCase()}">${invoice.status}</span>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${order.productName}</td>
+              <td>1</td>
+              <td>${order.finalAmount.toFixed(2)} ${order.currency}</td>
+              <td>${order.finalAmount.toFixed(2)} ${order.currency}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="totals">
+          <table>
+            <tr>
+              <td>Subtotal:</td>
+              <td>${order.finalAmount.toFixed(2)} ${order.currency}</td>
+            </tr>
+            <tr>
+              <td>Tax (0%):</td>
+              <td>0.00 ${order.currency}</td>
+            </tr>
+            <tr>
+              <td class="total-amount">Total:</td>
+              <td class="total-amount">${order.finalAmount.toFixed(2)} ${order.currency}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="footer">
+          <p>Thank you for your business!</p>
+          <p>If you have any questions, please contact us at ${company.email}.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+__name(generateInvoiceHTML2, "generateInvoiceHTML2");
+var onRequestGet8;
+var init_html = __esm({
+  "api/invoices/[id]/html.ts"() {
+    "use strict";
+    init_functionsRoutes_0_4590401186987789();
+    __name2(generateInvoiceHTML2, "generateInvoiceHTML");
+    onRequestGet8 = /* @__PURE__ */ __name2(async ({ params, env }) => {
+      try {
+        const invoiceId = params.id;
+        if (!invoiceId) {
+          return new Response("Invoice ID is required", { status: 400 });
+        }
+        const invoice = await env.DB.prepare(
+          "SELECT * FROM invoices WHERE id = ?"
+        ).bind(invoiceId).first();
+        if (!invoice) {
+          return new Response("Invoice not found", { status: 404 });
+        }
+        const order = await env.DB.prepare(
+          "SELECT * FROM orders WHERE id = ?"
+        ).bind(invoice.orderId).first();
+        if (!order) {
+          return new Response("Associated order not found", { status: 404 });
+        }
+        const settingsStmt = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind("invoice_settings").first();
+        const settings = settingsStmt ? JSON.parse(settingsStmt.value) : {};
+        const html = generateInvoiceHTML2(invoice, order, settings);
+        return new Response(html, {
+          headers: {
+            "Content-Type": "text/html",
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (error) {
+        return new Response(`Error generating invoice: ${error.message}`, { status: 500 });
+      }
+    }, "onRequestGet");
+  }
+});
+function generateReceiptHTML2(invoice, order, settings) {
+  const company = settings.company || {
+    name: "OCUS Job Hunter",
+    email: "support@jobhunter.one"
+  };
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Receipt for Invoice #${invoice.invoiceNumber}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; padding: 30px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .header h1 { font-size: 2.2em; color: #28a745; margin: 0; }
+        .header p { font-size: 1.1em; color: #555; }
+        .details { margin-top: 30px; font-size: 0.95em; }
+        .details strong { color: #000; }
+        .summary { margin-top: 30px; }
+        .summary h3 { font-size: 1.2em; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        td { padding: 10px 0; }
+        .total-amount { font-size: 1.5em; font-weight: bold; color: #000; }
+        .footer { margin-top: 30px; text-align: center; font-size: 0.85em; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Payment Receipt</h1>
+          <p>Thank you for your purchase!</p>
+        </div>
+        <div class="details">
+          <p><strong>Receipt #:</strong> RCPT-${invoice.id}</p>
+          <p><strong>Invoice #:</strong> ${invoice.invoiceNumber}</p>
+          <p><strong>Payment Date:</strong> ${new Date(order.completedAt).toLocaleDateString()}</p>
+          <p><strong>Paid To:</strong> ${company.name}</p>
+          <p><strong>Paid By:</strong> ${order.customerName} (${order.customerEmail})</p>
+        </div>
+        <div class="summary">
+          <h3>Payment Summary</h3>
+          <table>
+            <tr>
+              <td>${order.productName}</td>
+              <td style="text-align: right;">${order.finalAmount.toFixed(2)} ${order.currency}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Total Paid:</td>
+              <td style="text-align: right;" class="total-amount">${order.finalAmount.toFixed(2)} ${order.currency}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="footer">
+          <p>If you have any questions, please contact us at ${company.email}.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+__name(generateReceiptHTML2, "generateReceiptHTML2");
+var onRequestGet9;
+var init_receipt = __esm({
+  "api/invoices/[id]/receipt.ts"() {
+    "use strict";
+    init_functionsRoutes_0_4590401186987789();
+    __name2(generateReceiptHTML2, "generateReceiptHTML");
+    onRequestGet9 = /* @__PURE__ */ __name2(async ({ params, env }) => {
+      try {
+        const invoiceId = params.id;
+        if (!invoiceId) {
+          return new Response("Invoice ID is required", { status: 400 });
+        }
+        const invoice = await env.DB.prepare("SELECT * FROM invoices WHERE id = ?").bind(invoiceId).first();
+        if (!invoice) return new Response("Invoice not found", { status: 404 });
+        const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(invoice.orderId).first();
+        if (!order) return new Response("Associated order not found", { status: 404 });
+        const settingsStmt = await env.DB.prepare("SELECT value FROM settings WHERE key = ?").bind("invoice_settings").first();
+        const settings = settingsStmt ? JSON.parse(settingsStmt.value) : {};
+        const html = generateReceiptHTML2(invoice, order, settings);
+        return new Response(html, {
+          headers: { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" }
+        });
+      } catch (error) {
+        return new Response(`Error generating receipt: ${error.message}`, { status: 500 });
+      }
+    }, "onRequestGet");
   }
 });
 var TicketStorage;
@@ -3147,7 +3512,7 @@ var init_user_storage = __esm({
     };
   }
 });
-function json3(data, status = 200) {
+function json4(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -3156,17 +3521,17 @@ function json3(data, status = 200) {
     }
   });
 }
-__name(json3, "json3");
+__name(json4, "json4");
 var onRequestPost3;
-var onRequestGet6;
-var onRequestOptions6;
+var onRequestGet10;
+var onRequestOptions5;
 var init_messages = __esm({
   "api/tickets/[id]/messages.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_db();
     init_user_storage();
-    __name2(json3, "json");
+    __name2(json4, "json");
     onRequestPost3 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
       try {
         const ticketId = Number(params.id);
@@ -3252,14 +3617,14 @@ var init_messages = __esm({
         content = typeof content === "string" ? content.trim() : content;
         const hasAttachments = request.headers.get("content-type")?.includes("multipart/form-data");
         if (!content && !hasAttachments) {
-          return json3({ success: false, message: "Missing content" }, 400);
+          return json4({ success: false, message: "Missing content" }, 400);
         }
         if (!content && hasAttachments) {
           content = "[File attachment]";
         }
         const storage = new TicketStorage(env.DB);
         const ticket = await storage.getTicketById(ticketId);
-        if (!ticket) return json3({ success: false, message: "Ticket not found" }, 200);
+        if (!ticket) return json4({ success: false, message: "Ticket not found" }, 200);
         let finalSenderName = customerName;
         if (!customerName && customerEmail && !isAdmin) {
           try {
@@ -3281,14 +3646,14 @@ var init_messages = __esm({
           sender_email: customerEmail || (isAdmin ? void 0 : ticket.customer_email),
           attachments: attachmentData
         });
-        return json3({ success: true, message: msg });
+        return json4({ success: true, message: msg });
       } catch (error) {
         console.error("Failed to add message:", error);
         const message = error instanceof Error ? error.message : "An unknown error occurred";
-        return json3({ success: false, message }, 500);
+        return json4({ success: false, message }, 500);
       }
     }, "onRequestPost");
-    onRequestGet6 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
+    onRequestGet10 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
       const ticketId = Number(params.id);
       const expressBase = env?.EXPRESS_API_BASE;
       if (expressBase) {
@@ -3320,9 +3685,9 @@ var init_messages = __esm({
         createdAt: m.created_at,
         attachments: []
       }));
-      return json3(mapped);
+      return json4(mapped);
     }, "onRequestGet");
-    onRequestOptions6 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions5 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -3341,7 +3706,7 @@ function getStore() {
   return globalThis.__TICKET_STORE__;
 }
 __name(getStore, "getStore");
-function json4(data, status = 200) {
+function json5(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -3350,7 +3715,7 @@ function json4(data, status = 200) {
     }
   });
 }
-__name(json4, "json4");
+__name(json5, "json5");
 function toInternalStatus(input) {
   if (input === "in_progress") return "in-progress";
   if (input === "closed") return "closed";
@@ -3358,13 +3723,13 @@ function toInternalStatus(input) {
 }
 __name(toInternalStatus, "toInternalStatus");
 var onRequestPut5;
-var onRequestOptions7;
+var onRequestOptions6;
 var init_status = __esm({
   "api/tickets/[id]/status.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     __name2(getStore, "getStore");
-    __name2(json4, "json");
+    __name2(json5, "json");
     __name2(toInternalStatus, "toInternalStatus");
     onRequestPut5 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
       try {
@@ -3392,22 +3757,22 @@ var init_status = __esm({
         }
         const body = await request.json().catch(() => ({}));
         const status = body?.status;
-        if (!status) return json4({ success: false, message: "Missing status" }, 400);
+        if (!status) return json5({ success: false, message: "Missing status" }, 400);
         const store = getStore();
         const idx = store.tickets.findIndex((t) => t.id === ticketId);
-        if (idx === -1) return json4({ success: false, message: "Ticket not found" }, 404);
+        if (idx === -1) return json5({ success: false, message: "Ticket not found" }, 404);
         const now = (/* @__PURE__ */ new Date()).toISOString();
         store.tickets[idx] = {
           ...store.tickets[idx],
           status: toInternalStatus(status),
           updated_at: now
         };
-        return json4({ success: true, ticket: store.tickets[idx] });
+        return json5({ success: true, ticket: store.tickets[idx] });
       } catch (e) {
-        return json4({ success: false, message: "Failed to update status" }, 500);
+        return json5({ success: false, message: "Failed to update status" }, 500);
       }
     }, "onRequestPut");
-    onRequestOptions7 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions6 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -3418,7 +3783,7 @@ var init_status = __esm({
     }, "onRequestOptions");
   }
 });
-function json5(data, status = 200) {
+function json6(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -3429,19 +3794,19 @@ function json5(data, status = 200) {
     }
   });
 }
-__name(json5, "json5");
-var onRequestGet7;
+__name(json6, "json6");
+var onRequestGet11;
 var init_purchase_status = __esm({
   "api/user/[id]/purchase-status.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json5, "json");
-    onRequestGet7 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
+    __name2(json6, "json");
+    onRequestGet11 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
       try {
         const userId = params.id;
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json5({
+          return json6({
             hasPurchased: false,
             totalSpent: "0.00",
             completedOrders: 0,
@@ -3450,7 +3815,7 @@ var init_purchase_status = __esm({
         }
         const token = authHeader.substring(7);
         if (token === "demo-jwt-token" || token.startsWith("jwt-token-") && token.split("-")[2] === "1") {
-          return json5({
+          return json6({
             hasPurchased: true,
             totalSpent: "29.99",
             completedOrders: 1,
@@ -3458,7 +3823,7 @@ var init_purchase_status = __esm({
           });
         }
         if (!env.DB) {
-          return json5({
+          return json6({
             hasPurchased: false,
             totalSpent: "0.00",
             completedOrders: 0,
@@ -3489,7 +3854,7 @@ var init_purchase_status = __esm({
             }
           }
           if (!user && !customer) {
-            return json5({
+            return json6({
               hasPurchased: false,
               totalSpent: "0.00",
               completedOrders: 0,
@@ -3507,7 +3872,7 @@ var init_purchase_status = __esm({
           const totalPaid = String(orderStats?.totalPaid || "0.00");
           const lastPurchaseDate = orderStats?.lastPurchaseDate;
           const hasPurchased = hasPremiumStatus && hasExtensionActivated;
-          return json5({
+          return json6({
             hasPurchased,
             totalSpent: totalPaid,
             completedOrders,
@@ -3515,7 +3880,7 @@ var init_purchase_status = __esm({
           });
         } catch (dbError) {
           console.error("Database error in purchase-status:", dbError);
-          return json5({
+          return json6({
             hasPurchased: false,
             totalSpent: "0.00",
             completedOrders: 0,
@@ -3523,20 +3888,20 @@ var init_purchase_status = __esm({
           });
         }
       } catch (error) {
-        return json5({
+        return json6({
           error: error.message
         }, 500);
       }
     }, "onRequestGet");
   }
 });
-var onRequestGet8;
-var onRequestOptions8;
+var onRequestGet12;
+var onRequestOptions7;
 var init_invoices = __esm({
   "api/user/[userId]/invoices.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet8 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet12 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const { params } = context;
         const userId = params.userId;
@@ -3590,7 +3955,7 @@ var init_invoices = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions8 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions7 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -3602,13 +3967,13 @@ var init_invoices = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet9;
-var onRequestOptions9;
+var onRequestGet13;
+var onRequestOptions8;
 var init_orders = __esm({
   "api/user/[userId]/orders.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet9 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet13 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const { params } = context;
         const userId = params.userId;
@@ -3660,7 +4025,7 @@ var init_orders = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions9 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions8 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -3672,13 +4037,13 @@ var init_orders = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet10;
-var onRequestOptions10;
+var onRequestGet14;
+var onRequestOptions9;
 var init_purchase_status2 = __esm({
   "api/user/[userId]/purchase-status.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet10 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet14 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const { params } = context;
         const userId = params.userId;
@@ -3817,7 +4182,7 @@ var init_purchase_status2 = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions10 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions9 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -3829,13 +4194,13 @@ var init_purchase_status2 = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet11;
-var onRequestOptions11;
+var onRequestGet15;
+var onRequestOptions10;
 var init_analytics = __esm({
   "api/admin/analytics.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet11 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet15 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const ordersStatsQuery = `
       SELECT 
@@ -3890,7 +4255,7 @@ var init_analytics = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions11 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions10 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -3902,8 +4267,8 @@ var init_analytics = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestOptions12;
-var onRequestGet12;
+var onRequestOptions11;
+var onRequestGet16;
 var onRequestPost4;
 var onRequestPut6;
 var onRequestDelete3;
@@ -3912,7 +4277,7 @@ var init_announcement_badges = __esm({
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_settings_storage();
-    onRequestOptions12 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions11 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -3922,7 +4287,7 @@ var init_announcement_badges = __esm({
         }
       });
     }, "onRequestOptions");
-    onRequestGet12 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet16 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const settingsStorage = new SettingsStorage(context.env.DB);
         const badgesData = await settingsStorage.getSetting("announcement_badges");
@@ -4170,14 +4535,14 @@ Example format:
     }, "onRequestDelete");
   }
 });
-var onRequestGet13;
+var onRequestGet17;
 var onRequestPut7;
-var onRequestOptions13;
+var onRequestOptions12;
 var init_auth_settings = __esm({
   "api/admin/auth-settings.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet13 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet17 = /* @__PURE__ */ __name2(async (context) => {
       const { env } = context;
       try {
         const selectQuery = `SELECT * FROM auth_settings WHERE id = 1`;
@@ -4338,7 +4703,7 @@ var init_auth_settings = __esm({
         });
       }
     }, "onRequestPut");
-    onRequestOptions13 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions12 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -4349,15 +4714,15 @@ var init_auth_settings = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet14;
+var onRequestGet18;
 var onRequestPut8;
-var onRequestOptions14;
+var onRequestOptions13;
 var init_chat_settings = __esm({
   "api/admin/chat-settings.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_settings_storage();
-    onRequestGet14 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet18 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         if (!env.DB) {
           return new Response(JSON.stringify({
@@ -4472,7 +4837,7 @@ var init_chat_settings = __esm({
         });
       }
     }, "onRequestPut");
-    onRequestOptions14 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions13 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -4484,7 +4849,7 @@ var init_chat_settings = __esm({
     }, "onRequestOptions");
   }
 });
-function json6(data, status = 200) {
+function json7(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -4493,22 +4858,22 @@ function json6(data, status = 200) {
     }
   });
 }
-__name(json6, "json6");
-var onRequestGet15;
+__name(json7, "json7");
+var onRequestGet19;
 var init_check_user_data = __esm({
   "api/admin/check-user-data.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json6, "json");
-    onRequestGet15 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    __name2(json7, "json");
+    onRequestGet19 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const url = new URL(request.url);
         const email = url.searchParams.get("email");
         if (!email) {
-          return json6({ success: false, message: "Email required" }, 400);
+          return json7({ success: false, message: "Email required" }, 400);
         }
         if (!env.DB) {
-          return json6({ success: false, message: "Database not available" }, 500);
+          return json7({ success: false, message: "Database not available" }, 500);
         }
         const user = await env.DB.prepare(`
       SELECT id, email, name, is_premium, extension_activated, premium_activated_at, created_at
@@ -4530,7 +4895,7 @@ var init_check_user_data = __esm({
         SELECT id FROM users WHERE email = ?
       )
     `).bind(email, email).all();
-        return json6({
+        return json7({
           success: true,
           email,
           user,
@@ -4550,7 +4915,7 @@ var init_check_user_data = __esm({
         });
       } catch (error) {
         console.error("Error checking user data:", error);
-        return json6({
+        return json7({
           success: false,
           message: error.message
         }, 500);
@@ -4558,8 +4923,8 @@ var init_check_user_data = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestOptions15;
-var onRequestGet16;
+var onRequestOptions14;
+var onRequestGet20;
 var onRequestPost5;
 var onRequestPut9;
 var onRequestDelete4;
@@ -4568,7 +4933,7 @@ var init_countdown_banners = __esm({
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_settings_storage();
-    onRequestOptions15 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions14 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -4578,7 +4943,7 @@ var init_countdown_banners = __esm({
         }
       });
     }, "onRequestOptions");
-    onRequestGet16 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet20 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const settingsStorage = new SettingsStorage(context.env.DB);
         const bannersData = await settingsStorage.getSetting("countdown_banners");
@@ -4883,7 +5248,7 @@ Example format:
   }
 });
 var onRequestPost6;
-var onRequestOptions16;
+var onRequestOptions15;
 var init_create_default_banner = __esm({
   "api/admin/create-default-banner.ts"() {
     "use strict";
@@ -4957,7 +5322,7 @@ var init_create_default_banner = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions16 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions15 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -4968,14 +5333,14 @@ var init_create_default_banner = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet17;
-var onRequestOptions17;
+var onRequestGet21;
+var onRequestOptions16;
 var init_customers = __esm({
   "api/admin/customers.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_user_storage();
-    onRequestGet17 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet21 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         const userStorage = new UserStorage(env.DB);
         await userStorage.initializeUsers();
@@ -5003,7 +5368,7 @@ var init_customers = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions17 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions16 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -5015,9 +5380,9 @@ var init_customers = __esm({
   }
 });
 var FeatureStorage;
-var onRequestGet18;
+var onRequestGet22;
 var onRequestPut10;
-var onRequestOptions18;
+var onRequestOptions17;
 var init_dashboard_features = __esm({
   "api/admin/dashboard-features.ts"() {
     "use strict";
@@ -5091,7 +5456,7 @@ var init_dashboard_features = __esm({
         }
       }
     };
-    onRequestGet18 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet22 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         const storage = new FeatureStorage(env.DB);
         await storage.initializeFeatures();
@@ -5166,7 +5531,7 @@ var init_dashboard_features = __esm({
         });
       }
     }, "onRequestPut");
-    onRequestOptions18 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions17 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -5364,7 +5729,7 @@ var init_fix_premium_users = __esm({
     }, "onRequestPost");
   }
 });
-function json7(data, status = 200) {
+function json8(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -5373,22 +5738,22 @@ function json7(data, status = 200) {
     }
   });
 }
-__name(json7, "json7");
+__name(json8, "json8");
 var onRequestPost9;
 var init_fix_purchased_users = __esm({
   "api/admin/fix-purchased-users.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json7, "json");
+    __name2(json8, "json");
     onRequestPost9 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const body = await request.json();
         const { emails } = body;
         if (!emails || !Array.isArray(emails)) {
-          return json7({ success: false, message: "Array of emails required" }, 400);
+          return json8({ success: false, message: "Array of emails required" }, 400);
         }
         if (!env.DB) {
-          return json7({ success: false, message: "Database not available" }, 500);
+          return json8({ success: false, message: "Database not available" }, 500);
         }
         const now = (/* @__PURE__ */ new Date()).toISOString();
         const results = [];
@@ -5425,14 +5790,14 @@ var init_fix_purchased_users = __esm({
             });
           }
         }
-        return json7({
+        return json8({
           success: true,
           message: "Batch update completed",
           results
         });
       } catch (error) {
         console.error("Error fixing purchased users:", error);
-        return json7({
+        return json8({
           success: false,
           message: error.message
         }, 500);
@@ -5440,12 +5805,12 @@ var init_fix_purchased_users = __esm({
     }, "onRequestPost");
   }
 });
-var onRequestGet19;
+var onRequestGet23;
 var init_force_update_price = __esm({
   "api/admin/force-update-price.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet19 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet23 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         const updateResult = await env.DB.prepare(`
       UPDATE countdown_banners 
@@ -5485,13 +5850,13 @@ var init_force_update_price = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestGet20;
-var onRequestOptions19;
+var onRequestGet24;
+var onRequestOptions18;
 var init_invoices2 = __esm({
   "api/admin/invoices.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet20 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet24 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const invoicesQuery = `
       SELECT 
@@ -5537,7 +5902,7 @@ var init_invoices2 = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions19 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions18 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -5550,7 +5915,7 @@ var init_invoices2 = __esm({
   }
 });
 var onRequestPost10;
-var onRequestOptions20;
+var onRequestOptions19;
 var init_login = __esm({
   "api/admin/login.ts"() {
     "use strict";
@@ -5597,7 +5962,7 @@ var init_login = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions20 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions19 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -5608,13 +5973,13 @@ var init_login = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet21;
-var onRequestOptions21;
+var onRequestGet25;
+var onRequestOptions20;
 var init_orders2 = __esm({
   "api/admin/orders.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet21 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet25 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         let orders = [];
         let stats = {
@@ -5711,7 +6076,7 @@ var init_orders2 = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions21 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions20 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -5723,14 +6088,14 @@ var init_orders2 = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet22;
+var onRequestGet26;
 var onRequestPut11;
-var onRequestOptions22;
+var onRequestOptions21;
 var init_payment_settings = __esm({
   "api/admin/payment-settings.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet22 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet26 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         const result = await env.DB.prepare(`
       SELECT key, value FROM settings 
@@ -5822,7 +6187,7 @@ var init_payment_settings = __esm({
         });
       }
     }, "onRequestPut");
-    onRequestOptions22 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions21 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -5833,7 +6198,7 @@ var init_payment_settings = __esm({
     }, "onRequestOptions");
   }
 });
-async function onRequestGet23(context) {
+async function onRequestGet27(context) {
   const { env } = context;
   try {
     const selectQuery = `SELECT * FROM products WHERE id = 1 AND isActive = 1`;
@@ -5883,7 +6248,7 @@ async function onRequestGet23(context) {
     });
   }
 }
-__name(onRequestGet23, "onRequestGet23");
+__name(onRequestGet27, "onRequestGet27");
 async function onRequestPut12(context) {
   const { request, env } = context;
   try {
@@ -5945,7 +6310,7 @@ async function onRequestPut12(context) {
   }
 }
 __name(onRequestPut12, "onRequestPut12");
-async function onRequestOptions23(context) {
+async function onRequestOptions22(context) {
   return new Response(null, {
     status: 200,
     headers: {
@@ -5955,14 +6320,14 @@ async function onRequestOptions23(context) {
     }
   });
 }
-__name(onRequestOptions23, "onRequestOptions23");
+__name(onRequestOptions22, "onRequestOptions22");
 var init_pricing = __esm({
   "api/admin/pricing.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(onRequestGet23, "onRequestGet");
+    __name2(onRequestGet27, "onRequestGet");
     __name2(onRequestPut12, "onRequestPut");
-    __name2(onRequestOptions23, "onRequestOptions");
+    __name2(onRequestOptions22, "onRequestOptions");
   }
 });
 function toD1Batch(db, sql) {
@@ -5971,7 +6336,7 @@ function toD1Batch(db, sql) {
 __name(toD1Batch, "toD1Batch");
 var SCHEMA_SQL;
 var onRequestPost11;
-var onRequestOptions24;
+var onRequestOptions23;
 var init_reset_db = __esm({
   "api/admin/reset-db.ts"() {
     "use strict";
@@ -6212,7 +6577,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customerId);
         });
       }
     }, "onRequestPost");
-    onRequestOptions24 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions23 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 204,
         headers: {
@@ -6224,16 +6589,16 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customerId);
     }, "onRequestOptions");
   }
 });
-var onRequestGet24;
+var onRequestGet28;
 var onRequestPut13;
 var onRequestPatch;
-var onRequestOptions25;
+var onRequestOptions24;
 var init_seo_settings = __esm({
   "api/admin/seo-settings.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_settings_storage();
-    onRequestGet24 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet28 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         if (!env.DB) {
           return new Response(JSON.stringify({
@@ -6428,7 +6793,7 @@ var init_seo_settings = __esm({
         });
       }
     }, "onRequestPatch");
-    onRequestOptions25 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions24 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -6440,13 +6805,13 @@ var init_seo_settings = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet25;
-var onRequestOptions26;
+var onRequestGet29;
+var onRequestOptions25;
 var init_stats = __esm({
   "api/admin/stats.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet25 = /* @__PURE__ */ __name2(async () => {
+    onRequestGet29 = /* @__PURE__ */ __name2(async () => {
       const stats = {
         totalUsers: 1247,
         activeUsers: 892,
@@ -6483,7 +6848,7 @@ var init_stats = __esm({
         }
       });
     }, "onRequestGet");
-    onRequestOptions26 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions25 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -6495,7 +6860,7 @@ var init_stats = __esm({
   }
 });
 var onRequestPost12;
-var onRequestOptions27;
+var onRequestOptions26;
 var init_sync_banner_price = __esm({
   "api/admin/sync-banner-price.ts"() {
     "use strict";
@@ -6566,7 +6931,7 @@ var init_sync_banner_price = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions27 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions26 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -6584,15 +6949,15 @@ function mapStatus(status) {
   return status || "open";
 }
 __name(mapStatus, "mapStatus");
-var onRequestGet26;
-var onRequestOptions28;
+var onRequestGet30;
+var onRequestOptions27;
 var init_tickets = __esm({
   "api/admin/tickets.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_db();
     __name2(mapStatus, "mapStatus");
-    onRequestGet26 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet30 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       const expressBase = env?.EXPRESS_API_BASE;
       if (expressBase) {
         const base = expressBase.replace(/\/$/, "");
@@ -6633,7 +6998,7 @@ var init_tickets = __esm({
         }
       });
     }, "onRequestGet");
-    onRequestOptions28 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions27 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -6645,7 +7010,7 @@ var init_tickets = __esm({
   }
 });
 var onRequestPost13;
-var onRequestOptions29;
+var onRequestOptions28;
 var init_update_banner_price = __esm({
   "api/admin/update-banner-price.ts"() {
     "use strict";
@@ -6695,7 +7060,7 @@ var init_update_banner_price = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions29 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions28 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -6707,12 +7072,12 @@ var init_update_banner_price = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet27;
+var onRequestGet31;
 var init_update_banner_price_direct = __esm({
   "api/admin/update-banner-price-direct.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet27 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet31 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         const result = await env.DB.prepare(`
       UPDATE countdown_banners 
@@ -6878,13 +7243,13 @@ var init_update_user_premium = __esm({
     }, "onRequestPost");
   }
 });
-var onRequestGet28;
-var onRequestOptions30;
+var onRequestGet32;
+var onRequestOptions29;
 var init_users = __esm({
   "api/admin/users.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet28 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet32 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         let users = [];
         let stats = {
@@ -6984,7 +7349,7 @@ var init_users = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions30 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions29 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -6996,14 +7361,14 @@ var init_users = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestOptions31;
-var onRequestGet29;
+var onRequestOptions30;
+var onRequestGet33;
 var init_active = __esm({
   "api/announcement-badge/active.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_settings_storage();
-    onRequestOptions31 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions30 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -7013,7 +7378,7 @@ var init_active = __esm({
         }
       });
     }, "onRequestOptions");
-    onRequestGet29 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet33 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const settingsStorage = new SettingsStorage(context.env.DB);
         const badgesData = await settingsStorage.getSetting("announcement_badges");
@@ -7062,12 +7427,12 @@ var init_active = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestGet30;
+var onRequestGet34;
 var init_facebook = __esm({
   "api/auth/facebook.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet30 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet34 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       const url = new URL(request.url);
       const code = url.searchParams.get("code");
       try {
@@ -7136,12 +7501,12 @@ var init_facebook = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestGet31;
+var onRequestGet35;
 var init_github = __esm({
   "api/auth/github.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet31 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet35 = /* @__PURE__ */ __name2(async (context) => {
       const { request, env } = context;
       const url = new URL(request.url);
       const code = url.searchParams.get("code");
@@ -7227,12 +7592,12 @@ var init_github = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestGet32;
+var onRequestGet36;
 var init_google = __esm({
   "api/auth/google.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet32 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet36 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       const url = new URL(request.url);
       const code = url.searchParams.get("code");
       try {
@@ -7306,7 +7671,7 @@ var init_google = __esm({
 });
 var jsonResponse;
 var onRequestPost15;
-var onRequestOptions32;
+var onRequestOptions31;
 var init_register = __esm({
   "api/auth/register.ts"() {
     "use strict";
@@ -7343,7 +7708,7 @@ var init_register = __esm({
         return jsonResponse({ success: false, message: "Registration failed.", error: errorMessage }, 500);
       }
     }, "onRequestPost");
-    onRequestOptions32 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions31 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -7354,13 +7719,13 @@ var init_register = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet33;
-var onRequestOptions33;
+var onRequestGet37;
+var onRequestOptions32;
 var init_active2 = __esm({
   "api/countdown-banner/active.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet33 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet37 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const { env } = context;
         const banner = await env.DB.prepare(`
@@ -7467,7 +7832,7 @@ var init_active2 = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions33 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions32 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -7480,7 +7845,7 @@ var init_active2 = __esm({
   }
 });
 var onRequestPost16;
-var onRequestOptions34;
+var onRequestOptions33;
 var init_login2 = __esm({
   "api/customer/login.ts"() {
     "use strict";
@@ -7596,7 +7961,7 @@ var init_login2 = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions34 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions33 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -7607,15 +7972,15 @@ var init_login2 = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet34;
+var onRequestGet38;
 var onRequestPut14;
-var onRequestOptions35;
+var onRequestOptions34;
 var init_profile = __esm({
   "api/customer/profile.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_user_storage();
-    onRequestGet34 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet38 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const url = new URL(request.url);
         const userId = url.searchParams.get("userId");
@@ -7725,7 +8090,7 @@ var init_profile = __esm({
         });
       }
     }, "onRequestPut");
-    onRequestOptions35 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions34 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -7737,7 +8102,7 @@ var init_profile = __esm({
   }
 });
 var onRequestPost17;
-var onRequestOptions36;
+var onRequestOptions35;
 var init_register2 = __esm({
   "api/customer/register.ts"() {
     "use strict";
@@ -7848,7 +8213,7 @@ var init_register2 = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions36 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions35 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -7859,13 +8224,13 @@ var init_register2 = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet35;
-var onRequestOptions37;
+var onRequestGet39;
+var onRequestOptions36;
 var init_stats2 = __esm({
   "api/customer/stats.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet35 = /* @__PURE__ */ __name2(async () => {
+    onRequestGet39 = /* @__PURE__ */ __name2(async () => {
       const stats = {
         totalApplications: 47,
         successfulApplications: 12,
@@ -7891,7 +8256,7 @@ var init_stats2 = __esm({
         }
       });
     }, "onRequestGet");
-    onRequestOptions37 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions36 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -7902,12 +8267,12 @@ var init_stats2 = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet36;
+var onRequestGet40;
 var init_premium = __esm({
   "api/download-extension/premium.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet36 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet40 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -8075,12 +8440,12 @@ var init_premium = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestGet37;
+var onRequestGet41;
 var init_trial = __esm({
   "api/download-extension/trial.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet37 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet41 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const mockZipContent = new Uint8Array([
           80,
@@ -8158,13 +8523,13 @@ var init_trial = __esm({
     }, "onRequestGet");
   }
 });
-var onRequestGet38;
-var onRequestOptions38;
+var onRequestGet42;
+var onRequestOptions37;
 var init_premium_extension = __esm({
   "api/downloads/premium-extension.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet38 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet42 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const url = new URL(request.url);
         const downloadToken = url.searchParams.get("token");
@@ -8238,7 +8603,7 @@ var init_premium_extension = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions38 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions37 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -8250,13 +8615,53 @@ var init_premium_extension = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet39;
-var onRequestOptions39;
+function json9(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    }
+  });
+}
+__name(json9, "json9");
+var onRequestGet43;
+var init_customer = __esm({
+  "api/invoices/customer.ts"() {
+    "use strict";
+    init_functionsRoutes_0_4590401186987789();
+    __name2(json9, "json");
+    onRequestGet43 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+      try {
+        const { searchParams } = new URL(request.url);
+        const customerId = searchParams.get("customerId");
+        if (!customerId) {
+          return json9({ error: "Customer ID is required" }, 400);
+        }
+        const { results } = await env.DB.prepare(
+          "SELECT * FROM invoices WHERE customerId = ? ORDER BY invoiceDate DESC"
+        ).bind(customerId).all();
+        if (!results) {
+          return json9([]);
+        }
+        return json9(results);
+      } catch (error) {
+        return json9({
+          error: error.message
+        }, 500);
+      }
+    }, "onRequestGet");
+  }
+});
+var onRequestGet44;
+var onRequestOptions38;
 var init_generate = __esm({
   "api/invoices/generate.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet39 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet44 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const url = new URL(request.url);
         const orderId = url.searchParams.get("orderId");
@@ -8362,7 +8767,7 @@ var init_generate = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions39 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions38 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -8374,7 +8779,7 @@ var init_generate = __esm({
     }, "onRequestOptions");
   }
 });
-function json8(data, status = 200) {
+function json10(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -8385,23 +8790,23 @@ function json8(data, status = 200) {
     }
   });
 }
-__name(json8, "json8");
-var onRequestGet40;
-var onRequestOptions40;
+__name(json10, "json10");
+var onRequestGet45;
+var onRequestOptions39;
 var init_invoices3 = __esm({
   "api/me/invoices.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json8, "json");
-    onRequestGet40 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    __name2(json10, "json");
+    onRequestGet45 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json8({ error: "Unauthorized" }, 401);
+          return json10({ error: "Unauthorized" }, 401);
         }
         const token = authHeader.substring(7);
         if (token === "demo-jwt-token") {
-          return json8([
+          return json10([
             {
               id: 1,
               invoice_number: "INV-2024-001",
@@ -8425,7 +8830,7 @@ var init_invoices3 = __esm({
           if (parts.length >= 3) {
             const userId = parts[2];
             if (!env.DB) {
-              return json8({ error: "Database not available" }, 500);
+              return json10({ error: "Database not available" }, 500);
             }
             try {
               const customer = await env.DB.prepare(`
@@ -8433,7 +8838,7 @@ var init_invoices3 = __esm({
             FROM customers WHERE id = ?
           `).bind(parseInt(userId)).first();
               if (!customer) {
-                return json8({ error: "Customer not found" }, 404);
+                return json10({ error: "Customer not found" }, 404);
               }
               const invoices = await env.DB.prepare(`
             SELECT 
@@ -8457,21 +8862,21 @@ var init_invoices3 = __esm({
             WHERE i.customerId = ?
             ORDER BY i.createdAt DESC
           `).bind(parseInt(userId)).all();
-              return json8(invoices.results || []);
+              return json10(invoices.results || []);
             } catch (dbError) {
               console.error("Database error in /api/me/invoices:", dbError);
-              return json8({ error: "Database error" }, 500);
+              return json10({ error: "Database error" }, 500);
             }
           }
         }
-        return json8({ error: "Invalid token" }, 401);
+        return json10({ error: "Invalid token" }, 401);
       } catch (error) {
-        return json8({
+        return json10({
           error: error.message
         }, 500);
       }
     }, "onRequestGet");
-    onRequestOptions40 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions39 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -8483,7 +8888,7 @@ var init_invoices3 = __esm({
     }, "onRequestOptions");
   }
 });
-function json9(data, status = 200) {
+function json11(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -8494,23 +8899,23 @@ function json9(data, status = 200) {
     }
   });
 }
-__name(json9, "json9");
-var onRequestGet41;
-var onRequestOptions41;
+__name(json11, "json11");
+var onRequestGet46;
+var onRequestOptions40;
 var init_orders3 = __esm({
   "api/me/orders.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json9, "json");
-    onRequestGet41 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    __name2(json11, "json");
+    onRequestGet46 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json9({ error: "Unauthorized" }, 401);
+          return json11({ error: "Unauthorized" }, 401);
         }
         const token = authHeader.substring(7);
         if (token === "demo-jwt-token") {
-          return json9([
+          return json11([
             {
               id: 1,
               customerEmail: "demo@example.com",
@@ -8534,7 +8939,7 @@ var init_orders3 = __esm({
           if (parts.length >= 3) {
             const userId = parts[2];
             if (!env.DB) {
-              return json9({ error: "Database not available" }, 500);
+              return json11({ error: "Database not available" }, 500);
             }
             try {
               const customer = await env.DB.prepare(`
@@ -8542,7 +8947,7 @@ var init_orders3 = __esm({
             FROM customers WHERE id = ?
           `).bind(parseInt(userId)).first();
               if (!customer) {
-                return json9({ error: "Customer not found" }, 404);
+                return json11({ error: "Customer not found" }, 404);
               }
               const orders = await env.DB.prepare(`
             SELECT 
@@ -8564,21 +8969,21 @@ var init_orders3 = __esm({
             WHERE customerId = ?
             ORDER BY createdAt DESC
           `).bind(parseInt(userId)).all();
-              return json9(orders.results || []);
+              return json11(orders.results || []);
             } catch (dbError) {
               console.error("Database error in /api/me/orders:", dbError);
-              return json9({ error: "Database error" }, 500);
+              return json11({ error: "Database error" }, 500);
             }
           }
         }
-        return json9({ error: "Invalid token" }, 401);
+        return json11({ error: "Invalid token" }, 401);
       } catch (error) {
-        return json9({
+        return json11({
           error: error.message
         }, 500);
       }
     }, "onRequestGet");
-    onRequestOptions41 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions40 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -8591,7 +8996,7 @@ var init_orders3 = __esm({
   }
 });
 var onRequestPost18;
-var onRequestOptions42;
+var onRequestOptions41;
 var init_complete_purchase = __esm({
   "api/orders/complete-purchase.ts"() {
     "use strict";
@@ -8713,7 +9118,7 @@ var init_complete_purchase = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions42 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions41 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -8725,13 +9130,13 @@ var init_complete_purchase = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet42;
-var onRequestOptions43;
+var onRequestGet47;
+var onRequestOptions42;
 var init_user_orders = __esm({
   "api/orders/user-orders.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet42 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet47 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const url = new URL(request.url);
         const customerEmail = url.searchParams.get("email");
@@ -8799,7 +9204,7 @@ var init_user_orders = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions43 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions42 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -8811,7 +9216,7 @@ var init_user_orders = __esm({
     }, "onRequestOptions");
   }
 });
-async function onRequestGet43(context) {
+async function onRequestGet48(context) {
   const { env } = context;
   try {
     const selectQuery = `SELECT * FROM products WHERE id = 1 AND isActive = 1`;
@@ -8861,8 +9266,8 @@ async function onRequestGet43(context) {
     });
   }
 }
-__name(onRequestGet43, "onRequestGet43");
-async function onRequestOptions44(context) {
+__name(onRequestGet48, "onRequestGet48");
+async function onRequestOptions43(context) {
   return new Response(null, {
     status: 200,
     headers: {
@@ -8872,22 +9277,22 @@ async function onRequestOptions44(context) {
     }
   });
 }
-__name(onRequestOptions44, "onRequestOptions44");
+__name(onRequestOptions43, "onRequestOptions43");
 var init_pricing2 = __esm({
   "api/products/pricing.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(onRequestGet43, "onRequestGet");
-    __name2(onRequestOptions44, "onRequestOptions");
+    __name2(onRequestGet48, "onRequestGet");
+    __name2(onRequestOptions43, "onRequestOptions");
   }
 });
-var onRequestGet44;
-var onRequestOptions45;
+var onRequestGet49;
+var onRequestOptions44;
 var init_type = __esm({
   "api/download-extension/[type].ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet44 = /* @__PURE__ */ __name2(async (context) => {
+    onRequestGet49 = /* @__PURE__ */ __name2(async (context) => {
       try {
         const { params, request } = context;
         const downloadType = params.type;
@@ -8937,7 +9342,7 @@ var init_type = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions45 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions44 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -9047,7 +9452,7 @@ var init_orderId2 = __esm({
     __name2(onRequestPost19, "onRequestPost");
   }
 });
-function json10(data, status = 200) {
+function json12(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -9056,17 +9461,17 @@ function json10(data, status = 200) {
     }
   });
 }
-__name(json10, "json10");
+__name(json12, "json12");
 var onRequestPatch2;
 var onRequestPut15;
 var onRequestDelete5;
-var onRequestOptions46;
+var onRequestOptions45;
 var init_id5 = __esm({
   "api/tickets/[id].ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     init_db();
-    __name2(json10, "json");
+    __name2(json12, "json");
     onRequestPatch2 = /* @__PURE__ */ __name2(async ({ request, params, env }) => {
       try {
         const ticketId = Number(params.id);
@@ -9094,16 +9499,16 @@ var init_id5 = __esm({
         const updates = await request.json();
         const storage = new TicketStorage(env.DB);
         const ticket = await storage.getTicketById(ticketId);
-        if (!ticket) return json10({ success: false, message: "Ticket not found" }, 404);
+        if (!ticket) return json12({ success: false, message: "Ticket not found" }, 404);
         if (updates.status) {
           await storage.updateTicketStatus(ticketId, updates.status);
         }
         const updatedTicket = await storage.getTicketById(ticketId);
-        return json10({ success: true, ticket: updatedTicket });
+        return json12({ success: true, ticket: updatedTicket });
       } catch (error) {
         console.error("Failed to update ticket:", error);
         const message = error instanceof Error ? error.message : "An unknown error occurred";
-        return json10({ success: false, message }, 500);
+        return json12({ success: false, message }, 500);
       }
     }, "onRequestPatch");
     onRequestPut15 = /* @__PURE__ */ __name2(async (ctx) => {
@@ -9134,17 +9539,17 @@ var init_id5 = __esm({
         const storage = new TicketStorage(env.DB);
         const ticket = await storage.getTicketById(ticketId);
         if (!ticket) {
-          return json10({ success: false, message: "Ticket not found" }, 404);
+          return json12({ success: false, message: "Ticket not found" }, 404);
         }
         await storage.deleteTicket(ticketId);
-        return json10({ success: true, message: `Ticket ${ticketId} deleted` });
+        return json12({ success: true, message: `Ticket ${ticketId} deleted` });
       } catch (error) {
         console.error("Failed to delete ticket:", error);
         const message = error instanceof Error ? error.message : "An unknown error occurred";
-        return json10({ success: false, message }, 500);
+        return json12({ success: false, message }, 500);
       }
     }, "onRequestDelete");
-    onRequestOptions46 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions45 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -9156,8 +9561,8 @@ var init_id5 = __esm({
   }
 });
 var defaultSettings;
-var onRequestGet45;
-var onRequestOptions47;
+var onRequestGet50;
+var onRequestOptions46;
 var init_auth_settings2 = __esm({
   "api/auth-settings.ts"() {
     "use strict";
@@ -9174,7 +9579,7 @@ var init_auth_settings2 = __esm({
       facebookAppId: "",
       githubClientId: ""
     };
-    onRequestGet45 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet50 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         const dbQuery = "SELECT * FROM auth_settings WHERE id = 1";
         const dbSettings = await env.DB.prepare(dbQuery).first();
@@ -9210,7 +9615,7 @@ var init_auth_settings2 = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions47 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions46 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -9222,7 +9627,7 @@ var init_auth_settings2 = __esm({
   }
 });
 var onRequestPost20;
-var onRequestOptions48;
+var onRequestOptions47;
 var init_chat = __esm({
   "api/chat.ts"() {
     "use strict";
@@ -9317,7 +9722,7 @@ var init_chat = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions48 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions47 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -9329,7 +9734,7 @@ var init_chat = __esm({
     }, "onRequestOptions");
   }
 });
-function json11(data, status = 200) {
+function json13(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -9338,20 +9743,20 @@ function json11(data, status = 200) {
     }
   });
 }
-__name(json11, "json11");
+__name(json13, "json13");
 var onRequestPost21;
-var onRequestOptions49;
+var onRequestOptions48;
 var init_complete_stripe_payment = __esm({
   "api/complete-stripe-payment.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json11, "json");
+    __name2(json13, "json");
     onRequestPost21 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const body = await request.json();
         const { paymentIntentId, customerEmail, customerName } = body;
         if (!paymentIntentId || !customerEmail) {
-          return json11({ success: false, message: "Missing required fields" }, 400);
+          return json13({ success: false, message: "Missing required fields" }, 400);
         }
         console.log("Stripe payment completion request:", { paymentIntentId, customerEmail, customerName });
         const purchaseCompleteRequest = {
@@ -9365,7 +9770,7 @@ var init_complete_stripe_payment = __esm({
         };
         if (!env.DB) {
           console.error("D1 database not available");
-          return json11({ success: false, message: "Database not available" }, 500);
+          return json13({ success: false, message: "Database not available" }, 500);
         }
         const now = (/* @__PURE__ */ new Date()).toISOString();
         try {
@@ -9429,34 +9834,55 @@ var init_complete_stripe_payment = __esm({
           code, order_id, created_at
         ) VALUES (?, ?, ?)
       `).bind(activationCode, orderId, now).run();
-          console.log("Skipping invoice creation due to schema conflicts");
+          const invoiceNumber = `INV-${orderId}-${Date.now()}`;
+          await env.DB.prepare(`
+        INSERT INTO invoices (
+          order_id, invoice_number, customer_id, customer_email, customer_name,
+          amount, currency, status, invoice_date, due_date, paid_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
+      `).bind(
+            orderId,
+            invoiceNumber,
+            finalCustomerId,
+            customerEmail,
+            customerName || customerEmail,
+            purchaseCompleteRequest.amount,
+            purchaseCompleteRequest.currency.toLowerCase(),
+            now,
+            // invoice_date
+            now,
+            // due_date
+            now
+            // paid_at
+          ).run();
+          console.log("Invoice created successfully for order ID:", orderId);
           console.log("Purchase completed successfully:", {
             customerId: finalCustomerId,
             orderId,
             paymentIntentId,
             activationCode
           });
-          return json11({
+          return json13({
             success: true,
             activationKey: activationCode,
             message: "Payment completed successfully"
           });
         } catch (error) {
           console.error("Error in complete-stripe-payment:", error);
-          return json11({
+          return json13({
             success: false,
             message: error.message
           }, 500);
         }
       } catch (error) {
         console.error("Error in complete-stripe-payment:", error);
-        return json11({
+        return json13({
           success: false,
           message: error.message
         }, 500);
       }
     }, "onRequestPost");
-    onRequestOptions49 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions48 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -9469,7 +9895,7 @@ var init_complete_stripe_payment = __esm({
   }
 });
 var onRequestPost22;
-var onRequestOptions50;
+var onRequestOptions49;
 var init_create_user_payment_intent = __esm({
   "api/create-user-payment-intent.ts"() {
     "use strict";
@@ -9611,7 +10037,7 @@ var init_create_user_payment_intent = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions50 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions49 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -9622,7 +10048,7 @@ var init_create_user_payment_intent = __esm({
     }, "onRequestOptions");
   }
 });
-function json12(data, status = 200) {
+function json14(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -9631,29 +10057,29 @@ function json12(data, status = 200) {
     }
   });
 }
-__name(json12, "json12");
+__name(json14, "json14");
 var onRequestPost23;
-var onRequestGet46;
-var onRequestOptions51;
+var onRequestGet51;
+var onRequestOptions50;
 var init_download_premium = __esm({
   "api/download-premium.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json12, "json");
+    __name2(json14, "json");
     onRequestPost23 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const body = await request.json();
         const { customerId, customerEmail, activationCode, email } = body;
         const finalEmail = customerEmail || email;
         if (!customerId && !finalEmail && !activationCode) {
-          return json12({
+          return json14({
             success: false,
             message: "Customer identification required"
           }, 400);
         }
         if (!env.DB) {
           console.error("D1 database not available");
-          return json12({ success: false, message: "Database not available" }, 500);
+          return json14({ success: false, message: "Database not available" }, 500);
         }
         try {
           let account = null;
@@ -9707,14 +10133,14 @@ var init_download_premium = __esm({
             }
           }
           if (!account) {
-            return json12({
+            return json14({
               success: false,
               message: "Account not found or invalid credentials"
             }, 404);
           }
           const hasBasicAccess = account.is_premium && account.extension_activated;
           if (!hasBasicAccess) {
-            return json12({
+            return json14({
               success: false,
               message: "Premium access not activated. Please complete your purchase first.",
               accountStatus: {
@@ -9725,24 +10151,20 @@ var init_download_premium = __esm({
             }, 403);
           }
           let hasValidOrders = false;
-          if (account.is_premium) {
-            hasValidOrders = true;
-            console.log(`Premium account '${account.email}' granted access based on premium flag.`);
-          } else {
-            try {
-              const orderCheck = await env.DB.prepare(`
-            SELECT COUNT(*) as orderCount FROM orders 
-            WHERE (customer_id = ? OR customer_email = ?) AND status = 'completed' AND final_amount > 0
-          `).bind(account.id, account.email).first();
-              hasValidOrders = orderCheck?.orderCount > 0;
-              console.log(`Order check for ${accountType} '${account.email}':`, { hasValidOrders });
-            } catch (e) {
-              console.log("Order check failed:", e);
-              hasValidOrders = account.is_premium && account.extension_activated;
-            }
+          try {
+            const orderCheck = await env.DB.prepare(`
+          SELECT COUNT(*) as orderCount FROM orders 
+          WHERE (customer_id = ? OR customer_email = ?) AND status = 'completed' AND final_amount > 0
+        `).bind(account.id, account.email).first();
+            hasValidOrders = orderCheck?.orderCount > 0;
+            console.log(`Order check for ${accountType} '${account.email}':`, { hasValidOrders });
+          } catch (e) {
+            console.log("Order check failed:", e);
+            hasValidOrders = account.is_premium && account.extension_activated;
+            console.error("Database order check failed, falling back to premium flags. This should be investigated.", e);
           }
           if (!hasValidOrders) {
-            return json12({
+            return json14({
               success: false,
               message: "No valid premium purchases found. Premium download requires completed payment.",
               accountStatus: {
@@ -9781,7 +10203,7 @@ var init_download_premium = __esm({
               console.log("Failed to get activation code:", e);
             }
           }
-          return json12({
+          return json14({
             success: true,
             message: "Download access granted",
             downloadEnabled: true,
@@ -9795,7 +10217,7 @@ var init_download_premium = __esm({
           });
         } catch (dbError) {
           console.error("Database error during download validation:", dbError);
-          return json12({
+          return json14({
             success: false,
             message: "Failed to validate download access",
             error: dbError.message
@@ -9803,22 +10225,22 @@ var init_download_premium = __esm({
         }
       } catch (error) {
         console.error("Download validation error:", error);
-        return json12({
+        return json14({
           success: false,
           message: "Internal server error",
           error: error.message
         }, 500);
       }
     }, "onRequestPost");
-    onRequestGet46 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet51 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       const url = new URL(request.url);
       const customerId = url.searchParams.get("customerId");
       const customerEmail = url.searchParams.get("customerEmail");
       if (!customerId && !customerEmail) {
-        return json12({ success: false, message: "Customer identification required" }, 400);
+        return json14({ success: false, message: "Customer identification required" }, 400);
       }
       if (!env.DB) {
-        return json12({ success: false, message: "Database not available" }, 500);
+        return json14({ success: false, message: "Database not available" }, 500);
       }
       try {
         let customer = null;
@@ -9834,10 +10256,10 @@ var init_download_premium = __esm({
       `).bind(customerEmail).first();
         }
         if (!customer) {
-          return json12({ success: false, downloadEnabled: false, message: "Customer not found" });
+          return json14({ success: false, downloadEnabled: false, message: "Customer not found" });
         }
         const hasAccess = customer.is_premium && customer.extension_activated;
-        return json12({
+        return json14({
           success: true,
           downloadEnabled: hasAccess,
           customer: {
@@ -9851,10 +10273,10 @@ var init_download_premium = __esm({
         });
       } catch (error) {
         console.error("Download status check error:", error);
-        return json12({ success: false, downloadEnabled: false, error: error.message }, 500);
+        return json14({ success: false, downloadEnabled: false, error: error.message }, 500);
       }
     }, "onRequestGet");
-    onRequestOptions51 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions50 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -9865,13 +10287,13 @@ var init_download_premium = __esm({
     }, "onRequestOptions");
   }
 });
-var onRequestGet47;
-var onRequestOptions52;
+var onRequestGet52;
+var onRequestOptions51;
 var init_init_db = __esm({
   "api/init-db.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet47 = /* @__PURE__ */ __name2(async ({ env }) => {
+    onRequestGet52 = /* @__PURE__ */ __name2(async ({ env }) => {
       try {
         if (!env.DB) {
           return new Response(JSON.stringify({
@@ -9985,7 +10407,7 @@ var init_init_db = __esm({
         });
       }
     }, "onRequestGet");
-    onRequestOptions52 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions51 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -10021,7 +10443,7 @@ function getSettingsStore() {
   return g.__INVOICE_SETTINGS__;
 }
 __name(getSettingsStore, "getSettingsStore");
-function json13(data, status = 200) {
+function json15(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10030,17 +10452,17 @@ function json13(data, status = 200) {
     }
   });
 }
-__name(json13, "json13");
-var onRequestGet48;
+__name(json15, "json15");
+var onRequestGet53;
 var onRequestPut16;
-var onRequestOptions53;
+var onRequestOptions52;
 var init_invoice_settings = __esm({
   "api/invoice-settings.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
     __name2(getSettingsStore, "getSettingsStore");
-    __name2(json13, "json");
-    onRequestGet48 = /* @__PURE__ */ __name2(async () => {
+    __name2(json15, "json");
+    onRequestGet53 = /* @__PURE__ */ __name2(async () => {
       const settings = getSettingsStore();
       const ui = {
         id: settings.id,
@@ -10058,7 +10480,7 @@ var init_invoice_settings = __esm({
         primaryColor: settings.primaryColor,
         secondaryColor: settings.secondaryColor
       };
-      return json13(ui);
+      return json15(ui);
     }, "onRequestGet");
     onRequestPut16 = /* @__PURE__ */ __name2(async ({ request }) => {
       try {
@@ -10083,12 +10505,12 @@ var init_invoice_settings = __esm({
           if (k in body) store[k] = body[k];
         }
         store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-        return json13({ ...store });
+        return json15({ ...store });
       } catch (e) {
-        return json13({ success: false, message: "Failed to update settings" }, 500);
+        return json15({ success: false, message: "Failed to update settings" }, 500);
       }
     }, "onRequestPut");
-    onRequestOptions53 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions52 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -10099,7 +10521,7 @@ var init_invoice_settings = __esm({
     }, "onRequestOptions");
   }
 });
-function json14(data, status = 200) {
+function json16(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10110,18 +10532,18 @@ function json14(data, status = 200) {
     }
   });
 }
-__name(json14, "json14");
-var onRequestGet49;
+__name(json16, "json16");
+var onRequestGet54;
 var init_invoices4 = __esm({
   "api/invoices.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json14, "json");
-    onRequestGet49 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    __name2(json16, "json");
+    onRequestGet54 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json14([]);
+          return json16([]);
         }
         const token = authHeader.substring(7);
         if (token === "demo-jwt-token") {
@@ -10140,7 +10562,7 @@ var init_invoices4 = __esm({
             paidAt: (/* @__PURE__ */ new Date()).toISOString(),
             notes: "Premium extension purchase"
           };
-          return json14([demoInvoice]);
+          return json16([demoInvoice]);
         }
         if (token.startsWith("jwt-token-")) {
           const parts = token.split("-");
@@ -10162,20 +10584,20 @@ var init_invoices4 = __esm({
                 paidAt: (/* @__PURE__ */ new Date()).toISOString(),
                 notes: "Premium extension purchase"
               };
-              return json14([demoInvoice]);
+              return json16([demoInvoice]);
             }
           }
         }
-        return json14([]);
+        return json16([]);
       } catch (error) {
-        return json14({
+        return json16({
           error: error.message
         }, 500);
       }
     }, "onRequestGet");
   }
 });
-function json15(data, status = 200) {
+function json17(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10186,24 +10608,24 @@ function json15(data, status = 200) {
     }
   });
 }
-__name(json15, "json15");
-var onRequestGet50;
+__name(json17, "json17");
+var onRequestGet55;
 var init_me = __esm({
   "api/me.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json15, "json");
-    onRequestGet50 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    __name2(json17, "json");
+    onRequestGet55 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const authHeader = request.headers.get("Authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return json15({
+          return json17({
             error: "Unauthorized"
           }, 401);
         }
         const token = authHeader.substring(7);
         if (token === "demo-jwt-token") {
-          return json15({
+          return json17({
             id: 1,
             email: "demo@example.com",
             name: "Demo User",
@@ -10222,7 +10644,7 @@ var init_me = __esm({
             const userId = parts[2];
             console.log("Parsed userId from token:", userId, "from token:", token);
             if (!env.DB) {
-              return json15({ error: "Database not available" }, 500);
+              return json17({ error: "Database not available" }, 500);
             }
             try {
               const user = await env.DB.prepare(`
@@ -10230,7 +10652,7 @@ var init_me = __esm({
             FROM users WHERE id = ?
           `).bind(parseInt(userId)).first();
               if (user) {
-                return json15({
+                return json17({
                   id: user.id,
                   email: user.email,
                   name: user.name,
@@ -10246,7 +10668,7 @@ var init_me = __esm({
             FROM customers WHERE id = ?
           `).bind(parseInt(userId)).first();
               if (customer) {
-                return json15({
+                return json17({
                   id: customer.id,
                   email: customer.email,
                   name: customer.name,
@@ -10262,18 +10684,18 @@ var init_me = __esm({
             }
           }
         }
-        return json15({
+        return json17({
           error: "Invalid token"
         }, 401);
       } catch (error) {
-        return json15({
+        return json17({
           error: error.message
         }, 500);
       }
     }, "onRequestGet");
   }
 });
-function json16(data, status = 200) {
+function json18(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10282,17 +10704,17 @@ function json16(data, status = 200) {
     }
   });
 }
-__name(json16, "json16");
-var onRequestGet51;
-var onRequestOptions54;
+__name(json18, "json18");
+var onRequestGet56;
+var onRequestOptions53;
 var init_migrate_db = __esm({
   "api/migrate-db.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json16, "json");
-    onRequestGet51 = /* @__PURE__ */ __name2(async ({ env }) => {
+    __name2(json18, "json");
+    onRequestGet56 = /* @__PURE__ */ __name2(async ({ env }) => {
       if (!env.DB) {
-        return json16({ success: false, message: "Database not available" }, 500);
+        return json18({ success: false, message: "Database not available" }, 500);
       }
       try {
         const alterStmt = `ALTER TABLE tickets ADD COLUMN customer_id INTEGER;`;
@@ -10303,23 +10725,23 @@ var init_migrate_db = __esm({
       WHERE customer_id IS NULL;
     `;
         const backfillResult = await env.DB.prepare(backfillStmt).run();
-        return json16({
+        return json18({
           success: true,
           message: "Database migration successful: customer_id added and backfilled.",
           backfillDetails: backfillResult.meta
         });
       } catch (e) {
         if (e.message.includes("duplicate column name")) {
-          return json16({
+          return json18({
             success: true,
             message: "Migration not needed: customer_id column already exists."
           });
         }
         console.error("Migration failed:", e);
-        return json16({ success: false, message: e.message }, 500);
+        return json18({ success: false, message: e.message }, 500);
       }
     }, "onRequestGet");
-    onRequestOptions54 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions53 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -10330,7 +10752,7 @@ var init_migrate_db = __esm({
     }, "onRequestOptions");
   }
 });
-function json17(data, status = 200) {
+function json19(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10339,14 +10761,14 @@ function json17(data, status = 200) {
     }
   });
 }
-__name(json17, "json17");
+__name(json19, "json19");
 var onRequestPost24;
-var onRequestOptions55;
+var onRequestOptions54;
 var init_purchase_complete = __esm({
   "api/purchase-complete.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json17, "json");
+    __name2(json19, "json");
     onRequestPost24 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const body = await request.json();
@@ -10360,11 +10782,11 @@ var init_purchase_complete = __esm({
           productType = "premium_extension"
         } = body;
         if (!paymentIntentId || !customerEmail || !amount) {
-          return json17({ success: false, message: "Missing required fields" }, 400);
+          return json19({ success: false, message: "Missing required fields" }, 400);
         }
         if (!env.DB) {
           console.error("D1 database not available");
-          return json17({ success: false, message: "Database not available" }, 500);
+          return json19({ success: false, message: "Database not available" }, 500);
         }
         const now = (/* @__PURE__ */ new Date()).toISOString();
         try {
@@ -10481,7 +10903,7 @@ var init_purchase_complete = __esm({
             amount,
             activationCode
           });
-          return json17({
+          return json19({
             success: true,
             message: "Purchase completed successfully",
             data: {
@@ -10493,7 +10915,7 @@ var init_purchase_complete = __esm({
           });
         } catch (dbError) {
           console.error("Database error during purchase completion:", dbError);
-          return json17({
+          return json19({
             success: false,
             message: "Failed to process purchase completion",
             error: dbError.message
@@ -10501,14 +10923,14 @@ var init_purchase_complete = __esm({
         }
       } catch (error) {
         console.error("Purchase completion error:", error);
-        return json17({
+        return json19({
           success: false,
           message: "Internal server error",
           error: error.message
         }, 500);
       }
     }, "onRequestPost");
-    onRequestOptions55 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions54 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -10520,7 +10942,7 @@ var init_purchase_complete = __esm({
   }
 });
 var onRequestPost25;
-var onRequestOptions56;
+var onRequestOptions55;
 var init_test_upload = __esm({
   "api/test-upload.ts"() {
     "use strict";
@@ -10599,7 +11021,7 @@ var init_test_upload = __esm({
         });
       }
     }, "onRequestPost");
-    onRequestOptions56 = /* @__PURE__ */ __name2(async () => {
+    onRequestOptions55 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         status: 200,
         headers: {
@@ -10611,7 +11033,7 @@ var init_test_upload = __esm({
     }, "onRequestOptions");
   }
 });
-function json18(data, status = 200) {
+function json20(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10620,19 +11042,19 @@ function json18(data, status = 200) {
     }
   });
 }
-__name(json18, "json18");
+__name(json20, "json20");
 var onRequestPost26;
 var init_test_user = __esm({
   "api/test-user.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    __name2(json18, "json");
+    __name2(json20, "json");
     onRequestPost26 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const body = await request.json();
         const email = body.email || "heshmat@gmail.com";
         if (!env.DB) {
-          return json18({ success: false, message: "Database not available" }, 500);
+          return json20({ success: false, message: "Database not available" }, 500);
         }
         const user = await env.DB.prepare(`
       SELECT id, email, name, is_premium, extension_activated, premium_activated_at, created_at
@@ -10650,7 +11072,7 @@ var init_test_user = __esm({
       SELECT id, customer_id, customer_email, original_amount, final_amount, status, created_at, completed_at
       FROM orders WHERE customer_id = ?
     `).bind(customer.id).all() : { results: [] };
-        return json18({
+        return json20({
           success: true,
           email,
           user,
@@ -10670,7 +11092,7 @@ var init_test_user = __esm({
         });
       } catch (error) {
         console.error("Error checking user data:", error);
-        return json18({
+        return json20({
           success: false,
           message: error.message
         }, 500);
@@ -10678,7 +11100,7 @@ var init_test_user = __esm({
     }, "onRequestPost");
   }
 });
-function json19(data, status = 200) {
+function json21(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -10687,9 +11109,9 @@ function json19(data, status = 200) {
     }
   });
 }
-__name(json19, "json19");
-var onRequestOptions57;
-var onRequestGet52;
+__name(json21, "json21");
+var onRequestOptions56;
+var onRequestGet57;
 var onRequestPost27;
 var init_tickets2 = __esm({
   "api/tickets/index.ts"() {
@@ -10697,8 +11119,8 @@ var init_tickets2 = __esm({
     init_functionsRoutes_0_4590401186987789();
     init_db();
     init_user_storage();
-    __name2(json19, "json");
-    onRequestOptions57 = /* @__PURE__ */ __name2(async () => {
+    __name2(json21, "json");
+    onRequestOptions56 = /* @__PURE__ */ __name2(async () => {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
@@ -10707,7 +11129,7 @@ var init_tickets2 = __esm({
         }
       });
     }, "onRequestOptions");
-    onRequestGet52 = /* @__PURE__ */ __name2(async ({ request, env }) => {
+    onRequestGet57 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       const expressBase = env?.EXPRESS_API_BASE;
       if (expressBase) {
         const base = expressBase.replace(/\/$/, "");
@@ -10735,7 +11157,7 @@ var init_tickets2 = __esm({
       const customerId = url.searchParams.get("customerId");
       if (!env.DB) {
         console.error("D1 database not available");
-        return json19({ error: "Database not available" }, 500);
+        return json21({ error: "Database not available" }, 500);
       }
       try {
         const storage = new TicketStorage(env.DB);
@@ -10749,10 +11171,10 @@ var init_tickets2 = __esm({
         } else {
           result = [];
         }
-        return json19(result);
+        return json21(result);
       } catch (error) {
         console.error("Database error:", error);
-        return json19({ error: "Database query failed", details: error.message }, 500);
+        return json21({ error: "Database query failed", details: error.message }, 500);
       }
     }, "onRequestGet");
     onRequestPost27 = /* @__PURE__ */ __name2(async ({ request, env }) => {
@@ -10782,11 +11204,11 @@ var init_tickets2 = __esm({
         const { title, description, category, priority, customerEmail, customerName, customerId } = body;
         const parsedCustomerId = customerId ? parseInt(customerId) : void 0;
         if (!title || !description || !customerEmail || !parsedCustomerId) {
-          return json19({ success: false, message: "Missing required fields" }, 400);
+          return json21({ success: false, message: "Missing required fields" }, 400);
         }
         if (!env.DB) {
           console.error("D1 database not available for ticket creation");
-          return json19({ success: false, message: "Database not available" }, 500);
+          return json21({ success: false, message: "Database not available" }, 500);
         }
         const storage = new TicketStorage(env.DB);
         let finalCustomerName = customerName;
@@ -10812,21 +11234,21 @@ var init_tickets2 = __esm({
           customer_email: customerEmail,
           customer_name: finalCustomerName || customerEmail
         });
-        return json19({ success: true, ticket });
+        return json21({ success: true, ticket });
       } catch (e) {
         console.error("Failed to create ticket:", e);
         const message = e instanceof Error ? e.message : "An unknown error occurred";
-        return json19({ success: false, message }, 500);
+        return json21({ success: false, message }, 500);
       }
     }, "onRequestPost");
   }
 });
-var onRequestGet53;
+var onRequestGet58;
 var init_health = __esm({
   "health.ts"() {
     "use strict";
     init_functionsRoutes_0_4590401186987789();
-    onRequestGet53 = /* @__PURE__ */ __name2(async () => {
+    onRequestGet58 = /* @__PURE__ */ __name2(async () => {
       return new Response(JSON.stringify({
         status: "ok",
         timestamp: Date.now(),
@@ -10846,6 +11268,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
     "use strict";
     init_translate();
     init_translate();
+    init_list();
     init_id();
     init_id();
     init_id();
@@ -10859,8 +11282,10 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
     init_orderId();
     init_id3();
     init_id4();
-    init_pdf();
-    init_pdf();
+    init_download();
+    init_download_receipt();
+    init_html();
+    init_receipt();
     init_archive();
     init_messages();
     init_messages();
@@ -10956,6 +11381,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
     init_trial();
     init_premium_extension();
     init_premium_extension();
+    init_customer();
     init_generate();
     init_generate();
     init_invoices3();
@@ -11020,6 +11446,13 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         modules: [onRequestPost]
       },
       {
+        routePath: "/api/invoices/admin/list",
+        mountPath: "/api/invoices/admin",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet]
+      },
+      {
         routePath: "/api/admin/announcement-badges/:id",
         mountPath: "/api/admin/announcement-badges",
         method: "DELETE",
@@ -11031,7 +11464,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin/announcement-badges",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet]
+        modules: [onRequestGet2]
       },
       {
         routePath: "/api/admin/announcement-badges/:id",
@@ -11059,7 +11492,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin/countdown-banners",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet2]
+        modules: [onRequestGet3]
       },
       {
         routePath: "/api/admin/countdown-banners/:id",
@@ -11101,28 +11534,42 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/extension/check",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet3]
+        modules: [onRequestGet4]
       },
       {
         routePath: "/api/extension/downloads/:id",
         mountPath: "/api/extension/downloads",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet4]
-      },
-      {
-        routePath: "/api/invoices/:id/pdf",
-        mountPath: "/api/invoices/:id",
-        method: "GET",
-        middlewares: [],
         modules: [onRequestGet5]
       },
       {
-        routePath: "/api/invoices/:id/pdf",
+        routePath: "/api/invoices/:id/download",
         mountPath: "/api/invoices/:id",
-        method: "OPTIONS",
+        method: "GET",
         middlewares: [],
-        modules: [onRequestOptions5]
+        modules: [onRequestGet6]
+      },
+      {
+        routePath: "/api/invoices/:id/download-receipt",
+        mountPath: "/api/invoices/:id",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet7]
+      },
+      {
+        routePath: "/api/invoices/:id/html",
+        mountPath: "/api/invoices/:id",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet8]
+      },
+      {
+        routePath: "/api/invoices/:id/receipt",
+        mountPath: "/api/invoices/:id",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet9]
       },
       {
         routePath: "/api/tickets/:id/archive",
@@ -11136,14 +11583,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/tickets/:id",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet6]
+        modules: [onRequestGet10]
       },
       {
         routePath: "/api/tickets/:id/messages",
         mountPath: "/api/tickets/:id",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions6]
+        modules: [onRequestOptions5]
       },
       {
         routePath: "/api/tickets/:id/messages",
@@ -11157,7 +11604,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/tickets/:id",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions7]
+        modules: [onRequestOptions6]
       },
       {
         routePath: "/api/tickets/:id/status",
@@ -11171,63 +11618,63 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/user/:id",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet7]
+        modules: [onRequestGet11]
       },
       {
         routePath: "/api/user/:userId/invoices",
         mountPath: "/api/user/:userId",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet8]
+        modules: [onRequestGet12]
       },
       {
         routePath: "/api/user/:userId/invoices",
+        mountPath: "/api/user/:userId",
+        method: "OPTIONS",
+        middlewares: [],
+        modules: [onRequestOptions7]
+      },
+      {
+        routePath: "/api/user/:userId/orders",
+        mountPath: "/api/user/:userId",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet13]
+      },
+      {
+        routePath: "/api/user/:userId/orders",
         mountPath: "/api/user/:userId",
         method: "OPTIONS",
         middlewares: [],
         modules: [onRequestOptions8]
       },
       {
-        routePath: "/api/user/:userId/orders",
+        routePath: "/api/user/:userId/purchase-status",
         mountPath: "/api/user/:userId",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet9]
+        modules: [onRequestGet14]
       },
       {
-        routePath: "/api/user/:userId/orders",
+        routePath: "/api/user/:userId/purchase-status",
         mountPath: "/api/user/:userId",
         method: "OPTIONS",
         middlewares: [],
         modules: [onRequestOptions9]
       },
       {
-        routePath: "/api/user/:userId/purchase-status",
-        mountPath: "/api/user/:userId",
+        routePath: "/api/admin/analytics",
+        mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet10]
+        modules: [onRequestGet15]
       },
       {
-        routePath: "/api/user/:userId/purchase-status",
-        mountPath: "/api/user/:userId",
+        routePath: "/api/admin/analytics",
+        mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
         modules: [onRequestOptions10]
-      },
-      {
-        routePath: "/api/admin/analytics",
-        mountPath: "/api/admin",
-        method: "GET",
-        middlewares: [],
-        modules: [onRequestGet11]
-      },
-      {
-        routePath: "/api/admin/analytics",
-        mountPath: "/api/admin",
-        method: "OPTIONS",
-        middlewares: [],
-        modules: [onRequestOptions11]
       },
       {
         routePath: "/api/admin/announcement-badges",
@@ -11241,14 +11688,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet12]
+        modules: [onRequestGet16]
       },
       {
         routePath: "/api/admin/announcement-badges",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions12]
+        modules: [onRequestOptions11]
       },
       {
         routePath: "/api/admin/announcement-badges",
@@ -11269,14 +11716,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet13]
+        modules: [onRequestGet17]
       },
       {
         routePath: "/api/admin/auth-settings",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions13]
+        modules: [onRequestOptions12]
       },
       {
         routePath: "/api/admin/auth-settings",
@@ -11290,14 +11737,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet14]
+        modules: [onRequestGet18]
       },
       {
         routePath: "/api/admin/chat-settings",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions14]
+        modules: [onRequestOptions13]
       },
       {
         routePath: "/api/admin/chat-settings",
@@ -11311,7 +11758,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet15]
+        modules: [onRequestGet19]
       },
       {
         routePath: "/api/admin/countdown-banners",
@@ -11325,14 +11772,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet16]
+        modules: [onRequestGet20]
       },
       {
         routePath: "/api/admin/countdown-banners",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions15]
+        modules: [onRequestOptions14]
       },
       {
         routePath: "/api/admin/countdown-banners",
@@ -11353,7 +11800,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions16]
+        modules: [onRequestOptions15]
       },
       {
         routePath: "/api/admin/create-default-banner",
@@ -11367,28 +11814,28 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet17]
+        modules: [onRequestGet21]
       },
       {
         routePath: "/api/admin/customers",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions17]
+        modules: [onRequestOptions16]
       },
       {
         routePath: "/api/admin/dashboard-features",
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet18]
+        modules: [onRequestGet22]
       },
       {
         routePath: "/api/admin/dashboard-features",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions18]
+        modules: [onRequestOptions17]
       },
       {
         routePath: "/api/admin/dashboard-features",
@@ -11423,28 +11870,28 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet19]
+        modules: [onRequestGet23]
       },
       {
         routePath: "/api/admin/invoices",
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet20]
+        modules: [onRequestGet24]
       },
       {
         routePath: "/api/admin/invoices",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions19]
+        modules: [onRequestOptions18]
       },
       {
         routePath: "/api/admin/login",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions20]
+        modules: [onRequestOptions19]
       },
       {
         routePath: "/api/admin/login",
@@ -11458,28 +11905,28 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet21]
+        modules: [onRequestGet25]
       },
       {
         routePath: "/api/admin/orders",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions21]
+        modules: [onRequestOptions20]
       },
       {
         routePath: "/api/admin/payment-settings",
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet22]
+        modules: [onRequestGet26]
       },
       {
         routePath: "/api/admin/payment-settings",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions22]
+        modules: [onRequestOptions21]
       },
       {
         routePath: "/api/admin/payment-settings",
@@ -11493,14 +11940,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet23]
+        modules: [onRequestGet27]
       },
       {
         routePath: "/api/admin/pricing",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions23]
+        modules: [onRequestOptions22]
       },
       {
         routePath: "/api/admin/pricing",
@@ -11514,7 +11961,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions24]
+        modules: [onRequestOptions23]
       },
       {
         routePath: "/api/admin/reset-db",
@@ -11528,14 +11975,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet24]
+        modules: [onRequestGet28]
       },
       {
         routePath: "/api/admin/seo-settings",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions25]
+        modules: [onRequestOptions24]
       },
       {
         routePath: "/api/admin/seo-settings",
@@ -11556,21 +12003,21 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet25]
+        modules: [onRequestGet29]
       },
       {
         routePath: "/api/admin/stats",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions26]
+        modules: [onRequestOptions25]
       },
       {
         routePath: "/api/admin/sync-banner-price",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions27]
+        modules: [onRequestOptions26]
       },
       {
         routePath: "/api/admin/sync-banner-price",
@@ -11584,21 +12031,21 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet26]
+        modules: [onRequestGet30]
       },
       {
         routePath: "/api/admin/tickets",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions28]
+        modules: [onRequestOptions27]
       },
       {
         routePath: "/api/admin/update-banner-price",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions29]
+        modules: [onRequestOptions28]
       },
       {
         routePath: "/api/admin/update-banner-price",
@@ -11612,7 +12059,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet27]
+        modules: [onRequestGet31]
       },
       {
         routePath: "/api/admin/update-user-premium",
@@ -11626,56 +12073,56 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/admin",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet28]
+        modules: [onRequestGet32]
       },
       {
         routePath: "/api/admin/users",
         mountPath: "/api/admin",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions30]
+        modules: [onRequestOptions29]
       },
       {
         routePath: "/api/announcement-badge/active",
         mountPath: "/api/announcement-badge",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet29]
+        modules: [onRequestGet33]
       },
       {
         routePath: "/api/announcement-badge/active",
         mountPath: "/api/announcement-badge",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions31]
+        modules: [onRequestOptions30]
       },
       {
         routePath: "/api/auth/facebook",
         mountPath: "/api/auth",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet30]
+        modules: [onRequestGet34]
       },
       {
         routePath: "/api/auth/github",
         mountPath: "/api/auth",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet31]
+        modules: [onRequestGet35]
       },
       {
         routePath: "/api/auth/google",
         mountPath: "/api/auth",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet32]
+        modules: [onRequestGet36]
       },
       {
         routePath: "/api/auth/register",
         mountPath: "/api/auth",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions32]
+        modules: [onRequestOptions31]
       },
       {
         routePath: "/api/auth/register",
@@ -11689,21 +12136,21 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/countdown-banner",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet33]
+        modules: [onRequestGet37]
       },
       {
         routePath: "/api/countdown-banner/active",
         mountPath: "/api/countdown-banner",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions33]
+        modules: [onRequestOptions32]
       },
       {
         routePath: "/api/customer/login",
         mountPath: "/api/customer",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions34]
+        modules: [onRequestOptions33]
       },
       {
         routePath: "/api/customer/login",
@@ -11717,14 +12164,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/customer",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet34]
+        modules: [onRequestGet38]
       },
       {
         routePath: "/api/customer/profile",
         mountPath: "/api/customer",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions35]
+        modules: [onRequestOptions34]
       },
       {
         routePath: "/api/customer/profile",
@@ -11738,7 +12185,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/customer",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions36]
+        modules: [onRequestOptions35]
       },
       {
         routePath: "/api/customer/register",
@@ -11752,91 +12199,98 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/customer",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet35]
+        modules: [onRequestGet39]
       },
       {
         routePath: "/api/customer/stats",
         mountPath: "/api/customer",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions37]
+        modules: [onRequestOptions36]
       },
       {
         routePath: "/api/download-extension/premium",
         mountPath: "/api/download-extension",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet36]
+        modules: [onRequestGet40]
       },
       {
         routePath: "/api/download-extension/trial",
         mountPath: "/api/download-extension",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet37]
+        modules: [onRequestGet41]
       },
       {
         routePath: "/api/downloads/premium-extension",
         mountPath: "/api/downloads",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet38]
+        modules: [onRequestGet42]
       },
       {
         routePath: "/api/downloads/premium-extension",
         mountPath: "/api/downloads",
+        method: "OPTIONS",
+        middlewares: [],
+        modules: [onRequestOptions37]
+      },
+      {
+        routePath: "/api/invoices/customer",
+        mountPath: "/api/invoices",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet43]
+      },
+      {
+        routePath: "/api/invoices/generate",
+        mountPath: "/api/invoices",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet44]
+      },
+      {
+        routePath: "/api/invoices/generate",
+        mountPath: "/api/invoices",
         method: "OPTIONS",
         middlewares: [],
         modules: [onRequestOptions38]
-      },
-      {
-        routePath: "/api/invoices/generate",
-        mountPath: "/api/invoices",
-        method: "GET",
-        middlewares: [],
-        modules: [onRequestGet39]
-      },
-      {
-        routePath: "/api/invoices/generate",
-        mountPath: "/api/invoices",
-        method: "OPTIONS",
-        middlewares: [],
-        modules: [onRequestOptions39]
       },
       {
         routePath: "/api/me/invoices",
         mountPath: "/api/me",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet40]
+        modules: [onRequestGet45]
       },
       {
         routePath: "/api/me/invoices",
+        mountPath: "/api/me",
+        method: "OPTIONS",
+        middlewares: [],
+        modules: [onRequestOptions39]
+      },
+      {
+        routePath: "/api/me/orders",
+        mountPath: "/api/me",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet46]
+      },
+      {
+        routePath: "/api/me/orders",
         mountPath: "/api/me",
         method: "OPTIONS",
         middlewares: [],
         modules: [onRequestOptions40]
       },
       {
-        routePath: "/api/me/orders",
-        mountPath: "/api/me",
-        method: "GET",
-        middlewares: [],
-        modules: [onRequestGet41]
-      },
-      {
-        routePath: "/api/me/orders",
-        mountPath: "/api/me",
-        method: "OPTIONS",
-        middlewares: [],
-        modules: [onRequestOptions41]
-      },
-      {
         routePath: "/api/orders/complete-purchase",
         mountPath: "/api/orders",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions42]
+        modules: [onRequestOptions41]
       },
       {
         routePath: "/api/orders/complete-purchase",
@@ -11850,42 +12304,42 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/orders",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet42]
+        modules: [onRequestGet47]
       },
       {
         routePath: "/api/orders/user-orders",
         mountPath: "/api/orders",
         method: "OPTIONS",
         middlewares: [],
+        modules: [onRequestOptions42]
+      },
+      {
+        routePath: "/api/products/pricing",
+        mountPath: "/api/products",
+        method: "GET",
+        middlewares: [],
+        modules: [onRequestGet48]
+      },
+      {
+        routePath: "/api/products/pricing",
+        mountPath: "/api/products",
+        method: "OPTIONS",
+        middlewares: [],
         modules: [onRequestOptions43]
       },
       {
-        routePath: "/api/products/pricing",
-        mountPath: "/api/products",
+        routePath: "/api/download-extension/:type",
+        mountPath: "/api/download-extension",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet43]
+        modules: [onRequestGet49]
       },
       {
-        routePath: "/api/products/pricing",
-        mountPath: "/api/products",
+        routePath: "/api/download-extension/:type",
+        mountPath: "/api/download-extension",
         method: "OPTIONS",
         middlewares: [],
         modules: [onRequestOptions44]
-      },
-      {
-        routePath: "/api/download-extension/:type",
-        mountPath: "/api/download-extension",
-        method: "GET",
-        middlewares: [],
-        modules: [onRequestGet44]
-      },
-      {
-        routePath: "/api/download-extension/:type",
-        mountPath: "/api/download-extension",
-        method: "OPTIONS",
-        middlewares: [],
-        modules: [onRequestOptions45]
       },
       {
         routePath: "/api/generate-invoice/:orderId",
@@ -11906,7 +12360,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/tickets",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions46]
+        modules: [onRequestOptions45]
       },
       {
         routePath: "/api/tickets/:id",
@@ -11927,21 +12381,21 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet45]
+        modules: [onRequestGet50]
       },
       {
         routePath: "/api/auth-settings",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions47]
+        modules: [onRequestOptions46]
       },
       {
         routePath: "/api/chat",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions48]
+        modules: [onRequestOptions47]
       },
       {
         routePath: "/api/chat",
@@ -11955,7 +12409,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions49]
+        modules: [onRequestOptions48]
       },
       {
         routePath: "/api/complete-stripe-payment",
@@ -11969,7 +12423,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions50]
+        modules: [onRequestOptions49]
       },
       {
         routePath: "/api/create-user-payment-intent",
@@ -11983,14 +12437,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet46]
+        modules: [onRequestGet51]
       },
       {
         routePath: "/api/download-premium",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions51]
+        modules: [onRequestOptions50]
       },
       {
         routePath: "/api/download-premium",
@@ -12004,28 +12458,28 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet47]
+        modules: [onRequestGet52]
       },
       {
         routePath: "/api/init-db",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions52]
+        modules: [onRequestOptions51]
       },
       {
         routePath: "/api/invoice-settings",
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet48]
+        modules: [onRequestGet53]
       },
       {
         routePath: "/api/invoice-settings",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions53]
+        modules: [onRequestOptions52]
       },
       {
         routePath: "/api/invoice-settings",
@@ -12039,35 +12493,35 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet49]
+        modules: [onRequestGet54]
       },
       {
         routePath: "/api/me",
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet50]
+        modules: [onRequestGet55]
       },
       {
         routePath: "/api/migrate-db",
         mountPath: "/api",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet51]
+        modules: [onRequestGet56]
       },
       {
         routePath: "/api/migrate-db",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions54]
+        modules: [onRequestOptions53]
       },
       {
         routePath: "/api/purchase-complete",
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions55]
+        modules: [onRequestOptions54]
       },
       {
         routePath: "/api/purchase-complete",
@@ -12081,7 +12535,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions56]
+        modules: [onRequestOptions55]
       },
       {
         routePath: "/api/test-upload",
@@ -12102,14 +12556,14 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/api/tickets",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet52]
+        modules: [onRequestGet57]
       },
       {
         routePath: "/api/tickets",
         mountPath: "/api/tickets",
         method: "OPTIONS",
         middlewares: [],
-        modules: [onRequestOptions57]
+        modules: [onRequestOptions56]
       },
       {
         routePath: "/api/tickets",
@@ -12123,7 +12577,7 @@ var init_functionsRoutes_0_4590401186987789 = __esm({
         mountPath: "/",
         method: "GET",
         middlewares: [],
-        modules: [onRequestGet53]
+        modules: [onRequestGet58]
       }
     ];
   }

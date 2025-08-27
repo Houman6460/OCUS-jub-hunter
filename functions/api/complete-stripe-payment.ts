@@ -125,9 +125,27 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         ) VALUES (?, ?, ?)
       `).bind(activationCode, orderId, now).run();
 
-      // Skip invoice creation for now due to schema conflicts
-      // Invoice will be generated via separate endpoint if needed
-      console.log('Skipping invoice creation due to schema conflicts');
+      // Generate invoice
+      const invoiceNumber = `INV-${orderId}-${Date.now()}`;
+      await env.DB.prepare(`
+        INSERT INTO invoices (
+          order_id, invoice_number, customer_id, customer_email, customer_name,
+          amount, currency, status, invoice_date, due_date, paid_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', ?, ?, ?)
+      `).bind(
+        orderId,
+        invoiceNumber,
+        finalCustomerId,
+        customerEmail,
+        customerName || customerEmail,
+        purchaseCompleteRequest.amount,
+        purchaseCompleteRequest.currency.toLowerCase(),
+        now, // invoice_date
+        now, // due_date
+        now  // paid_at
+      ).run();
+
+      console.log('Invoice created successfully for order ID:', orderId);
 
       console.log('Purchase completed successfully:', {
         customerId: finalCustomerId,

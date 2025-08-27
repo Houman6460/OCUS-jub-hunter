@@ -1,5 +1,6 @@
 import { onRequestOptions as __api_admin_announcement_badges_translate_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/admin/announcement-badges/translate.ts"
 import { onRequestPost as __api_admin_announcement_badges_translate_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/admin/announcement-badges/translate.ts"
+import { onRequestGet as __api_invoices_admin_list_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/admin/list.ts"
 import { onRequestDelete as __api_admin_announcement_badges__id__ts_onRequestDelete } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/admin/announcement-badges/[id].ts"
 import { onRequestGet as __api_admin_announcement_badges__id__ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/admin/announcement-badges/[id].ts"
 import { onRequestOptions as __api_admin_announcement_badges__id__ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/admin/announcement-badges/[id].ts"
@@ -13,8 +14,10 @@ import { onRequestPut as __api_admin_dashboard_features__feature__ts_onRequestPu
 import { onRequestPut as __api_admin_orders__orderId__ts_onRequestPut } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/admin/orders/[orderId].ts"
 import { onRequestGet as __api_extension_check__id__ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/extension/check/[id].ts"
 import { onRequestGet as __api_extension_downloads__id__ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/extension/downloads/[id].ts"
-import { onRequestGet as __api_invoices__id__pdf_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/[id]/pdf.ts"
-import { onRequestOptions as __api_invoices__id__pdf_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/[id]/pdf.ts"
+import { onRequestGet as __api_invoices__id__download_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/[id]/download.ts"
+import { onRequestGet as __api_invoices__id__download_receipt_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/[id]/download-receipt.ts"
+import { onRequestGet as __api_invoices__id__html_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/[id]/html.ts"
+import { onRequestGet as __api_invoices__id__receipt_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/[id]/receipt.ts"
 import { onRequestPost as __api_tickets__id__archive_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/tickets/[id]/archive.ts"
 import { onRequestGet as __api_tickets__id__messages_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/tickets/[id]/messages.ts"
 import { onRequestOptions as __api_tickets__id__messages_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/tickets/[id]/messages.ts"
@@ -110,6 +113,7 @@ import { onRequestGet as __api_download_extension_premium_ts_onRequestGet } from
 import { onRequestGet as __api_download_extension_trial_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/download-extension/trial.ts"
 import { onRequestGet as __api_downloads_premium_extension_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/downloads/premium-extension.ts"
 import { onRequestOptions as __api_downloads_premium_extension_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/downloads/premium-extension.ts"
+import { onRequestGet as __api_invoices_customer_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/customer.ts"
 import { onRequestGet as __api_invoices_generate_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/generate.ts"
 import { onRequestOptions as __api_invoices_generate_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/invoices/generate.ts"
 import { onRequestGet as __api_me_invoices_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/me/invoices.ts"
@@ -173,6 +177,13 @@ export const routes = [
       method: "POST",
       middlewares: [],
       modules: [__api_admin_announcement_badges_translate_ts_onRequestPost],
+    },
+  {
+      routePath: "/api/invoices/admin/list",
+      mountPath: "/api/invoices/admin",
+      method: "GET",
+      middlewares: [],
+      modules: [__api_invoices_admin_list_ts_onRequestGet],
     },
   {
       routePath: "/api/admin/announcement-badges/:id",
@@ -266,18 +277,32 @@ export const routes = [
       modules: [__api_extension_downloads__id__ts_onRequestGet],
     },
   {
-      routePath: "/api/invoices/:id/pdf",
+      routePath: "/api/invoices/:id/download",
       mountPath: "/api/invoices/:id",
       method: "GET",
       middlewares: [],
-      modules: [__api_invoices__id__pdf_ts_onRequestGet],
+      modules: [__api_invoices__id__download_ts_onRequestGet],
     },
   {
-      routePath: "/api/invoices/:id/pdf",
+      routePath: "/api/invoices/:id/download-receipt",
       mountPath: "/api/invoices/:id",
-      method: "OPTIONS",
+      method: "GET",
       middlewares: [],
-      modules: [__api_invoices__id__pdf_ts_onRequestOptions],
+      modules: [__api_invoices__id__download_receipt_ts_onRequestGet],
+    },
+  {
+      routePath: "/api/invoices/:id/html",
+      mountPath: "/api/invoices/:id",
+      method: "GET",
+      middlewares: [],
+      modules: [__api_invoices__id__html_ts_onRequestGet],
+    },
+  {
+      routePath: "/api/invoices/:id/receipt",
+      mountPath: "/api/invoices/:id",
+      method: "GET",
+      middlewares: [],
+      modules: [__api_invoices__id__receipt_ts_onRequestGet],
     },
   {
       routePath: "/api/tickets/:id/archive",
@@ -943,6 +968,13 @@ export const routes = [
       method: "OPTIONS",
       middlewares: [],
       modules: [__api_downloads_premium_extension_ts_onRequestOptions],
+    },
+  {
+      routePath: "/api/invoices/customer",
+      mountPath: "/api/invoices",
+      method: "GET",
+      middlewares: [],
+      modules: [__api_invoices_customer_ts_onRequestGet],
     },
   {
       routePath: "/api/invoices/generate",
