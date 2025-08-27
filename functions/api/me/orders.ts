@@ -75,22 +75,22 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           const orders = await env.DB.prepare(`
             SELECT 
               id,
-              customerEmail,
-              customerName,
-              originalAmount,
-              finalAmount,
+              customer_email as customerEmail,
+              customer_name as customerName,
+              original_amount as originalAmount,
+              final_amount as finalAmount,
               currency,
               status,
-              paymentMethod,
-              downloadToken,
-              downloadCount,
-              maxDownloads,
-              activationCode,
-              createdAt,
-              completedAt
+              payment_method as paymentMethod,
+              download_token as downloadToken,
+              download_count as downloadCount,
+              max_downloads as maxDownloads,
+              activation_code as activationCode,
+              created_at as createdAt,
+              completed_at as completedAt
             FROM orders
-            WHERE customerId = ?
-            ORDER BY createdAt DESC
+            WHERE customer_id = ?
+            ORDER BY created_at DESC
           `).bind(parseInt(userId)).all();
 
           return json(orders.results || []);

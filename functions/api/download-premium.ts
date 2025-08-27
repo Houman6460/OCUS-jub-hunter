@@ -75,7 +75,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             SELECT c.id, c.email, c.name, c.is_premium, c.extension_activated, c.total_spent
             FROM customers c
             JOIN activation_codes ac ON c.id = ac.customer_id
-            WHERE ac.code = ? AND ac.is_active = 1
+            WHERE ac.code = ? AND ac.isActive = 1
           `).bind(activationCode).first();
           account = codeResult;
           if (account) accountType = 'customer';
@@ -178,7 +178,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       let activationCodeResult = `TEMP_${Date.now()}_${account.id}`;
       if (accountType === 'customer') {
           try {
-              const result = await env.DB.prepare(`SELECT code FROM activation_codes WHERE customer_id = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1`).bind(account.id).first();
+              const result = await env.DB.prepare(`SELECT code FROM activation_codes WHERE customer_id = ? AND isActive = 1 ORDER BY created_at DESC LIMIT 1`).bind(account.id).first();
               if(result) activationCodeResult = (result as any).code;
           } catch (e) { console.log('Failed to get activation code:', e); }
       }

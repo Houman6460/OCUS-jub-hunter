@@ -11,6 +11,20 @@ export interface User {
 export class UserStorage {
   constructor(private db: D1Database) {}
 
+  async getAllCustomers(): Promise<any[]> {
+    try {
+      const customers = await this.db.prepare(`
+        SELECT id, email, name, is_premium, extension_activated, total_spent, total_orders, created_at
+        FROM customers 
+        ORDER BY created_at DESC
+      `).all();
+      return customers.results || [];
+    } catch (error) {
+      console.error('Failed to get all customers:', error);
+      return [];
+    }
+  }
+
   async initializeUsers(): Promise<void> {
     try {
       await this.db.prepare(`
@@ -22,8 +36,13 @@ export class UserStorage {
           role TEXT DEFAULT 'customer' NOT NULL,
           provider TEXT,
           provider_id TEXT,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
+          is_premium BOOLEAN DEFAULT 0,
+          extension_activated BOOLEAN DEFAULT 0,
+          premium_activated_at TEXT,
+          total_spent REAL DEFAULT 0,
+          total_orders INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
       `).run();
     } catch (error) {
@@ -37,8 +56,8 @@ export class UserStorage {
     const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
-        INSERT INTO users (email, name, password)
-        VALUES (?, ?, ?)
+        INSERT INTO users (email, name, password, created_at, updated_at)
+        VALUES (?, ?, ?, datetime('now'), datetime('now'))
       `).bind(email, name, hashedPassword).run();
 
       const userId = result.meta.last_row_id;

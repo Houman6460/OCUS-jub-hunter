@@ -19,22 +19,22 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       const orderResults = await env.DB.prepare(`
         SELECT 
           id, 
-          customerEmail, 
-          customerName, 
-          productId,
-          originalAmount, 
-          finalAmount, 
+          customer_email as customerEmail, 
+          customer_name as customerName, 
+          product_id as productId,
+          original_amount as originalAmount, 
+          final_amount as finalAmount, 
           currency, 
           status, 
-          paymentMethod,
-          downloadToken, 
-          downloadCount, 
-          maxDownloads, 
-          activationCode,
-          createdAt, 
-          completedAt
+          payment_method as paymentMethod,
+          download_token as downloadToken, 
+          download_count as downloadCount, 
+          max_downloads as maxDownloads, 
+          activation_code as activationCode,
+          created_at as createdAt, 
+          completed_at as completedAt
         FROM orders 
-        ORDER BY createdAt DESC
+        ORDER BY created_at DESC
       `).all();
       orders = orderResults.results || [];
 
@@ -42,7 +42,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
       const statsResult = await env.DB.prepare(`
         SELECT 
           COUNT(*) as totalOrders,
-          SUM(CASE WHEN status = 'completed' THEN CAST(finalAmount as REAL) ELSE 0 END) as totalRevenue,
+          SUM(CASE WHEN status = 'completed' THEN CAST(final_amount as REAL) ELSE 0 END) as totalRevenue,
           COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
           COUNT(CASE WHEN status = 'pending' THEN 1 END) as pendingOrders
         FROM orders
