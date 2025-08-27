@@ -43,9 +43,30 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return json({ error: 'User not found.' }, 404);
     }
 
-    const customer = await env.DB.prepare(`SELECT * FROM customers WHERE email = ?`).bind(customerEmail).first<any>();
+    let customer = await env.DB.prepare(`SELECT * FROM customers WHERE email = ?`).bind(customerEmail).first<any>();
+    let customerId;
+
     if (!customer) {
-      return json({ error: 'Customer not found.' }, 404);
+      console.log('No customer found. Creating a new customer record.');
+      const customerResult = await env.DB.prepare(
+        `INSERT INTO customers (user_id, email, name, stripe_customer_id, created_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).bind(
+        user.id,
+        customerEmail,
+        user.name || 'N/A',
+        `cus_manual_${Date.now()}`,
+        new Date().toISOString()
+      ).run();
+
+      customerId = customerResult.meta?.last_row_id;
+      if (!customerId) {
+        throw new Error('Failed to create manual customer record.');
+      }
+      console.log('Manual customer record created with ID:', customerId);
+      customer = { id: customerId, email: customerEmail, name: user.name || 'N/A' }; // Use the newly created customer data
+    } else {
+      customerId = customer.id;
     }
 
     // 2. Find the latest order for the user
@@ -63,7 +84,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         `INSERT INTO orders (customer_id, customer_email, customer_name, original_amount, final_amount, currency, status, payment_method, payment_intent_id, created_at, completed_at)
          VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?)`
       ).bind(
-        customer.id,
+        customerId,
         customerEmail,
         customer.name,
         29.99, // Default amount
