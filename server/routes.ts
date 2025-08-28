@@ -2197,38 +2197,49 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
         break;
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log('Checkout Session was completed!', session);
+        console.log('--- Checkout Session Completed ---');
+        console.log('Received session ID:', session.id);
+        console.log('Metadata:', session.metadata);
 
         if (session.metadata?.userId && session.metadata?.orderId) {
           const userId = parseInt(session.metadata.userId, 10);
           const orderId = parseInt(session.metadata.orderId, 10);
+          console.log(`Processing purchase for userId: ${userId}, orderId: ${orderId}`);
 
           try {
             // 1. Update user to Premium
-            await db.update(users).set({ accountType: 'Premium' }).where(eq(users.id, userId));
-            console.log(`User ${userId} successfully upgraded to Premium.`);
+            console.log(`Attempting to upgrade user ${userId} to Premium...`);
+            const updateUserResult = await db.update(users).set({ accountType: 'Premium' }).where(eq(users.id, userId));
+            console.log(`User ${userId} upgrade successful. Result:`, updateUserResult);
 
             // 2. Update order status to 'completed'
-            await db.update(orders).set({ status: 'completed' }).where(eq(orders.id, orderId));
-            console.log(`Order ${orderId} marked as completed.`);
+            console.log(`Attempting to mark order ${orderId} as completed...`);
+            const updateOrderResult = await db.update(orders).set({ status: 'completed' }).where(eq(orders.id, orderId));
+            console.log(`Order ${orderId} status update successful. Result:`, updateOrderResult);
 
             // 3. Generate and save invoice
+            console.log(`Fetching order ${orderId} and user ${userId} for invoice generation...`);
             const order = await storage.getOrderById(orderId);
             const user = await storage.getUserById(userId);
 
             if (order && user) {
+              console.log('Order and user found. Generating invoice...');
               const invoicePath = await generateInvoicePDF(order, user);
               await db.update(orders).set({ invoiceUrl: invoicePath }).where(eq(orders.id, orderId));
               console.log(`Invoice generated and saved for order ${orderId} at ${invoicePath}`);
             } else {
               console.error(`Could not find order ${orderId} or user ${userId} to generate invoice.`);
             }
-
+            console.log('--- Purchase Fulfillment Successful ---');
           } catch (error) {
-            console.error('Error fulfilling purchase:', error);
+            console.error('--- Purchase Fulfillment Error ---');
+            console.error(`Failed to fulfill purchase for userId: ${userId}, orderId: ${orderId}.`);
+            console.error('Error details:', error);
           }
         } else {
+          console.error('--- Invalid Webhook Metadata ---');
           console.error('Webhook received checkout.session.completed but is missing userId or orderId in metadata.');
+          console.error('Session metadata:', session.metadata);
         }
         break;
       default:
