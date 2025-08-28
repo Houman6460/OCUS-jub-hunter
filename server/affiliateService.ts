@@ -1,10 +1,16 @@
-import { db } from './db';
+import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { customers, affiliateTransactions, affiliatePayouts, orders } from '../shared/schema';
+import * as schema from '../shared/schema';
 import { eq, desc, sum, count, and, gte, lte, isNotNull } from 'drizzle-orm';
 import { nanoid } from "nanoid";
 import { affiliateEmailService } from "./emailService/affiliateEmails";
 
 export class AffiliateService {
+  private db: BetterSQLite3Database<typeof schema>;
+
+  constructor(db: BetterSQLite3Database<typeof schema>) {
+    this.db = db;
+  }
   
   // Generate unique referral code
   async generateReferralCode(): Promise<string> {
@@ -13,7 +19,7 @@ export class AffiliateService {
     
     while (!isUnique) {
       code = nanoid(8).toUpperCase();
-      const existing = await db
+      const existing = await this.db
         .select()
         .from(customers)
         .where(eq(customers.referralCode, code))
@@ -30,7 +36,7 @@ export class AffiliateService {
   async createAffiliate(customerId: number, paymentEmail?: string): Promise<{ referralCode: string }> {
     const referralCode = await this.generateReferralCode();
     
-    await db
+    await this.db
       .update(customers)
       .set({ 
         referralCode,
@@ -44,7 +50,7 @@ export class AffiliateService {
   // Track referral and create commission
   async trackReferral(referralCode: string, orderId: number): Promise<void> {
     // Find affiliate by referral code
-    const affiliate = await db
+    const affiliate = await this.db
       .select()
       .from(customers)
       .where(eq(customers.referralCode, referralCode))
@@ -53,7 +59,7 @@ export class AffiliateService {
     if (affiliate.length === 0) return;
 
     // Get order details
-    const order = await db
+    const order = await this.db
       .select()
       .from(orders)
       .where(eq(orders.id, orderId))
@@ -69,7 +75,7 @@ export class AffiliateService {
     const commissionAmount = parseFloat(orderData.finalAmount) * commissionRate;
 
     // Create affiliate transaction
-    await db.insert(affiliateTransactions).values({
+    await this.db.insert(affiliateTransactions).values({
       affiliateId: affiliateData.id,
       orderId: orderId,
       commission: commissionAmount.toFixed(2),
@@ -78,7 +84,7 @@ export class AffiliateService {
 
     // Update affiliate total earnings
     const newTotalEarnings = parseFloat(affiliateData.totalEarnings || "0") + commissionAmount;
-    await db
+    await this.db
       .update(customers)
       .set({ 
         totalEarnings: newTotalEarnings.toFixed(2)
@@ -88,7 +94,7 @@ export class AffiliateService {
 
   // Get affiliate dashboard stats
   async getAffiliateDashboard(customerId: number) {
-    const affiliate = await db
+    const affiliate = await this.db
       .select()
       .from(customers)
       .where(eq(customers.id, customerId))
@@ -101,7 +107,7 @@ export class AffiliateService {
     const affiliateData = affiliate[0];
 
     // Get commission statistics
-    const commissionStats = await db
+    const commissionStats = await this.db
       .select({
         totalCommissions: sum(affiliateTransactions.commission),
         totalReferrals: count(affiliateTransactions.id),
@@ -111,7 +117,7 @@ export class AffiliateService {
       .where(eq(affiliateTransactions.affiliateId, customerId));
 
     // Get recent transactions
-    const recentTransactions = await db
+    const recentTransactions = await this.db
       .select({
         id: affiliateTransactions.id,
         commission: affiliateTransactions.commission,
@@ -128,7 +134,7 @@ export class AffiliateService {
       .limit(10);
 
     // Get payout history
-    const payoutHistory = await db
+    const payoutHistory = await this.db
       .select()
       .from(affiliatePayouts)
       .where(eq(affiliatePayouts.affiliateId, customerId))
@@ -150,7 +156,7 @@ export class AffiliateService {
     totalReferrals: number;
     totalCommissions: string;
   }> {
-    const affiliate = await db
+    const affiliate = await this.db
       .select()
       .from(customers)
       .where(eq(customers.id, customerId))
@@ -163,7 +169,7 @@ export class AffiliateService {
     const affiliateData = affiliate[0];
 
     // Get commission statistics
-    const commissionStats = await db
+    const commissionStats = await this.db
       .select({
         totalCommissions: sum(affiliateTransactions.commission),
         totalReferrals: count(affiliateTransactions.id)
@@ -194,7 +200,7 @@ export class AffiliateService {
       updateData.paymentEmail = paymentDetails.email;
     }
 
-    await db
+    await this.db
       .update(customers)
       .set(updateData)
       .where(eq(customers.id, customerId));
@@ -205,7 +211,7 @@ export class AffiliateService {
   // Request payout
   async requestPayout(customerId: number, amount: number, paymentMethod: string, paymentDetails: any) {
     // Check if affiliate has enough pending commission
-    const pendingCommission = await db
+    const pendingCommission = await this.db
       .select({
         total: sum(affiliateTransactions.commission)
       })
@@ -228,7 +234,7 @@ export class AffiliateService {
     }
 
     // Create payout request
-    const payout = await db.insert(affiliatePayouts).values({
+    const payout = await this.db.insert(affiliatePayouts).values({
       affiliateId: customerId,
       amount: amount.toFixed(2),
       paymentMethod,
@@ -242,7 +248,7 @@ export class AffiliateService {
 
   // Admin: Approve payout
   async approvePayout(payoutId: number, transactionId?: string) {
-    await db
+    await this.db
       .update(affiliatePayouts)
       .set({
         status: 'paid',
@@ -253,7 +259,7 @@ export class AffiliateService {
       .where(eq(affiliatePayouts.id, payoutId));
 
     // Mark related transactions as paid
-    const payout = await db
+    const payout = await this.db
       .select()
       .from(affiliatePayouts)
       .where(eq(affiliatePayouts.id, payoutId))
@@ -264,7 +270,7 @@ export class AffiliateService {
       
       // Find transactions to mark as paid (up to the payout amount)
       let remainingAmount = payoutAmount;
-      const transactions = await db
+      const transactions = await this.db
         .select()
         .from(affiliateTransactions)
         .where(
@@ -280,7 +286,7 @@ export class AffiliateService {
         
         const commissionAmount = parseFloat(transaction.commission);
         if (commissionAmount <= remainingAmount) {
-          await db
+          await this.db
             .update(affiliateTransactions)
             .set({ 
               status: 'paid',
@@ -296,18 +302,18 @@ export class AffiliateService {
 
   // Admin: Get all affiliate overview stats
   async getAllAffiliateStats() {
-    const totalAffiliates = await db
+    const totalAffiliates = await this.db
       .select({ count: count() })
       .from(customers)
       .where(isNotNull(customers.referralCode));
 
-    const totalCommissions = await db
+    const totalCommissions = await this.db
       .select({
         total: sum(affiliateTransactions.commission)
       })
       .from(affiliateTransactions);
 
-    const pendingPayouts = await db
+    const pendingPayouts = await this.db
       .select({
         count: count(),
         total: sum(affiliatePayouts.amount)
@@ -315,7 +321,7 @@ export class AffiliateService {
       .from(affiliatePayouts)
       .where(eq(affiliatePayouts.status, "pending"));
 
-    const topAffiliates = await db
+    const topAffiliates = await this.db
       .select({
         id: customers.id,
         name: customers.name,
@@ -342,7 +348,7 @@ export class AffiliateService {
 
   // Auto-approve commissions for orders over threshold
   async autoApproveCommissions(threshold: number = 100) {
-    const pendingTransactions = await db
+    const pendingTransactions = await this.db
       .select()
       .from(affiliateTransactions)
       .leftJoin(orders, eq(affiliateTransactions.orderId, orders.id))
@@ -357,7 +363,7 @@ export class AffiliateService {
       const orderAmount = parseFloat(transaction.orders?.finalAmount || "0");
       
       if (orderAmount >= threshold) {
-        await db
+        await this.db
           .update(affiliateTransactions)
           .set({ status: "approved" })
           .where(eq(affiliateTransactions.id, transaction.affiliate_transactions.id));
@@ -369,7 +375,7 @@ export class AffiliateService {
   async processAutomaticPayouts() {
     // This would integrate with PayPal API or other payment processors
     // For now, we'll just mark them as processing
-    const approvedTransactions = await db
+    const approvedTransactions = await this.db
       .select({
         affiliateId: affiliateTransactions.affiliateId,
         totalCommission: sum(affiliateTransactions.commission)
@@ -381,7 +387,7 @@ export class AffiliateService {
 
     for (const affiliate of approvedTransactions) {
       // Get affiliate payment details
-      const affiliateData = await db
+      const affiliateData = await this.db
         .select()
         .from(customers)
         .where(eq(customers.id, affiliate.affiliateId))
@@ -399,5 +405,3 @@ export class AffiliateService {
     }
   }
 }
-
-export const affiliateService = new AffiliateService();

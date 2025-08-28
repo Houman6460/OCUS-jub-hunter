@@ -1,29 +1,28 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
 import * as schema from "@shared/schema";
 
-// Dev-safe database initialization - only throws when actually accessed
-let db: any = null;
+export type DbInstance = BetterSQLite3Database<typeof schema>;
 
-if (process.env.DATABASE_URL) {
+let dbInstance: DbInstance | null = null;
+
+export async function initializeDb(): Promise<DbInstance> {
+  if (dbInstance) {
+    return dbInstance;
+  }
+
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL not set - database operations will fail.');
+    throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+  }
+
   try {
     const sqlite = new Database(process.env.DATABASE_URL.replace('file:', ''));
-    db = drizzle(sqlite, { schema });
+    dbInstance = drizzle(sqlite, { schema });
     console.log('Database connection initialized successfully with SQLite');
+    return dbInstance;
   } catch (error) {
     console.error('Error initializing SQLite database connection:', error);
-    // Don't throw here, allow the app to start but operations will fail gracefully
-    db = null;
+    throw new Error("Failed to initialize database.");
   }
-} else {
-  // Create proxy that throws only on actual database access
-  console.warn('DATABASE_URL not set - database operations will fail until configured');
-  
-  db = new Proxy({} as any, {
-    get() {
-      throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-    }
-  });
 }
-
-export { db };

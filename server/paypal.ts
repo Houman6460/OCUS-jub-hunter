@@ -14,7 +14,7 @@ import {
   OrdersController,
 } from "@paypal/paypal-server-sdk";
 import { Request, Response } from "express";
-import { db } from "./db";
+import type { DbInstance } from "./db";
 import { orders, customers, customerPayments } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 
@@ -122,7 +122,8 @@ export async function createPaypalOrder(req: Request, res: Response) {
   }
 }
 
-export async function capturePaypalOrder(req: Request, res: Response) {
+export function capturePaypalOrder(db: DbInstance) {
+  return async (req: Request, res: Response) => {
   try {
     const { orderID } = req.params;
     const collect = {
@@ -199,6 +200,7 @@ export async function capturePaypalOrder(req: Request, res: Response) {
   } catch (error) {
     console.error("Failed to create order:", error);
     res.status(500).json({ error: "Failed to capture order." });
+  }
   }
 }
 

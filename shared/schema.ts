@@ -1,26 +1,26 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, json } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, blob, real } from 'drizzle-orm/sqlite-core';
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email").notNull(),
-  isAdmin: boolean("is_admin").default(false),
+  isAdmin: integer("is_admin", { mode: 'boolean' }).default(false),
   stripeCustomerId: text("stripe_customer_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const orders = pgTable("orders", {
-  id: serial("id").primaryKey(),
+export const orders = sqliteTable("orders", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").references(() => users.id), // Link to authenticated users
   customerEmail: text("customer_email").notNull(),
   customerName: text("customer_name").notNull(),
-  originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
-  finalAmount: decimal("final_amount", { precision: 10, scale: 2 }).notNull(),
-  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  originalAmount: text("original_amount", { precision: 10, scale: 2 }).notNull(),
+  finalAmount: text("final_amount", { precision: 10, scale: 2 }).notNull(),
+  discountAmount: text("discount_amount", { precision: 10, scale: 2 }).default("0"),
   couponCode: text("coupon_code"),
   referralCode: text("referral_code"), // Added for affiliate tracking
   currency: text("currency").default("usd"),
@@ -32,146 +32,146 @@ export const orders = pgTable("orders", {
   downloadCount: integer("download_count").default(0),
   maxDownloads: integer("max_downloads").default(3),
   activationCode: text("activation_code"), // Generated activation code for the extension
-  createdAt: timestamp("created_at").defaultNow(),
-  completedAt: timestamp("completed_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
+  completedAt: integer("completed_at"),
 });
 
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
+export const products = sqliteTable("products", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  beforePrice: decimal("before_price", { precision: 10, scale: 2 }),
+  price: text("price", { precision: 10, scale: 2 }).notNull(),
+  beforePrice: text("before_price", { precision: 10, scale: 2 }),
   currency: text("currency").default("eur"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const coupons = pgTable("coupons", {
-  id: serial("id").primaryKey(),
+export const coupons = sqliteTable("coupons", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   code: text("code").notNull().unique(),
   discountType: text("discount_type").notNull(), // "percentage" or "fixed"
-  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
-  isActive: boolean("is_active").default(true),
+  discountValue: text("discount_value", { precision: 10, scale: 2 }).notNull(),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
   usageLimit: integer("usage_limit"), // null for unlimited
   usageCount: integer("usage_count").default(0),
-  expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: integer("expires_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const settings = pgTable("settings", {
-  id: serial("id").primaryKey(),
+export const settings = sqliteTable("settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   key: text("key").notNull().unique(),
   value: text("value").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 
 
 // Dashboard features control
-export const dashboardFeatures = pgTable("dashboard_features", {
-  id: serial("id").primaryKey(),
+export const dashboardFeatures = sqliteTable("dashboard_features", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   featureName: text("feature_name").notNull().unique(),
-  isEnabled: boolean("is_enabled").default(true),
+  isEnabled: integer("is_enabled", { mode: 'boolean' }).default(true),
   description: text("description"),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 // Mission tracking for extension usage
-export const missions = pgTable("missions", {
-  id: serial("id").primaryKey(),
+export const missions = sqliteTable("missions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   missionId: text("mission_id").notNull().unique(), // OCUS mission ID
   userId: text("user_id").notNull(), // Extension user ID
   customerId: integer("customer_id"), // References users table if logged in
   missionName: text("mission_name").notNull(),
-  compensationAmount: decimal("compensation_amount", { precision: 10, scale: 2 }),
+  compensationAmount: text("compensation_amount", { precision: 10, scale: 2 }),
   status: text("status").notNull().default("assignment_accepted"), // assignment_accepted, appointment_confirmation, media_upload, billing_payment, assignment_complete
-  assignmentAcceptedAt: timestamp("assignment_accepted_at").defaultNow(),
-  appointmentConfirmedAt: timestamp("appointment_confirmed_at"),
-  mediaUploadedAt: timestamp("media_uploaded_at"),
-  billingCompletedAt: timestamp("billing_completed_at"),
-  assignmentCompletedAt: timestamp("assignment_completed_at"),
-  trialUsed: boolean("trial_used").default(false), // Whether this mission used a trial attempt
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  assignmentAcceptedAt: integer("assignment_accepted_at").default(sql`(CURRENT_TIMESTAMP)`),
+  appointmentConfirmedAt: integer("appointment_confirmed_at"),
+  mediaUploadedAt: integer("media_uploaded_at"),
+  billingCompletedAt: integer("billing_completed_at"),
+  assignmentCompletedAt: integer("assignment_completed_at"),
+  trialUsed: integer("trial_used", { mode: 'boolean' }).default(false), // Whether this mission used a trial attempt
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 // User trial usage tracking
-export const userTrials = pgTable("user_trials", {
-  id: serial("id").primaryKey(),
+export const userTrials = sqliteTable("user_trials", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull().unique(), // Extension user ID
   customerId: integer("customer_id"), // References users table if logged in
   trialsUsed: integer("trials_used").default(0),
   maxTrials: integer("max_trials").default(3),
-  isActivated: boolean("is_activated").default(false),
+  isActivated: integer("is_activated", { mode: 'boolean' }).default(false),
   activationKey: text("activation_key"),
-  activatedAt: timestamp("activated_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  activatedAt: integer("activated_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 // Cross-browser trial tracking
-export const trialUsage = pgTable("trial_usage", {
-  id: serial("id").primaryKey(),
+export const trialUsage = sqliteTable("trial_usage", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   trialKey: text("trial_key").notNull().unique(), // Combination of extensionId + userFingerprint
   extensionId: text("extension_id").notNull(),
   userFingerprint: text("user_fingerprint").notNull(),
   usageCount: integer("usage_count").default(0),
-  lastUsed: timestamp("last_used").defaultNow(),
-  isExpired: boolean("is_expired").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  lastUsed: integer("last_used").default(sql`(CURRENT_TIMESTAMP)`),
+  isExpired: integer("is_expired", { mode: 'boolean' }).default(false),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const authSettings = pgTable("auth_settings", {
-  id: serial("id").primaryKey(),
+export const authSettings = sqliteTable("auth_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   // Google OAuth
   googleClientId: text("google_client_id"),
   googleClientSecret: text("google_client_secret"),
   googleRedirectUri: text("google_redirect_uri"),
-  googleEnabled: boolean("google_enabled").default(false),
+  googleEnabled: integer("google_enabled", { mode: 'boolean' }).default(false),
   
   // Facebook OAuth
   facebookAppId: text("facebook_app_id"),
   facebookAppSecret: text("facebook_app_secret"),
-  facebookEnabled: boolean("facebook_enabled").default(false),
+  facebookEnabled: integer("facebook_enabled", { mode: 'boolean' }).default(false),
   
   // GitHub OAuth
   githubClientId: text("github_client_id"),
   githubClientSecret: text("github_client_secret"),
-  githubEnabled: boolean("github_enabled").default(false),
+  githubEnabled: integer("github_enabled", { mode: 'boolean' }).default(false),
   
   // reCAPTCHA settings
   recaptchaSiteKey: text("recaptcha_site_key"),
   recaptchaSecretKey: text("recaptcha_secret_key"),
-  recaptchaEnabled: boolean("recaptcha_enabled").default(false),
+  recaptchaEnabled: integer("recaptcha_enabled", { mode: 'boolean' }).default(false),
   recaptchaMode: text("recaptcha_mode").default("v2"), // v2 or v3
-  recaptchaCustomerEnabled: boolean("recaptcha_customer_enabled").default(false),
-  recaptchaAdminEnabled: boolean("recaptcha_admin_enabled").default(true),
+  recaptchaCustomerEnabled: integer("recaptcha_customer_enabled", { mode: 'boolean' }).default(false),
+  recaptchaAdminEnabled: integer("recaptcha_admin_enabled", { mode: 'boolean' }).default(true),
   
   // Payment Gateway Settings
   stripePublicKey: text("stripe_public_key"),
   stripeSecretKey: text("stripe_secret_key"),
-  stripeEnabled: boolean("stripe_enabled").default(false),
+  stripeEnabled: integer("stripe_enabled", { mode: 'boolean' }).default(false),
   paypalClientId: text("paypal_client_id"),
   paypalClientSecret: text("paypal_client_secret"),
-  paypalEnabled: boolean("paypal_enabled").default(false),
+  paypalEnabled: integer("paypal_enabled", { mode: 'boolean' }).default(false),
   defaultPaymentMethod: text("default_payment_method").default("stripe"), // stripe or paypal
   
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const downloads = pgTable("downloads", {
-  id: serial("id").primaryKey(),
+export const downloads = sqliteTable("downloads", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   orderId: integer("order_id").references(() => orders.id).notNull(),
-  downloadedAt: timestamp("downloaded_at").defaultNow(),
+  downloadedAt: integer("downloaded_at").default(sql`(CURRENT_TIMESTAMP)`),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
 });
 
-export const tickets = pgTable("tickets", {
-  id: serial("id").primaryKey(),
+export const tickets = sqliteTable("tickets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   description: text("description").notNull(),
   category: text("category").notNull(), // "technical", "billing", "feature-request", "bug-report", "general"
@@ -180,209 +180,209 @@ export const tickets = pgTable("tickets", {
   customerEmail: text("customer_email").notNull(),
   customerName: text("customer_name").notNull(),
   assignedToUserId: integer("assigned_to_user_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  resolvedAt: timestamp("resolved_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`),
+  resolvedAt: integer("resolved_at"),
 });
 
-export const ticketMessages = pgTable("ticket_messages", {
-  id: serial("id").primaryKey(),
+export const ticketMessages = sqliteTable("ticket_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   ticketId: integer("ticket_id").references(() => tickets.id).notNull(),
   message: text("message").notNull(),
-  isFromCustomer: boolean("is_from_customer").notNull().default(true),
+  isFromCustomer: integer("is_from_customer", { mode: 'boolean' }).notNull().default(true),
   senderName: text("sender_name").notNull(),
   senderEmail: text("sender_email"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const activationKeys = pgTable("activation_keys", {
-  id: serial("id").primaryKey(),
+export const activationKeys = sqliteTable("activation_keys", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   activationKey: text("activation_key").notNull().unique(),
-  isActive: boolean("is_active").default(true),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
   orderId: integer("order_id").references(() => orders.id),
   userId: integer("user_id").references(() => users.id), // Link to authenticated user
-  installationId: varchar("installation_id", { length: 36 }), // Bind to specific installation
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  installationId: text("installation_id", { length: 36 }), // Bind to specific installation
+  usedAt: integer("used_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const demoUsers = pgTable("demo_users", {
-  id: serial("id").primaryKey(),
+export const demoUsers = sqliteTable("demo_users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: text("user_id").notNull().unique(), // UUID from extension
   demoCount: integer("demo_count").default(0),
   maxDemoUses: integer("max_demo_uses").default(3),
-  createdAt: timestamp("created_at").defaultNow(),
-  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
+  lastUsedAt: integer("last_used_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  password: varchar("password", { length: 255 }), // Optional for social logins
-  name: varchar("name", { length: 255 }).notNull(),
+export const customers = sqliteTable("customers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email", { length: 255 }).notNull().unique(),
+  password: text("password", { length: 255 }), // Optional for social logins
+  name: text("name", { length: 255 }).notNull(),
   
   // Extension activation and usage
-  activationKey: varchar("activation_key", { length: 100 }).unique(),
-  activationKeyRevealed: boolean("activation_key_revealed").default(false).notNull(),
-  activationKeyGeneratedAt: timestamp("activation_key_generated_at").defaultNow(),
-  isActivated: boolean("is_activated").default(false).notNull(),
-  extensionActivated: boolean("extension_activated").default(false).notNull(),
-  extensionLastUsed: timestamp("extension_last_used"),
+  activationKey: text("activation_key", { length: 100 }).unique(),
+  activationKeyRevealed: integer("activation_key_revealed", { mode: 'boolean' }).default(false).notNull(),
+  activationKeyGeneratedAt: integer("activation_key_generated_at").default(sql`(CURRENT_TIMESTAMP)`),
+  isActivated: integer("is_activated", { mode: 'boolean' }).default(false).notNull(),
+  extensionActivated: integer("extension_activated", { mode: 'boolean' }).default(false).notNull(),
+  extensionLastUsed: integer("extension_last_used"),
   extensionUsageCount: integer("extension_usage_count").default(0).notNull(),
   extensionSuccessfulJobs: integer("extension_successful_jobs").default(0).notNull(),
   extensionTrialJobsUsed: integer("extension_trial_jobs_used").default(0).notNull(),
   extensionTrialLimit: integer("extension_trial_limit").default(3).notNull(),
-  isBlocked: boolean("is_blocked").default(false).notNull(),
+  isBlocked: integer("is_blocked", { mode: 'boolean' }).default(false).notNull(),
   blockedReason: text("blocked_reason"),
-  blockedAt: timestamp("blocked_at"),
+  blockedAt: integer("blocked_at"),
   
   // Account status
-  isAdmin: boolean("is_admin").default(false).notNull(),
-  subscriptionStatus: varchar("subscription_status", { length: 20 }).default("inactive").notNull(), // inactive, active, cancelled, expired
-  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  isAdmin: integer("is_admin", { mode: 'boolean' }).default(false).notNull(),
+  subscriptionStatus: text("subscription_status", { length: 20 }).default("inactive").notNull(), // inactive, active, cancelled, expired
+  subscriptionExpiresAt: integer("subscription_expires_at"),
   
   // Payment integration
-  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
-  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
-  paypalCustomerId: varchar("paypal_customer_id", { length: 255 }),
-  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default("0").notNull(),
+  stripeCustomerId: text("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: text("stripe_subscription_id", { length: 255 }),
+  paypalCustomerId: text("paypal_customer_id", { length: 255 }),
+  totalSpent: text("total_spent", { precision: 10, scale: 2 }).default("0").notNull(),
   totalOrders: integer("total_orders").default(0).notNull(),
-  lastOrderDate: timestamp("last_order_date"),
+  lastOrderDate: integer("last_order_date"),
   
   // Social login fields
-  googleId: varchar("google_id", { length: 255 }),
-  facebookId: varchar("facebook_id", { length: 255 }),
-  githubId: varchar("github_id", { length: 255 }),
-  avatar: varchar("avatar", { length: 500 }),
+  googleId: text("google_id", { length: 255 }),
+  facebookId: text("facebook_id", { length: 255 }),
+  githubId: text("github_id", { length: 255 }),
+  avatar: text("avatar", { length: 500 }),
   
   // Affiliate program
-  referralCode: varchar("referral_code", { length: 20 }).unique(),
-  referredBy: varchar("referred_by", { length: 255 }),
-  totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 }).default("0"),
-  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).default("10.00"), // 10% default
+  referralCode: text("referral_code", { length: 20 }).unique(),
+  referredBy: text("referred_by", { length: 255 }),
+  totalEarnings: text("total_earnings", { precision: 10, scale: 2 }).default("0"),
+  commissionRate: text("commission_rate", { precision: 5, scale: 2 }).default("10.00"), // 10% default
   
   // Profile
-  phone: varchar("phone", { length: 50 }),
+  phone: text("phone", { length: 50 }),
   address: text("address"),
-  dateOfBirth: varchar("date_of_birth", { length: 10 }),
-  preferredLanguage: varchar("preferred_language", { length: 10 }).default("en").notNull(),
-  marketingOptIn: boolean("marketing_opt_in").default(false).notNull(),
+  dateOfBirth: text("date_of_birth", { length: 10 }),
+  preferredLanguage: text("preferred_language", { length: 10 }).default("en").notNull(),
+  marketingOptIn: integer("marketing_opt_in", { mode: 'boolean' }).default(false).notNull(),
   
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
-export const affiliateTransactions = pgTable("affiliate_transactions", {
-  id: serial("id").primaryKey(),
+export const affiliateTransactions = sqliteTable("affiliate_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   affiliateId: integer("affiliate_id").notNull().references(() => customers.id),
   orderId: integer("order_id").notNull().references(() => orders.id),
-  commission: decimal("commission", { precision: 10, scale: 2 }).notNull(),
-  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, paid, cancelled
-  paidAt: timestamp("paid_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  commission: text("commission", { precision: 10, scale: 2 }).notNull(),
+  status: text("status", { length: 20 }).default("pending").notNull(), // pending, paid, cancelled
+  paidAt: integer("paid_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Extension usage statistics table
-export const extensionUsageStats = pgTable("extension_usage_stats", {
-  id: serial("id").primaryKey(),
+export const extensionUsageStats = sqliteTable("extension_usage_stats", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   customerId: integer("customer_id").notNull().references(() => customers.id),
-  sessionId: varchar("session_id", { length: 100 }).notNull(),
-  usageDate: timestamp("usage_date").defaultNow().notNull(),
+  sessionId: text("session_id", { length: 100 }).notNull(),
+  usageDate: integer("usage_date").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   jobsFound: integer("jobs_found").default(0).notNull(),
   jobsApplied: integer("jobs_applied").default(0).notNull(),
   successfulJobs: integer("successful_jobs").default(0).notNull(),
   sessionDuration: integer("session_duration_minutes").default(0).notNull(), // in minutes
-  platform: varchar("platform", { length: 50 }).default("ocus").notNull(), // ocus, ubereats, foodora
-  location: varchar("location", { length: 100 }),
+  platform: text("platform", { length: 50 }).default("ocus").notNull(), // ocus, ubereats, foodora
+  location: text("location", { length: 100 }),
   userAgent: text("user_agent"),
-  extensionVersion: varchar("extension_version", { length: 20 }),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  extensionVersion: text("extension_version", { length: 20 }),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Customer payments tracking table
-export const customerPayments = pgTable("customer_payments", {
-  id: serial("id").primaryKey(),
+export const customerPayments = sqliteTable("customer_payments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   customerId: integer("customer_id").notNull().references(() => customers.id),
   orderId: integer("order_id").notNull().references(() => orders.id),
-  paymentMethod: varchar("payment_method", { length: 20 }).notNull(), // stripe, paypal
-  paymentIntentId: varchar("payment_intent_id", { length: 255 }),
-  paypalOrderId: varchar("paypal_order_id", { length: 255 }),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 3 }).default("usd").notNull(),
-  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, completed, failed, refunded
+  paymentMethod: text("payment_method", { length: 20 }).notNull(), // stripe, paypal
+  paymentIntentId: text("payment_intent_id", { length: 255 }),
+  paypalOrderId: text("paypal_order_id", { length: 255 }),
+  amount: text("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency", { length: 3 }).default("usd").notNull(),
+  status: text("status", { length: 20 }).default("pending").notNull(), // pending, completed, failed, refunded
   failureReason: text("failure_reason"),
-  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }).default("0"),
+  refundAmount: text("refund_amount", { precision: 10, scale: 2 }).default("0"),
   refundReason: text("refund_reason"),
-  processedAt: timestamp("processed_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  processedAt: integer("processed_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Global extension usage statistics
-export const globalUsageStats = pgTable("global_usage_stats", {
-  id: serial("id").primaryKey(),
-  statDate: varchar("stat_date", { length: 10 }).notNull(), // YYYY-MM-DD format
+export const globalUsageStats = sqliteTable("global_usage_stats", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  statDate: text("stat_date", { length: 10 }).notNull(), // YYYY-MM-DD format
   totalUsers: integer("total_users").default(0).notNull(),
   activeUsers: integer("active_users").default(0).notNull(),
   totalSessions: integer("total_sessions").default(0).notNull(),
   totalJobsFound: integer("total_jobs_found").default(0).notNull(),
   totalJobsApplied: integer("total_jobs_applied").default(0).notNull(),
   totalSuccessfulJobs: integer("total_successful_jobs").default(0).notNull(),
-  avgSessionDuration: decimal("avg_session_duration", { precision: 8, scale: 2 }).default("0").notNull(),
-  topPlatform: varchar("top_platform", { length: 50 }),
-  topLocation: varchar("top_location", { length: 100 }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  avgSessionDuration: text("avg_session_duration", { precision: 8, scale: 2 }).default("0").notNull(),
+  topPlatform: text("top_platform", { length: 50 }),
+  topLocation: text("top_location", { length: 100 }),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Premium device registration for single-device restriction
-export const premiumDevices = pgTable("premium_devices", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id", { length: 100 }).notNull(), // Extension user ID
-  deviceFingerprint: varchar("device_fingerprint", { length: 64 }).notNull().unique(),
-  extensionId: varchar("extension_id", { length: 100 }).notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  registeredAt: timestamp("registered_at").defaultNow().notNull(),
-  lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
-  deactivatedAt: timestamp("deactivated_at"),
+export const premiumDevices = sqliteTable("premium_devices", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: text("user_id", { length: 100 }).notNull(), // Extension user ID
+  deviceFingerprint: text("device_fingerprint", { length: 64 }).notNull().unique(),
+  extensionId: text("extension_id", { length: 100 }).notNull(),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true).notNull(),
+  registeredAt: integer("registered_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  lastSeenAt: integer("last_seen_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  deactivatedAt: integer("deactivated_at"),
   deactivationReason: text("deactivation_reason")
 });
 
 // SEO Settings table for managing meta tags and social media previews
-export const seoSettings = pgTable("seo_settings", {
-  id: serial("id").primaryKey(),
-  siteTitle: varchar("site_title", { length: 100 }).default("OCUS Job Hunter - Premium Chrome Extension").notNull(),
+export const seoSettings = sqliteTable("seo_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  siteTitle: text("site_title", { length: 100 }).default("OCUS Job Hunter - Premium Chrome Extension").notNull(),
   siteDescription: text("site_description").default("Boost your photography career with OCUS Job Hunter Chrome Extension. Automated mission detection, smart acceptance, and unlimited job opportunities for OCUS photographers.").notNull(),
   siteKeywords: text("site_keywords").default("OCUS extension, photography jobs, Chrome extension, job hunter, photographer tools, mission automation"),
-  siteAuthor: varchar("site_author", { length: 100 }).default("OCUS Job Hunter"),
+  siteAuthor: text("site_author", { length: 100 }).default("OCUS Job Hunter"),
   
   // Open Graph settings
-  ogTitle: varchar("og_title", { length: 100 }),
+  ogTitle: text("og_title", { length: 100 }),
   ogDescription: text("og_description"),
   ogImage: text("og_image").default("/og-image.svg"), // URL or path to image
-  ogImageAlt: varchar("og_image_alt", { length: 200 }),
-  ogSiteName: varchar("og_site_name", { length: 100 }).default("OCUS Job Hunter"),
-  ogType: varchar("og_type", { length: 50 }).default("website"),
-  ogUrl: varchar("og_url", { length: 255 }).default("https://jobhunter.one/"),
+  ogImageAlt: text("og_image_alt", { length: 200 }),
+  ogSiteName: text("og_site_name", { length: 100 }).default("OCUS Job Hunter"),
+  ogType: text("og_type", { length: 50 }).default("website"),
+  ogUrl: text("og_url", { length: 255 }).default("https://jobhunter.one/"),
   
   // Twitter Card settings  
-  twitterCard: varchar("twitter_card", { length: 50 }).default("summary_large_image"),
-  twitterTitle: varchar("twitter_title", { length: 100 }),
+  twitterCard: text("twitter_card", { length: 50 }).default("summary_large_image"),
+  twitterTitle: text("twitter_title", { length: 100 }),
   twitterDescription: text("twitter_description"),
   twitterImage: text("twitter_image").default("/og-image.svg"),
-  twitterSite: varchar("twitter_site", { length: 50 }),
-  twitterCreator: varchar("twitter_creator", { length: 50 }),
+  twitterSite: text("twitter_site", { length: 50 }),
+  twitterCreator: text("twitter_creator", { length: 50 }),
   
   // Additional SEO settings
-  metaRobots: varchar("meta_robots", { length: 100 }).default("index, follow"),
-  canonicalUrl: varchar("canonical_url", { length: 255 }),
-  themeColor: varchar("theme_color", { length: 7 }).default("#2563eb"),
+  metaRobots: text("meta_robots", { length: 100 }).default("index, follow"),
+  canonicalUrl: text("canonical_url", { length: 255 }),
+  themeColor: text("theme_color", { length: 7 }).default("#2563eb"),
   
   // Custom image uploads
   customLogo: text("custom_logo"), // Base64 or URL
   customFavicon: text("custom_favicon"), // Base64 or URL
   customOgImage: text("custom_og_image"), // Base64 or URL
   
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 
@@ -459,99 +459,99 @@ export const affiliateTransactionsRelations = relations(affiliateTransactions, (
 }));
 
 // Countdown Banner table for promotional campaigns
-export const countdownBanners = pgTable('countdown_banners', {
-  id: serial('id').primaryKey(),
-  isEnabled: boolean('is_enabled').default(false),
+export const countdownBanners = sqliteTable('countdown_banners', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  isEnabled: integer('is_enabled', { mode: 'boolean' }).default(false),
   titleEn: text('title_en').notNull(),
   subtitleEn: text('subtitle_en').notNull(),
-  titleTranslations: json('title_translations').$type<Record<string, string>>().default({}),
-  subtitleTranslations: json('subtitle_translations').$type<Record<string, string>>().default({}),
-  targetPrice: decimal('target_price', { precision: 10, scale: 2 }).notNull(),
-  originalPrice: decimal('original_price', { precision: 10, scale: 2 }),
-  endDateTime: timestamp('end_date_time').notNull(),
-  backgroundColor: varchar('background_color', { length: 20 }).default('gradient-primary'),
-  textColor: varchar('text_color', { length: 20 }).default('white'),
+  titleTranslations: text('title_translations').default('{}'),
+  subtitleTranslations: text('subtitle_translations').default('{}'),
+  targetPrice: text('target_price', { precision: 10, scale: 2 }).notNull(),
+  originalPrice: text('original_price', { precision: 10, scale: 2 }),
+  endDateTime: integer('end_date_time').notNull(),
+  backgroundColor: text('background_color', { length: 20 }).default('gradient-primary'),
+  textColor: text('text_color', { length: 20 }).default('white'),
   priority: integer('priority').default(1),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  createdAt: integer('created_at').default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer('updated_at').default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 // Announcement Badge table for hero section badge
-export const announcementBadges = pgTable('announcement_badges', {
-  id: serial('id').primaryKey(),
-  isEnabled: boolean('is_enabled').default(true),
+export const announcementBadges = sqliteTable('announcement_badges', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  isEnabled: integer('is_enabled', { mode: 'boolean' }).default(true),
   textEn: text('text_en').notNull(),
-  textTranslations: json('text_translations').$type<Record<string, string>>().default({}),
-  backgroundColor: varchar('background_color', { length: 20 }).default('gradient-primary'),
-  textColor: varchar('text_color', { length: 20 }).default('white'),
+  textTranslations: text('text_translations').default('{}'),
+  backgroundColor: text('background_color', { length: 20 }).default('gradient-primary'),
+  textColor: text('text_color', { length: 20 }).default('white'),
   priority: integer('priority').default(1),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  createdAt: integer('created_at').default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: integer('updated_at').default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 // Extension downloads tracking for registered users
-export const extensionDownloads = pgTable("extension_downloads", {
-  id: serial("id").primaryKey(),
+export const extensionDownloads = sqliteTable("extension_downloads", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   customerId: integer("customer_id").notNull().references(() => customers.id),
-  downloadToken: varchar("download_token", { length: 255 }).notNull().unique(),
-  downloadType: varchar("download_type", { length: 50 }).default("premium").notNull(), // premium, trial, etc.
-  downloadedAt: timestamp("downloaded_at").defaultNow().notNull(),
-  ipAddress: varchar("ip_address", { length: 45 }),
+  downloadToken: text("download_token", { length: 255 }).notNull().unique(),
+  downloadType: text("download_type", { length: 50 }).default("premium").notNull(), // premium, trial, etc.
+  downloadedAt: integer("downloaded_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  ipAddress: text("ip_address", { length: 45 }),
   userAgent: text("user_agent"),
   downloadCount: integer("download_count").default(1).notNull(),
   maxDownloads: integer("max_downloads").default(3).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Extension usage logs for trial limitations
-export const extensionUsageLogs = pgTable("extension_usage_logs", {
-  id: serial("id").primaryKey(),
+export const extensionUsageLogs = sqliteTable("extension_usage_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   customerId: integer("customer_id").notNull().references(() => customers.id),
-  sessionId: varchar("session_id", { length: 100 }).notNull(),
+  sessionId: text("session_id", { length: 100 }).notNull(),
   jobsUsed: integer("jobs_used").default(1).notNull(),
-  platform: varchar("platform", { length: 50 }).default("ocus").notNull(),
-  location: varchar("location", { length: 100 }),
-  usageDate: timestamp("usage_date").defaultNow().notNull(),
-  extensionVersion: varchar("extension_version", { length: 20 }),
+  platform: text("platform", { length: 50 }).default("ocus").notNull(),
+  location: text("location", { length: 100 }),
+  usageDate: integer("usage_date").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  extensionVersion: text("extension_version", { length: 20 }),
   ipAddress: text("ip_address"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Activation codes for extension licensing
-export const activationCodes = pgTable("activation_codes", {
-  id: serial("id").primaryKey(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
+export const activationCodes = sqliteTable("activation_codes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  code: text("code", { length: 50 }).notNull().unique(),
   customerId: integer("customer_id").references(() => customers.id),
   orderId: integer("order_id").references(() => orders.id),
   userId: integer("user_id").references(() => users.id), // Link to authenticated user
-  installationId: varchar("installation_id", { length: 36 }), // Unique installation identifier
-  versionToken: varchar("version_token", { length: 36 }).unique(),
-  activatedAt: timestamp("activated_at"),
+  installationId: text("installation_id", { length: 36 }), // Unique installation identifier
+  versionToken: text("version_token", { length: 36 }).unique(),
+  activatedAt: integer("activated_at"),
   activationCount: integer("activation_count").default(0).notNull(),
   maxActivations: integer("max_activations").default(1).notNull(),
-  deviceId: varchar("device_id", { length: 100 }),
+  deviceId: text("device_id", { length: 100 }),
   ipAddress: text("ip_address"),
-  isActive: boolean("is_active").default(true).notNull(),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true).notNull(),
   dailyValidationCount: integer("daily_validation_count").default(0).notNull(), // Daily rate limiting
-  lastValidationDate: timestamp("last_validation_date"), // Track daily reset
-  isRevoked: boolean("is_revoked").default(false).notNull(), // Manual revocation flag
-  expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  lastValidationDate: integer("last_validation_date"), // Track daily reset
+  isRevoked: integer("is_revoked", { mode: 'boolean' }).default(false).notNull(), // Manual revocation flag
+  expiresAt: integer("expires_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // New table to track extension installations
-export const extensionInstallations = pgTable("extension_installations", {
-  id: serial("id").primaryKey(),
-  installationId: varchar("installation_id", { length: 36 }).notNull().unique(),
+export const extensionInstallations = sqliteTable("extension_installations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  installationId: text("installation_id", { length: 36 }).notNull().unique(),
   userId: integer("user_id").references(() => users.id), // Link to authenticated user if logged in
   customerId: integer("customer_id").references(() => customers.id), // Fixed to integer
   deviceFingerprint: text("device_fingerprint"),
   userAgent: text("user_agent"),
   ipAddress: text("ip_address"),
-  extensionVersion: varchar("extension_version", { length: 20 }),
-  isActive: boolean("is_active").default(true).notNull(),
-  lastSeenAt: timestamp("last_seen_at").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  extensionVersion: text("extension_version", { length: 20 }),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true).notNull(),
+  lastSeenAt: integer("last_seen_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -745,51 +745,51 @@ export const insertDemoUserSchema = createInsertSchema(demoUsers).omit({
 export type InsertActivationKey = z.infer<typeof insertActivationKeySchema>;
 
 // Enhanced Affiliate Marketing Tables
-export const affiliatePrograms = pgTable("affiliate_programs", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  rewardType: varchar("reward_type", { length: 20 }).default("percentage").notNull(), // percentage, fixed
-  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }), // for percentage
-  fixedAmount: decimal("fixed_amount", { precision: 10, scale: 2 }), // for fixed amount
-  minPayout: decimal("min_payout", { precision: 10, scale: 2 }).default("50.00"),
+export const affiliatePrograms = sqliteTable("affiliate_programs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name", { length: 100 }).notNull(),
+  rewardType: text("reward_type", { length: 20 }).default("percentage").notNull(), // percentage, fixed
+  commissionRate: text("commission_rate", { precision: 5, scale: 2 }), // for percentage
+  fixedAmount: text("fixed_amount", { precision: 10, scale: 2 }), // for fixed amount
+  minPayout: text("min_payout", { precision: 10, scale: 2 }).default("50.00"),
   cookieLifetime: integer("cookie_lifetime").default(30), // days
-  autoApproval: boolean("auto_approval").default(false),
-  isActive: boolean("is_active").default(true),
+  autoApproval: integer("auto_approval", { mode: 'boolean' }).default(false),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
   description: text("description"),
   termsAndConditions: text("terms_and_conditions"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Affiliate Settings - Single row configuration table
-export const affiliateSettings = pgTable("affiliate_settings", {
-  id: serial("id").primaryKey(),
-  defaultRewardType: varchar("default_reward_type", { length: 20 }).default("percentage").notNull(),
-  defaultCommissionRate: decimal("default_commission_rate", { precision: 5, scale: 2 }).default("10.00"),
-  defaultFixedAmount: decimal("default_fixed_amount", { precision: 10, scale: 2 }).default("5.00"),
-  minPayoutAmount: decimal("min_payout_amount", { precision: 10, scale: 2 }).default("50.00"),
+export const affiliateSettings = sqliteTable("affiliate_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  defaultRewardType: text("default_reward_type", { length: 20 }).default("percentage").notNull(),
+  defaultCommissionRate: text("default_commission_rate", { precision: 5, scale: 2 }).default("10.00"),
+  defaultFixedAmount: text("default_fixed_amount", { precision: 10, scale: 2 }).default("5.00"),
+  minPayoutAmount: text("min_payout_amount", { precision: 10, scale: 2 }).default("50.00"),
   cookieLifetimeDays: integer("cookie_lifetime_days").default(30),
-  autoApprovalEnabled: boolean("auto_approval_enabled").default(false),
-  autoApprovalThreshold: decimal("auto_approval_threshold", { precision: 10, scale: 2 }).default("100.00"),
-  payoutFrequency: varchar("payout_frequency", { length: 20 }).default("monthly"), // weekly, monthly, quarterly
-  isActive: boolean("is_active").default(true),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  autoApprovalEnabled: integer("auto_approval_enabled", { mode: 'boolean' }).default(false),
+  autoApprovalThreshold: text("auto_approval_threshold", { precision: 10, scale: 2 }).default("100.00"),
+  payoutFrequency: text("payout_frequency", { length: 20 }).default("monthly"), // weekly, monthly, quarterly
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
-export const affiliatePayouts = pgTable("affiliate_payouts", {
-  id: serial("id").primaryKey(),
+export const affiliatePayouts = sqliteTable("affiliate_payouts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   affiliateId: integer("affiliate_id").notNull().references(() => customers.id),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: varchar("payment_method", { length: 20 }).notNull(), // paypal, bank, manual
-  paymentEmail: varchar("payment_email", { length: 255 }),
-  bankDetails: json("bank_details"),
-  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending, processing, paid, failed
-  transactionId: varchar("transaction_id", { length: 255 }),
+  amount: text("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method", { length: 20 }).notNull(), // paypal, bank, manual
+  paymentEmail: text("payment_email", { length: 255 }),
+  bankDetails: text("bank_details"),
+  status: text("status", { length: 20 }).default("pending").notNull(), // pending, processing, paid, failed
+  transactionId: text("transaction_id", { length: 255 }),
   notes: text("notes"),
-  requestedAt: timestamp("requested_at").defaultNow().notNull(),
-  processedAt: timestamp("processed_at"),
-  paidAt: timestamp("paid_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  requestedAt: integer("requested_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  processedAt: integer("processed_at"),
+  paidAt: integer("paid_at"),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 export type AffiliateProgram = typeof affiliatePrograms.$inferSelect;
@@ -800,61 +800,61 @@ export type AffiliateSettings = typeof affiliateSettings.$inferSelect;
 export type InsertAffiliateSettings = typeof affiliateSettings.$inferInsert;
 
 // Invoice Configuration Table
-export const invoiceSettings = pgTable("invoice_settings", {
-  id: serial("id").primaryKey(),
-  companyName: varchar("company_name", { length: 255 }).default("OCUS Job Hunter").notNull(),
+export const invoiceSettings = sqliteTable("invoice_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  companyName: text("company_name", { length: 255 }).default("OCUS Job Hunter").notNull(),
   companyLogo: text("company_logo"), // Base64 or URL
   companyAddress: text("company_address"),
-  companyPhone: varchar("company_phone", { length: 50 }),
-  companyEmail: varchar("company_email", { length: 255 }),
-  companyWebsite: varchar("company_website", { length: 255 }),
-  taxNumber: varchar("tax_number", { length: 100 }),
-  invoicePrefix: varchar("invoice_prefix", { length: 10 }).default("INV").notNull(),
-  receiptPrefix: varchar("receipt_prefix", { length: 10 }).default("RCP").notNull(),
+  companyPhone: text("company_phone", { length: 50 }),
+  companyEmail: text("company_email", { length: 255 }),
+  companyWebsite: text("company_website", { length: 255 }),
+  taxNumber: text("tax_number", { length: 100 }),
+  invoicePrefix: text("invoice_prefix", { length: 10 }).default("INV").notNull(),
+  receiptPrefix: text("receipt_prefix", { length: 10 }).default("RCP").notNull(),
   invoiceNotes: text("invoice_notes"),
   termsAndConditions: text("terms_and_conditions"),
   footerText: text("footer_text"),
-  primaryColor: varchar("primary_color", { length: 7 }).default("#007bff"),
-  secondaryColor: varchar("secondary_color", { length: 7 }).default("#6c757d"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  primaryColor: text("primary_color", { length: 7 }).default("#007bff"),
+  secondaryColor: text("secondary_color", { length: 7 }).default("#6c757d"),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Invoices Table
-export const invoices = pgTable("invoices", {
-  id: serial("id").primaryKey(),
-  invoiceNumber: varchar("invoice_number", { length: 50 }).notNull().unique(),
+export const invoices = sqliteTable("invoices", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  invoiceNumber: text("invoice_number", { length: 50 }).notNull().unique(),
   orderId: integer("order_id").references(() => orders.id),
   customerId: integer("customer_id").references(() => customers.id),
-  customerName: varchar("customer_name", { length: 255 }).notNull(),
-  customerEmail: varchar("customer_email", { length: 255 }).notNull(),
+  customerName: text("customer_name", { length: 255 }).notNull(),
+  customerEmail: text("customer_email", { length: 255 }).notNull(),
   customerAddress: text("customer_address"),
   billingAddress: text("billing_address"),
-  invoiceDate: timestamp("invoice_date").defaultNow().notNull(),
-  dueDate: timestamp("due_date").notNull(),
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0.00"),
-  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0.00"),
-  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-  status: varchar("status", { length: 20 }).default("issued").notNull(), // issued, paid, overdue, cancelled
-  paidAt: timestamp("paid_at"),
+  invoiceDate: integer("invoice_date").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  dueDate: integer("due_date").notNull(),
+  subtotal: text("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: text("tax_amount", { precision: 10, scale: 2 }).default("0.00"),
+  discountAmount: text("discount_amount", { precision: 10, scale: 2 }).default("0.00"),
+  totalAmount: text("total_amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency", { length: 3 }).default("USD").notNull(),
+  status: text("status", { length: 20 }).default("issued").notNull(), // issued, paid, overdue, cancelled
+  paidAt: integer("paid_at"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 // Invoice Items Table
-export const invoiceItems = pgTable("invoice_items", {
-  id: serial("id").primaryKey(),
+export const invoiceItems = sqliteTable("invoice_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
-  productName: varchar("product_name", { length: 255 }).notNull(),
+  productName: text("product_name", { length: 255 }).notNull(),
   description: text("description"),
   quantity: integer("quantity").default(1).notNull(),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  unitPrice: text("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: text("total_price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
 export type InvoiceSettings = typeof invoiceSettings.$inferSelect;
@@ -905,41 +905,41 @@ export const insertGlobalUsageStatsSchema = createInsertSchema(globalUsageStats)
 
 
 // Location tables for the locking system
-export const continents = pgTable("continents", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-  code: varchar("code", { length: 2 }).notNull().unique(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+export const continents = sqliteTable("continents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name", { length: 100 }).notNull().unique(),
+  code: text("code", { length: 2 }).notNull().unique(),
+  createdAt: integer("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const countries = pgTable("countries", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  code: varchar("code", { length: 2 }).notNull().unique(),
+export const countries = sqliteTable("countries", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name", { length: 100 }).notNull(),
+  code: text("code", { length: 2 }).notNull().unique(),
   continentId: integer("continent_id").references(() => continents.id).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: integer("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
-export const cities = pgTable("cities", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
+export const cities = sqliteTable("cities", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name", { length: 100 }).notNull(),
   countryId: integer("country_id").references(() => countries.id).notNull(),
-  isAvailable: boolean("is_available").notNull().default(true),
+  isAvailable: integer("is_available", { mode: 'boolean' }).notNull().default(true),
   assignedUserId: integer("assigned_user_id").references(() => customers.id),
-  assignedAt: timestamp("assigned_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  assignedAt: integer("assigned_at"),
+  createdAt: integer("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 // User location assignments
-export const userLocationAssignments = pgTable("user_location_assignments", {
-  id: serial("id").primaryKey(),
+export const userLocationAssignments = sqliteTable("user_location_assignments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").references(() => customers.id).notNull().unique(),
   continentId: integer("continent_id").references(() => continents.id).notNull(),
   countryId: integer("country_id").references(() => countries.id).notNull(),
   cityId: integer("city_id").references(() => cities.id).notNull(),
-  assignedAt: timestamp("assigned_at").notNull().defaultNow(),
+  assignedAt: integer("assigned_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
   assignedBy: integer("assigned_by").references(() => customers.id), // null for self-assignment, admin user id for admin assignment
-  isLocked: boolean("is_locked").notNull().default(true),
+  isLocked: integer("is_locked", { mode: 'boolean' }).notNull().default(true),
 });
 
 // Location relations

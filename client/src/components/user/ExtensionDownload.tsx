@@ -14,6 +14,7 @@ interface Customer {
   email: string;
   name: string;
   isBlocked?: boolean;
+  isPremium?: boolean;
   extensionActivated?: boolean;
   extensionTrialJobsUsed?: number;
   extensionTrialLimit?: number;
@@ -21,13 +22,6 @@ interface Customer {
   activationKeyRevealed?: boolean;
   totalSpent?: string | number;
   blockedReason?: string | null;
-}
-
-interface PurchaseStatus {
-  hasPurchased: boolean;
-  totalSpent: string;
-  completedOrders: number;
-  lastPurchaseDate: number | null;
 }
 
 interface ExtensionStatus {
@@ -67,15 +61,6 @@ export function ExtensionDownload({ customer }: ExtensionDownloadProps) {
     queryKey: ['/api/extension/downloads', customer.id],
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/extension/downloads/${customer.id}`);
-      return res.json();
-    },
-  });
-
-  // Get real-time purchase status from orders
-  const { data: purchaseStatus } = useQuery<PurchaseStatus>({
-    queryKey: ['/api/user/purchase-status', customer.id],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/user/${customer.id}/purchase-status`);
       return res.json();
     },
   });
@@ -146,8 +131,7 @@ export function ExtensionDownload({ customer }: ExtensionDownloadProps) {
     }
   };
 
-  // Check if user has purchased premium - use real-time purchase status
-  const hasPurchased = purchaseStatus?.hasPurchased || false;
+  const hasPurchased = customer.isPremium || false;
 
   return (
     <Card>
@@ -182,7 +166,7 @@ export function ExtensionDownload({ customer }: ExtensionDownloadProps) {
                   Premium Activated
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  Full access to all extension features - Total spent: €{purchaseStatus?.totalSpent || '0.00'}
+                  Full access to all extension features.
                 </span>
               </>
             ) : (

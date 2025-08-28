@@ -2,13 +2,13 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { Strategy as GitHubStrategy } from 'passport-github2';
-import { storage } from './storage';
+import type { DatabaseStorage } from './storage';
 import { v4 as uuidv4 } from 'uuid';
 
 // Dynamic OAuth strategy initialization
 let strategiesInitialized = false;
 
-async function initializeStrategies() {
+async function initializeStrategies(storage: DatabaseStorage) {
   if (strategiesInitialized) return;
 
   try {
@@ -167,16 +167,17 @@ async function initializeStrategies() {
   }
 }
 
-// Initialize strategies when the module loads
-initializeStrategies();
-
 // Function to reinitialize strategies when settings change
-export async function reinitializeStrategies() {
+export async function reinitializeStrategies(storage: DatabaseStorage) {
   strategiesInitialized = false;
-  await initializeStrategies();
+  await initializeStrategies(storage);
 }
 
-passport.serializeUser((user: any, done) => {
+export async function configurePassport(storage: DatabaseStorage) {
+  // Initialize strategies at setup time
+  await initializeStrategies(storage);
+
+  passport.serializeUser((user: any, done) => {
   done(null, user.id);
 });
 
@@ -188,8 +189,9 @@ passport.deserializeUser(async (id: string | number, done) => {
     done(null, customer);
   } catch (error) {
     console.error('Error deserializing user:', error);
-    done(error, null);
+        done(error, null);
   }
 });
+}
 
 export { passport };

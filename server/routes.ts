@@ -1112,9 +1112,17 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
+      const user = req.user as any;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...safeUser } = req.user as any;
-      res.json(safeUser);
+      const { password, ...userProfile } = user;
+
+      const isPremium = user.accountType === 'Premium';
+
+      res.json({
+        ...userProfile,
+        isPremium,
+        extensionActivated: isPremium,
+      });
     } catch (error: any) {
       console.error('Failed to get user profile:', error);
       res.status(500).json({ message: "Failed to get profile: " + error.message });
@@ -2190,7 +2198,38 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('Checkout Session was completed!', session);
-        // TODO: Fulfill the purchase based on the session details.
+
+        if (session.metadata?.userId && session.metadata?.orderId) {
+          const userId = parseInt(session.metadata.userId, 10);
+          const orderId = parseInt(session.metadata.orderId, 10);
+
+          try {
+            // 1. Update user to Premium
+            await db.update(users).set({ accountType: 'Premium' }).where(eq(users.id, userId));
+            console.log(`User ${userId} successfully upgraded to Premium.`);
+
+            // 2. Update order status to 'completed'
+            await db.update(orders).set({ status: 'completed' }).where(eq(orders.id, orderId));
+            console.log(`Order ${orderId} marked as completed.`);
+
+            // 3. Generate and save invoice
+            const order = await storage.getOrderById(orderId);
+            const user = await storage.getUserById(userId);
+
+            if (order && user) {
+              const invoicePath = await generateInvoicePDF(order, user);
+              await db.update(orders).set({ invoiceUrl: invoicePath }).where(eq(orders.id, orderId));
+              console.log(`Invoice generated and saved for order ${orderId} at ${invoicePath}`);
+            } else {
+              console.error(`Could not find order ${orderId} or user ${userId} to generate invoice.`);
+            }
+
+          } catch (error) {
+            console.error('Error fulfilling purchase:', error);
+          }
+        } else {
+          console.error('Webhook received checkout.session.completed but is missing userId or orderId in metadata.');
+        }
         break;
       default:
         console.log(`Unhandled event type ${event.type}`);

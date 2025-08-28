@@ -91,8 +91,8 @@ import {
   type InvoiceSettings,
   type InsertInvoiceSettings
 } from "@shared/schema";
-import { db } from "./db";
 import { eq, desc, count, and, gte, lte, sql } from "drizzle-orm";
+import type { DbInstance } from './db';
 import crypto from "crypto";
 
 export interface IStorage {
@@ -349,24 +349,29 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private db: DbInstance;
+
+  constructor(db: DbInstance) {
+    this.db = db;
+  }
   // Users
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await this.db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await this.db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const [user] = await this.db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
+    const [user] = await this.db
       .insert(users)
       .values(insertUser)
       .returning();
@@ -374,7 +379,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User> {
-    const [user] = await db
+    const [user] = await this.db
       .update(users)
       .set({ stripeCustomerId })
       .where(eq(users.id, userId))
@@ -389,7 +394,7 @@ export class DatabaseStorage implements IStorage {
       downloadToken: this.generateDownloadToken(),
     };
     
-    const [order] = await db
+    const [order] = await this.db
       .insert(orders)
       .values(orderWithToken)
       .returning();
@@ -397,22 +402,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrder(id: number): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    const [order] = await this.db.select().from(orders).where(eq(orders.id, id));
     return order || undefined;
   }
 
   async getOrderByDownloadToken(token: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.downloadToken, token));
+    const [order] = await this.db.select().from(orders).where(eq(orders.downloadToken, token));
     return order || undefined;
   }
 
   async getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.paymentIntentId, paymentIntentId));
+    const [order] = await this.db.select().from(orders).where(eq(orders.paymentIntentId, paymentIntentId));
     return order || undefined;
   }
 
   async getOrderByPaypalOrderId(paypalOrderId: string): Promise<Order | undefined> {
-    const [order] = await db.select().from(orders).where(eq(orders.paypalOrderId, paypalOrderId));
+    const [order] = await this.db.select().from(orders).where(eq(orders.paypalOrderId, paypalOrderId));
     return order || undefined;
   }
 
@@ -422,7 +427,7 @@ export class DatabaseStorage implements IStorage {
       updateData.completedAt = completedAt;
     }
 
-    const [order] = await db
+    const [order] = await this.db
       .update(orders)
       .set(updateData)
       .where(eq(orders.id, id))
@@ -431,7 +436,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async incrementDownloadCount(id: number): Promise<Order> {
-    const [order] = await db
+    const [order] = await this.db
       .update(orders)
       .set({ downloadCount: sql`${orders.downloadCount} + 1` })
       .where(eq(orders.id, id))
@@ -440,18 +445,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllOrders(): Promise<Order[]> {
-    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+    return await this.db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
   async getOrdersWithPagination(page: number, limit: number): Promise<{ orders: Order[], total: number }> {
     const offset = (page - 1) * limit;
     
-    const ordersPromise = db.select().from(orders)
+    const ordersPromise = this.db.select().from(orders)
       .orderBy(desc(orders.createdAt))
       .limit(limit)
       .offset(offset);
     
-    const totalPromise = db.select({ count: count() }).from(orders);
+    const totalPromise = this.db.select({ count: count() }).from(orders);
     
     const [ordersList, totalResult] = await Promise.all([ordersPromise, totalPromise]);
     
@@ -462,14 +467,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserOrders(userId: number): Promise<Order[]> {
-    return await db.select().from(orders)
+    return await this.db.select().from(orders)
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));
   }
 
   // Products
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db
+    const [product] = await this.db
       .insert(products)
       .values(insertProduct)
       .returning();
@@ -477,21 +482,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
+    const [product] = await this.db.select().from(products).where(eq(products.id, id));
     return product || undefined;
   }
 
   async getActiveProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.isActive, true));
+    return await this.db.select().from(products).where(eq(products.isActive, true));
   }
 
   async getActiveProduct(): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.isActive, true)).limit(1);
+    const [product] = await this.db.select().from(products).where(eq(products.isActive, true)).limit(1);
     return product || undefined;
   }
 
   async updateProduct(id: number, updates: Partial<InsertProduct>): Promise<Product> {
-    const [product] = await db
+    const [product] = await this.db
       .update(products)
       .set(updates)
       .where(eq(products.id, id))
@@ -501,7 +506,7 @@ export class DatabaseStorage implements IStorage {
 
   // Downloads
   async createDownload(insertDownload: InsertDownload): Promise<Download> {
-    const [download] = await db
+    const [download] = await this.db
       .insert(downloads)
       .values(insertDownload)
       .returning();
@@ -509,11 +514,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDownloadsByOrder(orderId: number): Promise<Download[]> {
-    return await db.select().from(downloads).where(eq(downloads.orderId, orderId));
+    return await this.db.select().from(downloads).where(eq(downloads.orderId, orderId));
   }
 
   async getUserDownloads(userId: number): Promise<Download[]> {
-    return await db.select({
+    return await this.db.select({
       id: downloads.id,
       orderId: downloads.orderId,
       downloadedAt: downloads.downloadedAt,
@@ -529,24 +534,24 @@ export class DatabaseStorage implements IStorage {
   // Analytics
   async getTotalRevenue(): Promise<number> {
     // This is a simplified calculation - in practice you'd use SQL aggregation
-    const completedOrders = await db.select().from(orders).where(eq(orders.status, 'completed'));
+    const completedOrders = await this.db.select().from(orders).where(eq(orders.status, 'completed'));
     return completedOrders.reduce((sum: number, order: any) => sum + parseFloat(order.finalAmount || '0'), 0);
   }
 
   async getTotalSales(): Promise<number> {
-    const [result] = await db.select({ count: count() }).from(orders).where(eq(orders.status, 'completed'));
+    const [result] = await this.db.select({ count: count() }).from(orders).where(eq(orders.status, 'completed'));
     return result?.count || 0;
   }
 
   async getRecentOrders(limit: number): Promise<Order[]> {
-    return await db.select().from(orders)
+    return await this.db.select().from(orders)
       .orderBy(desc(orders.createdAt))
       .limit(limit);
   }
 
   // Coupons
   async createCoupon(insertCoupon: InsertCoupon): Promise<Coupon> {
-    const [coupon] = await db
+    const [coupon] = await this.db
       .insert(coupons)
       .values(insertCoupon)
       .returning();
@@ -554,17 +559,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCoupon(id: number): Promise<Coupon | undefined> {
-    const [coupon] = await db.select().from(coupons).where(eq(coupons.id, id));
+    const [coupon] = await this.db.select().from(coupons).where(eq(coupons.id, id));
     return coupon || undefined;
   }
 
   async getCouponByCode(code: string): Promise<Coupon | undefined> {
-    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code));
+    const [coupon] = await this.db.select().from(coupons).where(eq(coupons.code, code));
     return coupon || undefined;
   }
 
   async updateCoupon(id: number, updates: Partial<InsertCoupon>): Promise<Coupon> {
-    const [coupon] = await db
+    const [coupon] = await this.db
       .update(coupons)
       .set(updates)
       .where(eq(coupons.id, id))
@@ -573,15 +578,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllCoupons(): Promise<Coupon[]> {
-    return await db.select().from(coupons).orderBy(desc(coupons.createdAt));
+    return await this.db.select().from(coupons).orderBy(desc(coupons.createdAt));
   }
 
   async incrementCouponUsage(id: number): Promise<Coupon> {
     // First get current usage count
-    const [currentCoupon] = await db.select().from(coupons).where(eq(coupons.id, id));
+    const [currentCoupon] = await this.db.select().from(coupons).where(eq(coupons.id, id));
     const newUsageCount = (currentCoupon?.usageCount || 0) + 1;
     
-    const [coupon] = await db
+    const [coupon] = await this.db
       .update(coupons)
       .set({ usageCount: newUsageCount })
       .where(eq(coupons.id, id))
@@ -590,12 +595,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCoupon(id: number): Promise<void> {
-    await db.delete(coupons).where(eq(coupons.id, id));
+    await this.db.delete(coupons).where(eq(coupons.id, id));
   }
 
   // Settings
   async createSetting(insertSetting: InsertSetting): Promise<Setting> {
-    const [setting] = await db
+    const [setting] = await this.db
       .insert(settings)
       .values(insertSetting)
       .returning();
@@ -603,13 +608,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSetting(key: string): Promise<Setting | undefined> {
-    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    const [setting] = await this.db.select().from(settings).where(eq(settings.key, key));
     return setting || undefined;
   }
 
   async updateSetting(key: string, value: string): Promise<Setting> {
     // Try to update existing setting first
-    const [updatedSetting] = await db
+    const [updatedSetting] = await this.db
       .update(settings)
       .set({ value, updatedAt: new Date() })
       .where(eq(settings.key, key))
@@ -620,7 +625,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // If no setting exists, create a new one
-    const [newSetting] = await db
+    const [newSetting] = await this.db
       .insert(settings)
       .values({ key, value, updatedAt: new Date() })
       .returning();
@@ -629,12 +634,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSettings(): Promise<Setting[]> {
-    return await db.select().from(settings);
+    return await this.db.select().from(settings);
   }
 
   // Auth Settings
   async getAuthSettings(): Promise<AuthSetting | undefined> {
-    const [authSetting] = await db.select().from(authSettings).limit(1);
+    const [authSetting] = await this.db.select().from(authSettings).limit(1);
     return authSetting || undefined;
   }
 
@@ -644,7 +649,7 @@ export class DatabaseStorage implements IStorage {
     
     if (existing) {
       // Update existing settings
-      const [updated] = await db
+      const [updated] = await this.db
         .update(authSettings)
         .set({ ...updates, updatedAt: new Date() })
         .where(eq(authSettings.id, existing.id))
@@ -657,7 +662,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAuthSettings(insertAuthSetting: InsertAuthSetting): Promise<AuthSetting> {
-    const [authSetting] = await db
+    const [authSetting] = await this.db
       .insert(authSettings)
       .values(insertAuthSetting)
       .returning();
@@ -666,7 +671,7 @@ export class DatabaseStorage implements IStorage {
 
   // SEO Settings
   async getSeoSettings(): Promise<SeoSettings | undefined> {
-    const [seoSetting] = await db.select().from(seoSettings).limit(1);
+    const [seoSetting] = await this.db.select().from(seoSettings).limit(1);
     return seoSetting || undefined;
   }
 
@@ -676,7 +681,7 @@ export class DatabaseStorage implements IStorage {
     
     if (existing) {
       // Update existing settings
-      const [updated] = await db
+      const [updated] = await this.db
         .update(seoSettings)
         .set({ ...updates, updatedAt: new Date() })
         .where(eq(seoSettings.id, existing.id))
@@ -684,7 +689,7 @@ export class DatabaseStorage implements IStorage {
       return updated;
     } else {
       // Create new SEO settings with defaults
-      const [created] = await db
+      const [created] = await this.db
         .insert(seoSettings)
         .values(updates as InsertSeoSettings)
         .returning();
@@ -694,7 +699,7 @@ export class DatabaseStorage implements IStorage {
 
   // Activation Keys
   async createActivationKey(insertActivationKey: InsertActivationKey): Promise<ActivationKey> {
-    const [activationKey] = await db
+    const [activationKey] = await this.db
       .insert(activationKeys)
       .values(insertActivationKey)
       .returning();
@@ -702,16 +707,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentActivationKeys(): Promise<ActivationKey[]> {
-    return await db.select().from(activationKeys).orderBy(desc(activationKeys.createdAt)).limit(10);
+    return await this.db.select().from(activationKeys).orderBy(desc(activationKeys.createdAt)).limit(10);
   }
 
   async getActivationKeyByKey(key: string): Promise<ActivationKey | undefined> {
-    const [activationKey] = await db.select().from(activationKeys).where(eq(activationKeys.activationKey, key));
+    const [activationKey] = await this.db.select().from(activationKeys).where(eq(activationKeys.activationKey, key));
     return activationKey || undefined;
   }
 
   async updateActivationKeyUsage(key: string): Promise<ActivationKey> {
-    const [activationKey] = await db
+    const [activationKey] = await this.db
       .update(activationKeys)
       .set({ usedAt: new Date() })
       .where(eq(activationKeys.activationKey, key))
@@ -721,7 +726,7 @@ export class DatabaseStorage implements IStorage {
 
   // Demo Users
   async createDemoUser(insertDemoUser: InsertDemoUser): Promise<DemoUser> {
-    const [demoUser] = await db
+    const [demoUser] = await this.db
       .insert(demoUsers)
       .values(insertDemoUser)
       .returning();
@@ -729,7 +734,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDemoUserById(userId: string): Promise<DemoUser | undefined> {
-    const [demoUser] = await db.select().from(demoUsers).where(eq(demoUsers.userId, userId));
+    const [demoUser] = await this.db.select().from(demoUsers).where(eq(demoUsers.userId, userId));
     return demoUser || undefined;
   }
 
@@ -737,13 +742,13 @@ export class DatabaseStorage implements IStorage {
   async createOrUpdateUserLifecycle(userId: string, email?: string): Promise<any> {
     try {
       // Check if user exists
-      const [existing] = await db.raw`
+      const [existing] = await this.db.raw`
         SELECT * FROM user_lifecycle WHERE user_id = $1 LIMIT 1
       ` as any;
       
       if (existing.length > 0) {
         // Update existing user
-        const [updated] = await db.raw`
+        const [updated] = await this.db.raw`
           UPDATE user_lifecycle 
           SET email = COALESCE($2, email), updated_at = NOW()
           WHERE user_id = $1 
@@ -752,7 +757,7 @@ export class DatabaseStorage implements IStorage {
         return updated[0];
       } else {
         // Create new user
-        const [created] = await db.raw`
+        const [created] = await this.db.raw`
           INSERT INTO user_lifecycle (user_id, email, trial_uses_remaining, trial_uses_total)
           VALUES ($1, $2, 3, 0)
           RETURNING *
@@ -767,7 +772,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUserLifecycle(userId: string): Promise<any> {
     try {
-      const [user] = await db.raw`
+      const [user] = await this.db.raw`
         SELECT * FROM user_lifecycle WHERE user_id = $1 LIMIT 1
       ` as any;
       return user.length > 0 ? user[0] : null;
@@ -782,7 +787,7 @@ export class DatabaseStorage implements IStorage {
       // Ensure user exists first
       await this.createOrUpdateUserLifecycle(userId);
       
-      const [updated] = await db.raw`
+      const [updated] = await this.db.raw`
         UPDATE user_lifecycle 
         SET trial_uses_total = trial_uses_total + 1,
             trial_uses_remaining = GREATEST(0, trial_uses_remaining - 1),
@@ -799,7 +804,7 @@ export class DatabaseStorage implements IStorage {
 
   async activateUser(userId: string, activationCode: string): Promise<any> {
     try {
-      const [updated] = await db.raw`
+      const [updated] = await this.db.raw`
         UPDATE user_lifecycle 
         SET activation_code = $2, 
             is_activated = true, 
@@ -819,7 +824,7 @@ export class DatabaseStorage implements IStorage {
     const activationCode = `OCUS-${Date.now()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
     
     try {
-      await db.raw`
+      await this.db.raw`
         UPDATE orders SET activation_code = $1 WHERE id = $2
       ` as any;
       return activationCode;
@@ -831,7 +836,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsersWithLifecycle(): Promise<any[]> {
     try {
-      const users = await db.raw`
+      const users = await this.db.raw`
         SELECT 
           ul.user_id,
           ul.email,
@@ -859,7 +864,7 @@ export class DatabaseStorage implements IStorage {
     const newCode = `OCUS-${Date.now()}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
     
     try {
-      const [updated] = await db.raw`
+      const [updated] = await this.db.raw`
         UPDATE user_lifecycle 
         SET activation_code = $2, updated_at = NOW()
         WHERE user_id = $1 
@@ -867,7 +872,7 @@ export class DatabaseStorage implements IStorage {
       ` as any;
       
       // Also update in orders table if exists
-      await db.raw`
+      await this.db.raw`
         UPDATE orders SET activation_code = $1 WHERE user_id = $2
       ` as any;
       
@@ -880,7 +885,7 @@ export class DatabaseStorage implements IStorage {
 
   async blockUser(userId: string, reason: string): Promise<any> {
     try {
-      const [updated] = await db.raw`
+      const [updated] = await this.db.raw`
         UPDATE user_lifecycle 
         SET is_activated = false, updated_at = NOW()
         WHERE user_id = $1 
@@ -895,7 +900,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUserLifecycle(userId: string): Promise<void> {
     try {
-      await db.raw`DELETE FROM user_lifecycle WHERE user_id = $1` as any;
+      await this.db.raw`DELETE FROM user_lifecycle WHERE user_id = $1` as any;
     } catch (error) {
       console.error('Error deleting user lifecycle:', error);
       throw error;
@@ -904,10 +909,10 @@ export class DatabaseStorage implements IStorage {
 
   async incrementDemoUsage(userId: string): Promise<DemoUser> {
     // First get current demo user
-    const [currentUser] = await db.select().from(demoUsers).where(eq(demoUsers.userId, userId));
+    const [currentUser] = await this.db.select().from(demoUsers).where(eq(demoUsers.userId, userId));
     const newCount = (currentUser?.demoCount || 0) + 1;
     
-    const [demoUser] = await db
+    const [demoUser] = await this.db
       .update(demoUsers)
       .set({ 
         demoCount: newCount,
@@ -921,12 +926,12 @@ export class DatabaseStorage implements IStorage {
   // Customer operations
   async getCustomer(id: number | string): Promise<Customer | undefined> {
     const customerId = typeof id === 'string' ? parseInt(id) : id;
-    const [customer] = await db.select().from(customers).where(eq(customers.id, customerId));
+    const [customer] = await this.db.select().from(customers).where(eq(customers.id, customerId));
     return customer || undefined;
   }
 
   async getCustomerByEmail(email: string): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(eq(customers.email, email));
+    const [customer] = await this.db.select().from(customers).where(eq(customers.email, email));
     return customer || undefined;
   }
 
@@ -934,7 +939,7 @@ export class DatabaseStorage implements IStorage {
     // Generate unique activation key for new customer
     const activationKey = `OCUS-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     
-    const [customer] = await db
+    const [customer] = await this.db
       .insert(customers)
       .values({
         ...customerData,
@@ -948,7 +953,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateCustomerActivationKey(id: number | string, activationKey: string): Promise<void> {
     const customerId = typeof id === 'string' ? parseInt(id) : id;
-    await db
+    await this.db
       .update(customers)
       .set({ activationKey, updatedAt: new Date() })
       .where(eq(customers.id, customerId));
@@ -970,13 +975,13 @@ export class DatabaseStorage implements IStorage {
         return undefined;
     }
     
-    const [customer] = await db.select().from(customers).where(condition);
+    const [customer] = await this.db.select().from(customers).where(condition);
     return customer || undefined;
   }
 
   async updateCustomer(id: number | string, updates: Partial<InsertCustomer>): Promise<Customer> {
     const customerId = typeof id === 'string' ? parseInt(id) : id;
-    const [customer] = await db
+    const [customer] = await this.db
       .update(customers)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(customers.id, customerId))
@@ -992,12 +997,12 @@ export class DatabaseStorage implements IStorage {
 
   // Affiliate operations
   async getCustomerByReferralCode(code: string): Promise<Customer | undefined> {
-    const [customer] = await db.select().from(customers).where(eq(customers.referralCode, code));
+    const [customer] = await this.db.select().from(customers).where(eq(customers.referralCode, code));
     return customer || undefined;
   }
 
   async createAffiliateTransaction(transaction: InsertAffiliateTransaction): Promise<AffiliateTransaction> {
-    const [affiliateTransaction] = await db
+    const [affiliateTransaction] = await this.db
       .insert(affiliateTransactions)
       .values(transaction)
       .returning();
@@ -1005,7 +1010,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAffiliateTransactions(affiliateId: number): Promise<AffiliateTransaction[]> {
-    const transactions = await db
+    const transactions = await this.db
       .select()
       .from(affiliateTransactions)
       .where(eq(affiliateTransactions.affiliateId, affiliateId))
@@ -1023,7 +1028,7 @@ export class DatabaseStorage implements IStorage {
       .filter(t => t.status === 'pending')
       .reduce((sum, t) => sum + parseFloat(t.commission), 0);
 
-    const referrals = await db
+    const referrals = await this.db
       .select({ count: count() })
       .from(customers)
       .where(eq(customers.referredBy, affiliateId.toString()));
@@ -1039,7 +1044,7 @@ export class DatabaseStorage implements IStorage {
 
   // Ticket operations - using existing tickets table from schema
   async createTicket(ticket: any): Promise<any> {
-    const [newTicket] = await db.insert(tickets).values({
+    const [newTicket] = await this.db.insert(tickets).values({
       title: ticket.title,
       description: ticket.description,
       category: ticket.category,
@@ -1089,7 +1094,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTicketsByCustomerEmail(customerEmail: string): Promise<any[]> {
-    const result = await db
+    const result = await this.db
       .select()
       .from(tickets)
       .where(eq(tickets.customerEmail, customerEmail))
@@ -1099,7 +1104,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllTickets(): Promise<any[]> {
-    const result = await db
+    const result = await this.db
       .select()
       .from(tickets)
       .orderBy(desc(tickets.createdAt));
@@ -1108,7 +1113,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTicketStatus(id: number, status: string): Promise<any> {
-    const [updatedTicket] = await db
+    const [updatedTicket] = await this.db
       .update(tickets)
       .set({ 
         status, 
@@ -1122,7 +1127,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTicket(id: number, updateData: any): Promise<any> {
-    const [updatedTicket] = await db
+    const [updatedTicket] = await this.db
       .update(tickets)
       .set({ 
         ...updateData,
@@ -1136,7 +1141,7 @@ export class DatabaseStorage implements IStorage {
 
   // Ticket Message operations
   async addTicketMessage(message: any): Promise<any> {
-    const [newMessage] = await db.insert(ticketMessages).values({
+    const [newMessage] = await this.db.insert(ticketMessages).values({
       ticketId: message.ticketId,
       message: message.content || message.message,
       isFromCustomer: !message.isStaff && !message.isAdmin,
@@ -1145,7 +1150,7 @@ export class DatabaseStorage implements IStorage {
     }).returning();
     
     // Update ticket's updated_at timestamp
-    await db.update(tickets)
+    await this.db.update(tickets)
       .set({ updatedAt: new Date() })
       .where(eq(tickets.id, message.ticketId));
     
@@ -1154,14 +1159,14 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTicket(id: number): Promise<void> {
     // Delete ticket messages first
-    await db.delete(ticketMessages).where(eq(ticketMessages.ticketId, id));
+    await this.db.delete(ticketMessages).where(eq(ticketMessages.ticketId, id));
     
     // Delete the ticket
-    await db.delete(tickets).where(eq(tickets.id, id));
+    await this.db.delete(tickets).where(eq(tickets.id, id));
   }
 
   async getTicketMessages(ticketId: number): Promise<any[]> {
-    const result = await db
+    const result = await this.db
       .select()
       .from(ticketMessages)
       .where(eq(ticketMessages.ticketId, ticketId))
@@ -1178,13 +1183,13 @@ export class DatabaseStorage implements IStorage {
 
   // Enhanced Customer Management
   async getAllCustomers(): Promise<Customer[]> {
-    return await db.select().from(customers).orderBy(desc(customers.createdAt));
+    return await this.db.select().from(customers).orderBy(desc(customers.createdAt));
   }
 
   async generateActivationKey(customerId: string): Promise<string> {
     const activationKey = `ACT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`.toUpperCase();
     
-    await db
+    await this.db
       .update(customers)
       .set({ 
         activationKey, 
@@ -1196,14 +1201,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async activateCustomer(activationKey: string): Promise<Customer | null> {
-    const [customer] = await db
+    const [customer] = await this.db
       .select()
       .from(customers)
       .where(eq(customers.activationKey, activationKey));
 
     if (!customer) return null;
 
-    const [activatedCustomer] = await db
+    const [activatedCustomer] = await this.db
       .update(customers)
       .set({ 
         isActivated: true, 
@@ -1219,13 +1224,13 @@ export class DatabaseStorage implements IStorage {
   // Extension Usage Statistics
   async recordExtensionUsage(stats: InsertExtensionUsageStats): Promise<ExtensionUsageStats> {
     // Record individual usage
-    const [newStats] = await db
+    const [newStats] = await this.db
       .insert(extensionUsageStats)
       .values(stats)
       .returning();
 
     // Update customer's usage counters
-    await db
+    await this.db
       .update(customers)
       .set({ 
         extensionUsageCount: sql`${customers.extensionUsageCount} + 1`,
@@ -1243,7 +1248,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerUsageStats(customerId: string): Promise<ExtensionUsageStats[]> {
-    return await db
+    return await this.db
       .select()
       .from(extensionUsageStats)
       .where(eq(extensionUsageStats.customerId, typeof customerId === 'string' ? parseInt(customerId) : customerId))
@@ -1251,7 +1256,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGlobalUsageStats(): Promise<GlobalUsageStats[]> {
-    return await db
+    return await this.db
       .select()
       .from(globalUsageStats)
       .orderBy(desc(globalUsageStats.statDate))
@@ -1260,7 +1265,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateGlobalStats(date: string): Promise<void> {
     // Check if stats already exist for this date
-    const [existingStats] = await db
+    const [existingStats] = await this.db
       .select()
       .from(globalUsageStats)
       .where(eq(globalUsageStats.statDate, date));
@@ -1269,12 +1274,12 @@ export class DatabaseStorage implements IStorage {
     const todayStart = new Date(date + 'T00:00:00Z');
     const todayEnd = new Date(date + 'T23:59:59Z');
 
-    const totalUsers = await db
+    const totalUsers = await this.db
       .select({ count: count() })
       .from(customers)
       .where(eq(customers.isActivated, true));
 
-    const activeUsers = await db
+    const activeUsers = await this.db
       .select({ count: count() })
       .from(extensionUsageStats)
       .where(and(
@@ -1282,7 +1287,7 @@ export class DatabaseStorage implements IStorage {
         lte(extensionUsageStats.usageDate, todayEnd)
       ));
 
-    const dailyStats = await db
+    const dailyStats = await this.db
       .select({
         totalSessions: count(),
         totalJobsFound: sql<number>`COALESCE(SUM(${extensionUsageStats.jobsFound}), 0)`,
@@ -1309,12 +1314,12 @@ export class DatabaseStorage implements IStorage {
     };
 
     if (existingStats) {
-      await db
+      await this.db
         .update(globalUsageStats)
         .set(statsData)
         .where(eq(globalUsageStats.id, existingStats.id));
     } else {
-      await db
+      await this.db
         .insert(globalUsageStats)
         .values([statsData]);
     }
@@ -1322,14 +1327,14 @@ export class DatabaseStorage implements IStorage {
 
   // Customer Payments
   async recordPayment(payment: InsertCustomerPayment): Promise<CustomerPayment> {
-    const [newPayment] = await db
+    const [newPayment] = await this.db
       .insert(customerPayments)
       .values(payment)
       .returning();
 
     // Update customer's total spent and order count if payment is completed
     if (payment.status === 'completed') {
-      await db
+      await this.db
         .update(customers)
         .set({ 
           totalSpent: sql`${customers.totalSpent} + ${payment.amount}`,
@@ -1344,7 +1349,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerPayments(customerId: number): Promise<CustomerPayment[]> {
-    return await db
+    return await this.db
       .select()
       .from(customerPayments)
       .where(eq(customerPayments.customerId, customerId))
@@ -1352,7 +1357,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePaymentStatus(paymentId: number, status: string, processedAt?: Date): Promise<CustomerPayment> {
-    const [updatedPayment] = await db
+    const [updatedPayment] = await this.db
       .update(customerPayments)
       .set({ 
         status, 
@@ -1366,7 +1371,7 @@ export class DatabaseStorage implements IStorage {
 
   // Database Ticket Operations (Real Implementation)
   async createTicketDB(ticket: any): Promise<Ticket> {
-    const [newTicket] = await db
+    const [newTicket] = await this.db
       .insert(tickets)
       .values(ticket)
       .returning();
@@ -1374,7 +1379,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTicketDB(id: number): Promise<Ticket | undefined> {
-    const [ticket] = await db
+    const [ticket] = await this.db
       .select()
       .from(tickets)
       .where(eq(tickets.id, id));
@@ -1382,7 +1387,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerTickets(customerEmail: string): Promise<Ticket[]> {
-    return await db
+    return await this.db
       .select()
       .from(tickets)
       .where(eq(tickets.customerEmail, customerEmail))
@@ -1390,7 +1395,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllTicketsDB(): Promise<Ticket[]> {
-    return await db
+    return await this.db
       .select()
       .from(tickets)
       .orderBy(desc(tickets.createdAt));
@@ -1406,7 +1411,7 @@ export class DatabaseStorage implements IStorage {
       updateData.resolvedAt = new Date();
     }
 
-    const [updatedTicket] = await db
+    const [updatedTicket] = await this.db
       .update(tickets)
       .set(updateData)
       .where(eq(tickets.id, id))
@@ -1417,19 +1422,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTicketDB(id: number): Promise<void> {
     // First delete associated messages
-    await db.delete(ticketMessages).where(eq(ticketMessages.ticketId, id));
+    await this.db.delete(ticketMessages).where(eq(ticketMessages.ticketId, id));
     // Then delete the ticket
-    await db.delete(tickets).where(eq(tickets.id, id));
+    await this.db.delete(tickets).where(eq(tickets.id, id));
   }
 
   async addTicketMessageDB(message: any): Promise<TicketMessage> {
-    const [newMessage] = await db
+    const [newMessage] = await this.db
       .insert(ticketMessages)
       .values(message)
       .returning();
     
     // Update ticket's updatedAt timestamp
-    await db
+    await this.db
       .update(tickets)
       .set({ updatedAt: new Date() })
       .where(eq(tickets.id, message.ticketId));
@@ -1438,7 +1443,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTicketMessagesDB(ticketId: number): Promise<TicketMessage[]> {
-    return await db
+    return await this.db
       .select()
       .from(ticketMessages)
       .where(eq(ticketMessages.ticketId, ticketId))
@@ -1448,11 +1453,11 @@ export class DatabaseStorage implements IStorage {
   async updateProductPricing(data: { price: number; beforePrice: number | null }): Promise<any> {
     try {
       // First, check if a product exists
-      const existingProducts = await db.select().from(products).limit(1);
+      const existingProducts = await this.db.select().from(products).limit(1);
       
       if (existingProducts.length === 0) {
         // Create new product with default values
-        const [newProduct] = await db
+        const [newProduct] = await this.db
           .insert(products)
           .values({
             name: "OCUS Job Hunter Chrome Extension",
@@ -1468,7 +1473,7 @@ export class DatabaseStorage implements IStorage {
         return newProduct;
       } else {
         // Update existing product
-        const [updatedProduct] = await db
+        const [updatedProduct] = await this.db
           .update(products)
           .set({
             price: data.price.toString(),
@@ -1486,7 +1491,7 @@ export class DatabaseStorage implements IStorage {
 
   async getCurrentProduct(): Promise<any> {
     try {
-      const productList = await db.select().from(products).where(eq(products.isActive, true)).limit(1);
+      const productList = await this.db.select().from(products).where(eq(products.isActive, true)).limit(1);
       
       if (productList.length === 0) {
         // Return default product structure
@@ -1510,7 +1515,7 @@ export class DatabaseStorage implements IStorage {
   // Countdown Banner Management
   async createCountdownBanner(bannerData: any): Promise<any> {
     try {
-      const [newBanner] = await db
+      const [newBanner] = await this.db
         .insert(countdownBanners)
         .values(bannerData)
         .returning();
@@ -1523,7 +1528,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateCountdownBanner(id: number, bannerData: any): Promise<any> {
     try {
-      const [updatedBanner] = await db
+      const [updatedBanner] = await this.db
         .update(countdownBanners)
         .set({ ...bannerData, updatedAt: new Date() })
         .where(eq(countdownBanners.id, id))
@@ -1537,7 +1542,7 @@ export class DatabaseStorage implements IStorage {
 
   async getActiveCountdownBanner(): Promise<any> {
     try {
-      const [activeBanner] = await db
+      const [activeBanner] = await this.db
         .select()
         .from(countdownBanners)
         .where(eq(countdownBanners.isEnabled, true))
@@ -1547,7 +1552,7 @@ export class DatabaseStorage implements IStorage {
       // Check if banner has expired
       if (activeBanner && new Date(activeBanner.endDateTime) <= new Date()) {
         // Disable expired banner
-        await db
+        await this.db
           .update(countdownBanners)
           .set({ isEnabled: false })
           .where(eq(countdownBanners.id, activeBanner.id));
@@ -1563,7 +1568,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCountdownBanners(): Promise<any[]> {
     try {
-      return await db
+      return await this.db
         .select()
         .from(countdownBanners)
         .orderBy(countdownBanners.createdAt);
@@ -1575,7 +1580,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCountdownBanner(id: number): Promise<void> {
     try {
-      await db.delete(countdownBanners).where(eq(countdownBanners.id, id));
+      await this.db.delete(countdownBanners).where(eq(countdownBanners.id, id));
     } catch (error) {
       console.error("Error deleting countdown banner:", error);
       throw error;
@@ -1585,7 +1590,7 @@ export class DatabaseStorage implements IStorage {
   // Announcement Badge Management
   async getActiveAnnouncementBadge(): Promise<AnnouncementBadge | null> {
     try {
-      const [activeBadge] = await db
+      const [activeBadge] = await this.db
         .select()
         .from(announcementBadges)
         .where(eq(announcementBadges.isEnabled, true))
@@ -1601,7 +1606,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllAnnouncementBadges(): Promise<AnnouncementBadge[]> {
     try {
-      return await db
+      return await this.db
         .select()
         .from(announcementBadges)
         .orderBy(desc(announcementBadges.createdAt));
@@ -1613,7 +1618,7 @@ export class DatabaseStorage implements IStorage {
 
   async createAnnouncementBadge(data: InsertAnnouncementBadge): Promise<AnnouncementBadge> {
     try {
-      const [badge] = await db
+      const [badge] = await this.db
         .insert(announcementBadges)
         .values(data)
         .returning();
@@ -1626,7 +1631,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateAnnouncementBadge(id: number, data: Partial<InsertAnnouncementBadge>): Promise<AnnouncementBadge> {
     try {
-      const [badge] = await db
+      const [badge] = await this.db
         .update(announcementBadges)
         .set({ ...data, updatedAt: new Date() })
         .where(eq(announcementBadges.id, id))
@@ -1640,7 +1645,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAnnouncementBadge(id: number): Promise<void> {
     try {
-      await db.delete(announcementBadges).where(eq(announcementBadges.id, id));
+      await this.db.delete(announcementBadges).where(eq(announcementBadges.id, id));
     } catch (error) {
       console.error("Error deleting announcement badge:", error);
       throw error;
@@ -1650,7 +1655,7 @@ export class DatabaseStorage implements IStorage {
   // Missing interface methods
   async deleteCustomer(id: number | string): Promise<void> {
     const customerId = typeof id === 'string' ? parseInt(id) : id;
-    await db.delete(customers).where(eq(customers.id, customerId));
+    await this.db.delete(customers).where(eq(customers.id, customerId));
   }
 
   // Lottery Scratch Activation System
@@ -1661,7 +1666,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async revealActivationKey(customerId: string): Promise<Customer> {
-    const [customer] = await db
+    const [customer] = await this.db
       .update(customers)
       .set({ 
         activationKeyRevealed: true,
@@ -1675,7 +1680,7 @@ export class DatabaseStorage implements IStorage {
 
   // Activation Code System Implementation
   async createActivationCode(codeData: InsertActivationCode): Promise<ActivationCode> {
-    const [code] = await db
+    const [code] = await this.db
       .insert(activationCodes)
       .values(codeData)
       .returning();
@@ -1683,7 +1688,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActivationCode(code: string): Promise<ActivationCode | undefined> {
-    const [activation] = await db
+    const [activation] = await this.db
       .select()
       .from(activationCodes)
       .where(eq(activationCodes.code, code));
