@@ -424,7 +424,7 @@ export class DatabaseStorage implements IStorage {
   async updateOrderStatus(id: number, status: string, completedAt?: Date): Promise<Order> {
     const updateData: any = { status };
     if (completedAt) {
-      updateData.completedAt = completedAt;
+      updateData.completedAt = Math.floor(completedAt.getTime() / 1000);
     }
 
     const [order] = await this.db

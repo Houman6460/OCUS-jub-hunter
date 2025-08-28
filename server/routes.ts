@@ -28,6 +28,8 @@ import { generateInvoicePDF } from './invoicePdfService';
 import { existsSync, createReadStream } from 'fs';
 import { promises as fsp } from 'fs';
 import * as fsSync from 'fs';
+import { z } from "zod";
+import type { DbInstance } from './db';
 
 declare global {
   namespace Express {
@@ -1097,7 +1099,10 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         totalSpent: totalSpent.toFixed(2),
         completedOrders: completedOrders.length,
         lastPurchaseDate: completedOrders.length > 0 ? 
-          Math.max(...completedOrders.map((o: { completedAt: string | Date | null, createdAt: string | Date | null }) => new Date(o.completedAt || o.createdAt || new Date()).getTime())) : null
+          Math.max(...completedOrders.map((o: any) => {
+            const timestamp = o.completedAt || o.createdAt || Date.now();
+            return typeof timestamp === 'number' ? timestamp * 1000 : new Date(timestamp).getTime();
+          })) : null
       });
     } catch (error: any) {
       console.error('Failed to get user purchase status:', error);
@@ -1746,17 +1751,6 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         const invoiceNumber = await storage.generateInvoiceNumber();
         const invoice = await storage.createInvoice({
           invoiceNumber,
-          orderId: order.id,
-          customerId: order.userId || null,
-          customerName: order.customerName,
-          customerEmail: order.customerEmail,
-          invoiceDate: new Date(),
-          dueDate: new Date(), // Paid immediately
-          subtotal: order.finalAmount,
-          totalAmount: order.finalAmount,
-          currency: (order.currency || 'USD').toUpperCase(),
-          status: 'paid',
-          paidAt: new Date(),
           notes: `Invoice for order #${order.id}`
         });
 
@@ -2158,8 +2152,8 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
 
             // 3. Generate and save invoice
             console.log(`Fetching order ${orderId} and user ${userId} for invoice generation...`);
-            const order = await storage.getOrderById(orderId);
-            const user = await storage.getUserById(userId);
+            const order = await storage.getOrder(orderId);
+            const user = await storage.getUser(userId);
 
             if (order && user) {
               console.log('Order and user found. Generating invoice...');
