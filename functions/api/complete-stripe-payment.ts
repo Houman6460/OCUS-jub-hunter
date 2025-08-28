@@ -103,8 +103,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       // For now, we accept the small risk between these inserts.
 
       const orderResult = await session.prepare(`
-        INSERT INTO orders (customerId, customerEmail, customerName, originalAmount, finalAmount, currency, status, paymentMethod, paymentIntentId, downloadToken, createdAt, completedAt)
-        VALUES (?, ?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
+        INSERT INTO orders (customerId, customerEmail, customerName, productId, productName, originalAmount, finalAmount, currency, status, paymentMethod, paymentIntentId, downloadToken, createdAt, completedAt)
+        VALUES (?, ?, ?, 1, 'OCUS Job Hunter Extension', ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
       `).bind(finalCustomerId, customerEmail, customerName || customerEmail, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, purchaseCompleteRequest.currency.toLowerCase(), paymentIntentId, downloadToken, now, now).run();
 
       const orderId = orderResult.meta?.last_row_id;
@@ -118,11 +118,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       // 3. Create invoice
       finalBatch.push(session.prepare(`
         INSERT INTO invoices (orderId, invoiceNumber, customerId, customerEmail, 
-                             invoiceDate, dueDate, subtotal, taxAmount, discountAmount, 
+                             amount, invoiceDate, dueDate, subtotal, taxAmount, discountAmount, 
                              totalAmount, currency, status, paidAt, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
       `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, 
-               now, now, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, 
+               purchaseCompleteRequest.amount, now, now, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, 
                purchaseCompleteRequest.currency, now, now, now));
       
       console.log('Running final batch for invoice...');
