@@ -56,7 +56,7 @@ export class UserStorage {
     const now = new Date().toISOString();
     try {
       const result = await this.db.prepare(`
-        INSERT INTO users (email, name, password, created_at, updated_at)
+        INSERT INTO users (email, name, password, created_at, updatedAt)
         VALUES (?, ?, ?, datetime('now'), datetime('now'))
       `).bind(email, name, hashedPassword).run();
 
