@@ -29,17 +29,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     });
 
     const body = await request.text();
+    console.log('Stripe webhook signature verified.');
     const event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
       env.STRIPE_WEBHOOK_SECRET
     );
+    console.log('Stripe event constructed:', event.type);
 
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log('Checkout session completed:', session.id);
+        console.log('Handling checkout.session.completed for session ID:', session.id);
+        console.log('Session details:', JSON.stringify(session, null, 2));
         const customerEmail = session.customer_details?.email;
         const customerName = session.customer_details?.name;
         const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : '';
@@ -93,6 +96,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
         `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, amount, now, now, amount, amount, currency, now, now, now).run();
 
+        console.log('Database operations completed successfully for:', customerEmail);
         console.log('Successfully processed checkout.session.completed for:', customerEmail);
         break;
       // ... handle other event types
