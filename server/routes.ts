@@ -125,10 +125,11 @@ const upload = multer({
 });
 
 async function createStripeCheckoutSession(stripe: Stripe, plan: string, customerId: string, successUrl: string, cancelUrl: string) {
-  const priceId = plan === 'premium' ? process.env.STRIPE_PREMIUM_PRICE_ID : process.env.STRIPE_BASIC_PRICE_ID;
+  const isSubscription = plan === 'premium'; // Assuming premium is a subscription
+  const priceId = isSubscription ? process.env.STRIPE_PREMIUM_PRICE_ID : process.env.STRIPE_BASIC_PRICE_ID;
 
   if (!priceId) {
-    throw new Error('Price ID not configured');
+    throw new Error('Price ID not configured for plan: ' + plan);
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -139,10 +140,17 @@ async function createStripeCheckoutSession(stripe: Stripe, plan: string, custome
         quantity: 1,
       },
     ],
-    mode: 'subscription',
+    mode: isSubscription ? 'subscription' : 'payment',
     customer: customerId,
     success_url: successUrl,
     cancel_url: cancelUrl,
+    // Ensure the checkout session completion event is sent to the webhook
+    payment_intent_data: isSubscription ? undefined : {
+      setup_future_usage: 'on_session',
+    },
+    subscription_data: isSubscription ? {
+      trial_from_plan: true,
+    } : undefined,
   });
 
   return session;
