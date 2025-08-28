@@ -24,7 +24,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   try {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-06-20',
+      apiVersion: '2025-07-30.basil',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
