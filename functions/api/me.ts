@@ -58,12 +58,22 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         }
 
         try {
-          // First try users table (for registered users)
-          const user = await env.DB.prepare(`
+          // Use D1 Sessions API for consistent reads
+          const session = env.DB.withSession('first-primary');
+          
+          // The token format is jwt-token-{email}-{timestamp}, not userId
+          // Extract email from token instead of treating as userId
+          console.log('Token parts:', parts);
+          const userEmail = parts[2]; // This is actually the email
+          
+          // First try users table (for registered users) - search by email
+          const user = await session.prepare(`
             SELECT id, email, name, role, created_at, is_premium, extension_activated, 
                    premium_activated_at, total_spent, total_orders
-            FROM users WHERE id = ?
-          `).bind(parseInt(userId)).first();
+            FROM users WHERE email = ?
+          `).bind(userEmail).first();
+
+          console.log('User lookup result:', user);
 
           if (user) {
             return json({
@@ -81,12 +91,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             });
           }
 
-          // Fallback to customers table (for legacy users)
-          const customer = await env.DB.prepare(`
+          // Fallback to customers table (for legacy users) - search by email
+          const customer = await session.prepare(`
             SELECT id, email, name, is_premium, extension_activated, created_at,
                    total_spent, total_orders
-            FROM customers WHERE id = ?
-          `).bind(parseInt(userId)).first();
+            FROM customers WHERE email = ?
+          `).bind(userEmail).first();
+
+          console.log('Customer lookup result:', customer);
 
           if (customer) {
             return json({
