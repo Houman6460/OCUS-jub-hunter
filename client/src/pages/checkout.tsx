@@ -53,7 +53,8 @@ interface CouponValidationResponse {
 }
 
 interface OrderCompletionResponse {
-  activationKey: string;
+  success: boolean;
+  message: string;
 }
 
 export default function Checkout() {
@@ -121,8 +122,9 @@ export default function Checkout() {
   
           if (response.ok) {
             const result: OrderCompletionResponse = await response.json();
-            if (result.activationKey) {
-              localStorage.setItem('latestActivationKey', result.activationKey);
+            if (result.success) {
+              // Premium access activated - no activation key needed
+              localStorage.setItem('premiumActivated', 'true');
             }
           }
         } catch (err) {
@@ -349,36 +351,20 @@ export default function Checkout() {
   }, [isFormValid, paymentMethod, customerData, clientSecret, finalPrice, toast, t]);
 
   if (isSuccess) {
-    const activationKey = localStorage.getItem('latestActivationKey');
-    
     return (
       <div className="min-h-screen bg-slate-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
-          <Card className="text-center p-8">
-            <div className="w-16 h-16 bg-accent text-white rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check className="h-8 w-8" />
-            </div>
+          <Card className="p-8 text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-6" />
             <h1 className="text-2xl font-bold text-slate-900 mb-4">{t.checkout.successTitle}</h1>
             <p className="text-slate-600 mb-6">{t.checkout.successMessage}</p>
             
-            {activationKey ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-blue-900 mb-3">{t.checkout.activationCode}</h3>
-                <div className="bg-white border rounded p-3 font-mono text-sm text-slate-900 break-all">
-                  {activationKey}
-                </div>
-                <p className="text-sm text-blue-700 mt-2">
-                  {t.checkout.activationCodeHint}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-yellow-900 mb-3">{t.checkout.processingActivationCode}</h3>
-                <p className="text-sm text-yellow-700">
-                  {t.checkout.processingActivationCodeMessage}
-                </p>
-              </div>
-            )}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+              <h3 className="font-semibold text-green-900 mb-3">Premium Access Activated</h3>
+              <p className="text-sm text-green-700">
+                Your premium features are now available. Visit your dashboard to access downloads and manage your account.
+              </p>
+            </div>
             
             <div className="flex justify-center space-x-4">
               <Link href="/">

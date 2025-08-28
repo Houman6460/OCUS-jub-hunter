@@ -92,11 +92,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const finalCustomerId = finalCustomer.id;
       console.log('Final customer ID for orders/invoices:', finalCustomerId);
 
-      // Now, create the order, activation code, and invoice in a second batch
+      // Now, create the order and invoice in a second batch
       const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const activationCode = `OCUS_${Date.now()}_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       
-      // We need the orderId for the invoice and activation code, which is also not available pre-batch.
+      // We need the orderId for the invoice, which is not available pre-batch.
       // We will have to do these sequentially but can wrap them in a manual transaction if D1 supported it.
       // For now, we accept the small risk between these inserts.
 
@@ -113,36 +112,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const invoiceNumber = `INV-${orderId}-${Date.now()}`;
 
       const finalBatch = [];
-      // 3. Create activation code
+      // 3. Create invoice
       finalBatch.push(env.DB.prepare(`
-        INSERT INTO activation_codes (code, orderId, createdAt) VALUES (?, ?, ?)
-      `).bind(activationCode, orderId, now));
-
-      // 4. Create invoice
-      finalBatch.push(env.DB.prepare(`
-        INSERT INTO invoices (orderId, invoiceNumber, customerId, customerName, customerEmail, 
+        INSERT INTO invoices (orderId, invoiceNumber, customerId, customerEmail, 
                              invoiceDate, dueDate, subtotal, taxAmount, discountAmount, 
                              totalAmount, currency, status, paidAt, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
-      `).bind(orderId, invoiceNumber, finalCustomerId, customerName || customerEmail, customerEmail, 
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
+      `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, 
                now, now, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, 
                purchaseCompleteRequest.currency, now, now, now));
       
-      console.log('Running final batch for activation code and invoice...');
+      console.log('Running final batch for invoice...');
       await env.DB.batch(finalBatch);
-      console.log('Invoice and activation code created successfully for order ID:', orderId);
+      console.log('Invoice created successfully for order ID:', orderId);
 
       console.log('Purchase completed successfully:', {
         customerId: finalCustomerId,
         orderId,
-        paymentIntentId,
-        activationCode
+        paymentIntentId
       });
     
       return json({
         success: true,
-        activationKey: activationCode,
-        message: 'Payment completed successfully'
+        message: 'Payment completed successfully - Premium access activated'
       });
 
     } catch (error: any) {
