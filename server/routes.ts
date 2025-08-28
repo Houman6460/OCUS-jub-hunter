@@ -1149,14 +1149,13 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
     }
   });
 
-  // ...
 
   app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     // ...
 
-    if (event.type === 'checkout.session.completed') {
+    if (event && event.type === 'checkout.session.completed') {
       try {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = (event.data as any).object as Stripe.Checkout.Session;
         console.log('Checkout session completed:', JSON.stringify(session.metadata, null, 2));
 
         const orderId = session.metadata?.orderId ? parseInt(session.metadata.orderId) : null;
@@ -1167,7 +1166,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           return res.status(400).json({ message: 'Missing orderId' });
         }
 
-        const order = await storage.getOrderById(orderId);
+        const order = await storage.getOrder(orderId);
         if (!order) {
           console.error(`Webhook Error: Order with ID ${orderId} not found.`);
           return res.status(404).json({ message: 'Order not found' });
@@ -1179,13 +1178,13 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         }
 
         if (userId) {
-          const user = await storage.getUser(userId.toString());
+          const user = await storage.getUser(userId);
           if (!user) {
             return res.status(404).json({ message: 'User not found' });
           }
 
           // Update user to premium
-          await storage.updateUser(user.id, { premium: true });
+          await storage.updateUser(user.id, { isPremium: true });
 
           // Update order status
           await storage.updateOrderStatus(order.id, 'paid');
@@ -1195,10 +1194,10 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           const invoice = await storage.createInvoice({
             invoiceNumber,
             customerId: user.id,
-            customerName: user.name || '',
+            customerName: user.username || '',
             customerEmail: user.email,
-            invoiceDate: new Date(),
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+            invoiceDate: new Date().toISOString(),
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
             status: 'paid',
             amount: order.amount,
             paidAt: Math.floor(new Date().getTime() / 1000),
@@ -1206,22 +1205,27 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
 
           await storage.createInvoiceItem({
             invoiceId: invoice.id,
-            description: order.productName,
+            productName: order.productName,
             quantity: 1,
             unitPrice: order.amount.toString(),
-            amount: order.amount.toString(),
-            taxRate: 0, // No tax for now
+            totalPrice: order.amount.toString(),
+            description: `Premium subscription activation`
           });
           console.log(`Invoice item created for invoice ${invoice.id}.`);
 
-          const pdfBuffer = await generateInvoicePDF(invoice, storage);
+          const invoiceWithItems = {
+            ...invoice,
+            items: await storage.getInvoiceItems(invoice.id),
+          };
+
+          const pdfBuffer = await generateInvoicePDF(invoiceWithItems, storage);
           const pdfPath = path.join(__dirname, `../../public/invoices/invoice-${invoiceNumber}.pdf`);
           await fsp.mkdir(path.dirname(pdfPath), { recursive: true });
           await fsp.writeFile(pdfPath, pdfBuffer);
           const pdfUrl = `/invoices/invoice-${invoiceNumber}.pdf`;
           console.log(`Invoice PDF generated at ${pdfUrl}`);
 
-          await storage.updateInvoice(invoice.id, { pdfUrl });
+          await storage.updateInvoice(invoice.id, { pdfPath: pdfUrl });
           console.log(`Invoice ${invoice.id} updated with PDF URL.`);
         }
       } catch (error) {
