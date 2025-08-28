@@ -1117,7 +1117,11 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-      const user = req.user as any;
+      const userDetails = await storage.getUser((req.user as any).id);
+      if (!userDetails) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const user = userDetails;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userProfile } = user;
 
@@ -1178,7 +1182,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         }
 
         if (userId) {
-          const user = await storage.getUser(userId);
+          const user = await storage.getUser(userId as number);
           if (!user) {
             return res.status(404).json({ message: 'User not found' });
           }
@@ -1198,6 +1202,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
             customerName: user.username || '',
             customerEmail: user.email,
             invoiceDate: Math.floor(new Date().getTime() / 1000),
+            trialExpires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7-day trial
             dueDate: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000), // 30 days
             status: 'paid',
             totalAmount: order.finalAmount,
