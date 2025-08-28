@@ -2190,6 +2190,9 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
                 customerAddress: null,
                 billingAddress: null,
                 items: [{
+                  id: 0, // Placeholder, not used in PDF
+                  invoiceId: 0, // Placeholder, not used in PDF
+                  createdAt: Math.floor(Date.now() / 1000),
                   productName: 'OCUS Job Hunter Extension',
                   description: 'Chrome extension for job hunting automation',
                   quantity: 1,
