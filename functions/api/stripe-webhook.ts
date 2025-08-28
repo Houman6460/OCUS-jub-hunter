@@ -55,31 +55,49 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         }
 
         // Reuse logic from complete-stripe-payment.ts
+        console.log(`Processing purchase for customer: ${customerEmail}`);
+
         const now = new Date().toISOString();
         const dbSession = env.DB.withSession('webhook-session');
+        console.log('Database session created.');
+
+        const existingUser = await dbSession.prepare(`SELECT id, is_premium FROM users WHERE email = ?`).bind(customerEmail).first<{ id: number; is_premium: number }>();
+        if (!existingUser) {
+            console.error(`Webhook Error: User with email ${customerEmail} not found in the database.`);
+        } else {
+            console.log(`Found user ${customerEmail} with is_premium=${existingUser.is_premium}. Preparing to update.`);
+        }
 
         const userUpdateStmt = dbSession.prepare(`
           UPDATE users SET is_premium = 1, extension_activated = 1, premium_activated_at = ? WHERE email = ?
         `).bind(now, customerEmail);
 
         const existingCustomer = await dbSession.prepare(`SELECT id FROM customers WHERE email = ?`).bind(customerEmail).first<{ id: number }>();
+        console.log(`Checking for existing customer record for ${customerEmail}. Found: ${existingCustomer ? existingCustomer.id : 'none'}`);
 
         let customerStmt;
         if (existingCustomer?.id) {
+          console.log(`Updating existing customer record for ID: ${existingCustomer.id}`);
           customerStmt = dbSession.prepare(`UPDATE customers SET is_premium = 1, extension_activated = 1 WHERE id = ?`).bind(existingCustomer.id);
         } else {
+          console.log(`Creating new customer record for ${customerEmail}`);
           customerStmt = dbSession.prepare(`INSERT INTO customers (email, name, is_premium, extension_activated, created_at) VALUES (?, ?, 1, 1, ?)`).bind(customerEmail, customerName || customerEmail, now);
         }
 
-        await dbSession.batch([userUpdateStmt, customerStmt]);
+        console.log('Executing database batch update for user and customer.');
+        const batchResult = await dbSession.batch([userUpdateStmt, customerStmt]);
+        console.log('Database batch update executed. Result:', JSON.stringify(batchResult, null, 2));
 
         const finalCustomer = await dbSession.prepare(`SELECT id FROM customers WHERE email = ?`).bind(customerEmail).first<{ id: number }>();
         if (!finalCustomer) {
+          console.error('CRITICAL: Failed to find or create customer record in webhook.');
           throw new Error('Failed to find or create customer record in webhook.');
         }
         const finalCustomerId = finalCustomer.id;
+        console.log(`Final customer ID for order creation: ${finalCustomerId}`);
 
         const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log('Preparing to create order record.');
         const orderResult = await dbSession.prepare(`
           INSERT INTO orders (customerId, customerEmail, customerName, productId, productName, originalAmount, finalAmount, currency, status, paymentMethod, paymentIntentId, downloadToken, createdAt, completedAt)
           VALUES (?, ?, ?, 1, 'OCUS Job Hunter Extension', ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
@@ -87,14 +105,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
         const orderId = orderResult.meta?.last_row_id;
         if (!orderId) {
+          console.error('CRITICAL: Failed to create order in webhook.');
           throw new Error('Failed to create order in webhook.');
         }
+        console.log(`Order created successfully with ID: ${orderId}`);
 
         const invoiceNumber = `INV-${orderId}-${Date.now()}`;
+        console.log(`Preparing to create invoice record with number: ${invoiceNumber}`);
         await dbSession.prepare(`
           INSERT INTO invoices (orderId, invoiceNumber, customerId, customerEmail, amount, invoiceDate, dueDate, subtotal, taxAmount, discountAmount, totalAmount, currency, status, paidAt, createdAt, updatedAt)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
         `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, amount, now, now, amount, amount, currency, now, now, now).run();
+        console.log(`Invoice created successfully for order ID: ${orderId}`);
 
         console.log('Database operations completed successfully for:', customerEmail);
         console.log('Successfully processed checkout.session.completed for:', customerEmail);
