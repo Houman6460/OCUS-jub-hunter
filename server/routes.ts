@@ -1155,7 +1155,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
 
     if (event && event.type === 'checkout.session.completed') {
       try {
-        const session = (event.data as any).object as Stripe.Checkout.Session;
+        const session = (event as any).data.object as Stripe.Checkout.Session;
         console.log('Checkout session completed:', JSON.stringify(session.metadata, null, 2));
 
         const orderId = session.metadata?.orderId ? parseInt(session.metadata.orderId) : null;
@@ -1184,7 +1184,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           }
 
           // Update user to premium
-          await storage.updateUser(user.id, { isPremium: true });
+          await storage.updateUser(user.id, { isPremium: true, premiumActivatedAt: new Date().toISOString() });
 
           // Update order status
           await storage.updateOrderStatus(order.id, 'paid');
@@ -1192,23 +1192,24 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           // Generate and save invoice
           const invoiceNumber = await storage.generateInvoiceNumber();
           const invoice = await storage.createInvoice({
+            subtotal: order.finalAmount,
             invoiceNumber,
             customerId: user.id,
             customerName: user.username || '',
             customerEmail: user.email,
-            invoiceDate: new Date().toISOString(),
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+            invoiceDate: Math.floor(new Date().getTime() / 1000),
+            dueDate: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000), // 30 days
             status: 'paid',
-            amount: order.amount,
+            totalAmount: order.finalAmount,
             paidAt: Math.floor(new Date().getTime() / 1000),
           });
 
           await storage.createInvoiceItem({
             invoiceId: invoice.id,
-            productName: order.productName,
+            productName: 'Premium Subscription',
             quantity: 1,
-            unitPrice: order.amount.toString(),
-            totalPrice: order.amount.toString(),
+            unitPrice: order.finalAmount.toString(),
+            totalPrice: order.finalAmount.toString(),
             description: `Premium subscription activation`
           });
           console.log(`Invoice item created for invoice ${invoice.id}.`);
@@ -1218,14 +1219,18 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
             items: await storage.getInvoiceItems(invoice.id),
           };
 
-          const pdfBuffer = await generateInvoicePDF(invoiceWithItems, storage);
+          const invoiceSettings = await storage.getInvoiceSettings();
+          if (!invoiceSettings) {
+            throw new Error('Invoice settings not found');
+          }
+          const pdfBuffer = await generateInvoicePDF(invoiceWithItems, invoiceSettings);
           const pdfPath = path.join(__dirname, `../../public/invoices/invoice-${invoiceNumber}.pdf`);
           await fsp.mkdir(path.dirname(pdfPath), { recursive: true });
           await fsp.writeFile(pdfPath, pdfBuffer);
           const pdfUrl = `/invoices/invoice-${invoiceNumber}.pdf`;
           console.log(`Invoice PDF generated at ${pdfUrl}`);
 
-          await storage.updateInvoice(invoice.id, { pdfPath: pdfUrl });
+          await storage.updateInvoice(invoice.id, { pdfUrl });
           console.log(`Invoice ${invoice.id} updated with PDF URL.`);
         }
       } catch (error) {
