@@ -1575,27 +1575,47 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
         referralCode: validatedData.referralCode || null
       });
 
-      // Create Stripe payment intent
+      // Create Stripe checkout session
       if (!stripe) {
         return res.status(500).json({ message: "Stripe is not configured" });
       }
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(validatedData.amount * 100), // Convert to cents
-        currency: "usd",
+
+      const successUrl = new URL('/purchase-success', process.env.APP_URL || 'http://localhost:3000');
+      successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
+      successUrl.searchParams.append('order_id', order.id.toString());
+
+      const cancelUrl = new URL('/purchase-canceled', process.env.APP_URL || 'http://localhost:3000');
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'OCUS Job Hunter - Premium',
+              },
+              unit_amount: Math.round(validatedData.amount * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: successUrl.toString(),
+        cancel_url: cancelUrl.toString(),
+        customer_email: validatedData.customerEmail,
         metadata: {
           orderId: order.id.toString(),
-          customerEmail: validatedData.customerEmail,
-          customerName: validatedData.customerName
-        }
+        },
       });
 
-      // Update order with payment intent ID
+      // Update order with session ID
       await storage.updateOrderStatus(order.id, "pending");
-      await db.update(orders).set({ paymentIntentId: paymentIntent.id }).where(eq(orders.id, order.id));
+      await db.update(orders).set({ paymentIntentId: session.id }).where(eq(orders.id, order.id));
 
       res.json({ 
-        clientSecret: paymentIntent.client_secret,
-        orderId: order.id 
+        sessionId: session.id,
+        checkoutUrl: session.url 
       });
     } catch (error: any) {
       console.error('Payment intent creation failed:', error);
