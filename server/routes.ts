@@ -1016,26 +1016,47 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
         activationCode: activationCode
       });
 
-      // Create Stripe payment intent
+      // Create Stripe checkout session
       if (!stripe) {
         return res.status(500).json({ message: "Stripe is not configured" });
       }
-      
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(parseFloat(product.price) * 100), // Convert to cents
-        currency: product.currency || "eur",
+
+      const successUrl = new URL('/purchase-success', process.env.APP_URL || 'http://localhost:3000');
+      successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
+      successUrl.searchParams.append('order_id', order.id.toString());
+
+      const cancelUrl = new URL('/purchase-canceled', process.env.APP_URL || 'http://localhost:3000');
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: product.currency || 'eur',
+              product_data: {
+                name: product.name || 'OCUS Job Hunter - Premium',
+              },
+              unit_amount: Math.round(parseFloat(product.price) * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: successUrl.toString(),
+        cancel_url: cancelUrl.toString(),
         metadata: {
           orderId: order.id.toString(),
           userId: userId?.toString() || '',
           activationCode: activationCode
-        }
+        },
       });
 
-      // Update order with payment intent ID
-      await db.update(orders).set({ paymentIntentId: paymentIntent.id }).where(eq(orders.id, order.id));
+      // Update order with session ID
+      await db.update(orders).set({ paymentIntentId: session.id }).where(eq(orders.id, order.id));
 
       res.json({ 
-        clientSecret: paymentIntent.client_secret,
+        sessionId: session.id,
+        checkoutUrl: session.url,
         orderId: order.id,
         activationCode: activationCode
       });
@@ -1135,18 +1156,55 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
       }
 
       try {
-        // Create Stripe payment intent
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(validatedData.amount * 100), // Convert to cents
+        // Create an order before creating the checkout session
+        const order = await storage.createOrder({
+          customerEmail: (req.user as any)?.email || 'user@example.com',
+          customerName: (req.user as any)?.name || 'User',
+          originalAmount: validatedData.amount.toString(),
+          finalAmount: validatedData.amount.toString(),
           currency: "usd",
-          metadata: {
-            source: "user_dashboard",
-            product: "extension_premium"
-          }
+          status: "pending",
+          paymentMethod: "stripe",
+          userId: (req.user as any)?.id || null,
         });
 
+        const successUrl = new URL('/purchase-success', process.env.APP_URL || 'http://localhost:3000');
+        successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
+        successUrl.searchParams.append('order_id', order.id.toString());
+
+        const cancelUrl = new URL('/purchase-canceled', process.env.APP_URL || 'http://localhost:3000');
+
+        // Create Stripe checkout session
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: 'OCUS Job Hunter - Premium',
+                },
+                unit_amount: Math.round(validatedData.amount * 100),
+              },
+              quantity: 1,
+            },
+          ],
+          mode: 'payment',
+          success_url: successUrl.toString(),
+          cancel_url: cancelUrl.toString(),
+          customer_email: (req.user as any)?.email,
+          metadata: {
+            orderId: order.id.toString(),
+            userId: (req.user as any)?.id?.toString() || '',
+          },
+        });
+
+        // Update order with session ID
+        await db.update(orders).set({ paymentIntentId: session.id }).where(eq(orders.id, order.id));
+
         res.json({ 
-          clientSecret: paymentIntent.client_secret
+          sessionId: session.id,
+          checkoutUrl: session.url
         });
       } catch (stripeError: any) {
         console.error('Stripe payment intent creation failed:', stripeError);
