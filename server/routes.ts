@@ -2102,7 +2102,24 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
       case 'payment_intent.succeeded':
         const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
         console.log('PaymentIntent was successful!', paymentIntentSucceeded);
-        // TODO: Fulfill the purchase, e.g., update user's subscription status in the database.
+        
+        // Find order by payment intent ID and update user to premium
+        const order = await storage.getOrderByPaymentIntentId(paymentIntentSucceeded.id);
+        if (order && order.userId) {
+          try {
+            console.log(`Upgrading user ${order.userId} to Premium after payment_intent.succeeded`);
+            // Update user premium status using direct database query since storage doesn't have this method
+            await db.update(users).set({ 
+              isPremium: true, 
+              extensionActivated: true,
+              premiumActivatedAt: new Date().toISOString()
+            }).where(eq(users.id, order.userId));
+            await storage.updateOrderStatus(order.id, 'completed', new Date());
+            console.log(`User ${order.userId} successfully upgraded to Premium`);
+          } catch (error) {
+            console.error(`Failed to upgrade user ${order.userId} to Premium:`, error);
+          }
+        }
         break;
       case 'payment_intent.created':
         const paymentIntentCreated = event.data.object as Stripe.PaymentIntent;
@@ -2127,13 +2144,17 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
           try {
             // 1. Update user to Premium
             console.log(`Attempting to upgrade user ${userId} to Premium...`);
-            const updateUserResult = await db.update(users).set({ accountType: 'Premium' }).where(eq(users.id, userId));
-            console.log(`User ${userId} upgrade successful. Result:`, updateUserResult);
+            await db.update(users).set({ 
+              isPremium: true, 
+              extensionActivated: true,
+              premiumActivatedAt: new Date().toISOString()
+            }).where(eq(users.id, userId));
+            console.log(`User ${userId} upgrade successful.`);
 
             // 2. Update order status to 'completed'
             console.log(`Attempting to mark order ${orderId} as completed...`);
-            const updateOrderResult = await db.update(orders).set({ status: 'completed' }).where(eq(orders.id, orderId));
-            console.log(`Order ${orderId} status update successful. Result:`, updateOrderResult);
+            await storage.updateOrderStatus(orderId, 'completed', new Date());
+            console.log(`Order ${orderId} status update successful.`);
 
             // 3. Generate and save invoice
             console.log(`Fetching order ${orderId} and user ${userId} for invoice generation...`);
@@ -2143,6 +2164,7 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
             if (order && user) {
               console.log('Order and user found. Generating invoice...');
               const invoicePath = await generateInvoicePDF(order, user);
+              // Update order with invoice URL using direct database query
               await db.update(orders).set({ invoiceUrl: invoicePath }).where(eq(orders.id, orderId));
               console.log(`Invoice generated and saved for order ${orderId} at ${invoicePath}`);
             } else {

@@ -10,6 +10,11 @@ export const users = sqliteTable("users", {
   email: text("email").notNull(),
   isAdmin: integer("is_admin", { mode: 'boolean' }).default(false),
   stripeCustomerId: text("stripe_customer_id"),
+  isPremium: integer("is_premium", { mode: 'boolean' }).default(false),
+  extensionActivated: integer("extension_activated", { mode: 'boolean' }).default(false),
+  premiumActivatedAt: text("premium_activated_at"),
+  totalSpent: text("total_spent", { precision: 10, scale: 2 }).default("0"),
+  totalOrders: integer("total_orders").default(0),
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
 
@@ -32,6 +37,7 @@ export const orders = sqliteTable("orders", {
   downloadCount: integer("download_count").default(0),
   maxDownloads: integer("max_downloads").default(3),
   activationCode: text("activation_code"), // Generated activation code for the extension
+  invoiceUrl: text("invoice_url"), // Path to generated invoice PDF
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
   completedAt: integer("completed_at"),
 });
