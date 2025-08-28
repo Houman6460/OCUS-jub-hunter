@@ -7,6 +7,7 @@ import { DatabaseStorage } from '../../server/storage';
 import Stripe from 'stripe';
 import { drizzle } from 'drizzle-orm/d1';
 import * as schema from '../../shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Helper to create a JSON response
 function json(data: any, status = 200) {
@@ -37,7 +38,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   
   try {
     const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-06-20', // Use stable API version
+      apiVersion: '2025-07-30.basil', // Match expected API version
       httpClient: Stripe.createFetchHttpClient(),
     });
 
@@ -56,8 +57,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   // Initialize database connection and storage
-  const db = drizzle(env.DB, { schema });
+  const db = drizzle(env.DB, { schema }) as any; // Type assertion for D1 compatibility
   const storage = new DatabaseStorage(db);
+  // Make db accessible for direct queries
+  (storage as any).db = db;
 
   try {
 
@@ -129,14 +132,21 @@ async function handleCheckoutSessionCompleted(
     } else {
       console.log(`Updating existing customer: ${customerEmail}`);
       // Update customer to premium status
-      await storage.updateCustomer(customer.id, {
-        extensionActivated: true,
-        subscriptionStatus: 'active',
-        totalSpent: (parseFloat(customer.totalSpent) + amount).toString(),
-        totalOrders: customer.totalOrders + 1,
-        lastOrderDate: now,
-        updatedAt: now,
-      });
+      // Update customer using available method
+      const updatedCustomer = await storage.getCustomer(customer.id);
+      if (updatedCustomer) {
+        // Use raw update since updateCustomer method signature may differ
+        await storage.db.update(schema.customers)
+          .set({
+            extensionActivated: true,
+            subscriptionStatus: 'active',
+            totalSpent: (parseFloat(customer.totalSpent) + amount).toString(),
+            totalOrders: customer.totalOrders + 1,
+            lastOrderDate: now,
+            updatedAt: now,
+          })
+          .where(eq(schema.customers.id, customer.id));
+      }
     }
 
     // 2. Update user if exists (for authenticated users)
@@ -157,20 +167,25 @@ async function handleCheckoutSessionCompleted(
     const activationCode = `activation_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
     
     console.log('Creating order record...');
-    const order = await storage.createOrder({
-      userId: user?.id,
-      customerEmail,
-      customerName: customerName || customerEmail,
-      originalAmount: amount.toString(),
-      finalAmount: amount.toString(),
-      currency: currency.toLowerCase(),
-      status: 'completed',
-      paymentMethod: 'stripe',
-      paymentIntentId,
-      downloadToken,
-      activationCode,
-      completedAt: now,
-    });
+    // Create order using database insert
+    const [order] = await storage.db
+      .insert(schema.orders)
+      .values({
+        userId: user?.id || null,
+        customerEmail,
+        customerName: customerName || customerEmail,
+        originalAmount: amount.toString(),
+        finalAmount: amount.toString(),
+        currency: currency.toLowerCase(),
+        status: 'completed',
+        paymentMethod: 'stripe',
+        paymentIntentId,
+        downloadToken,
+        activationCode,
+        completedAt: now,
+        createdAt: now,
+      })
+      .returning();
 
     console.log(`Order created with ID: ${order.id}`);
 
@@ -178,32 +193,41 @@ async function handleCheckoutSessionCompleted(
     const invoiceNumber = `INV-${order.id}-${Date.now()}`;
     console.log(`Creating invoice: ${invoiceNumber}`);
     
-    const invoice = await storage.createInvoice({
-      orderId: order.id,
-      invoiceNumber,
-      customerId: customer.id,
-      customerName: customerName || customerEmail,
-      customerEmail,
-      invoiceDate: now,
-      dueDate: now, // Immediate payment
-      subtotal: amount.toString(),
-      taxAmount: '0.00',
-      discountAmount: '0.00',
-      totalAmount: amount.toString(),
-      currency: currency.toUpperCase(),
-      status: 'paid',
-      paidAt: now,
-    });
+    // Create invoice using database insert
+    const [invoice] = await storage.db
+      .insert(schema.invoices)
+      .values({
+        orderId: order.id,
+        invoiceNumber,
+        customerId: customer.id,
+        customerName: customerName || customerEmail,
+        customerEmail,
+        invoiceDate: now,
+        dueDate: now, // Immediate payment
+        subtotal: amount.toString(),
+        taxAmount: '0.00',
+        discountAmount: '0.00',
+        totalAmount: amount.toString(),
+        currency: currency.toUpperCase(),
+        status: 'paid',
+        paidAt: now,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
 
-    // 5. Create invoice item
-    await storage.createInvoiceItem({
-      invoiceId: invoice.id,
-      productName: 'OCUS Job Hunter Extension',
-      description: 'Premium Chrome Extension for OCUS Job Hunting',
-      quantity: 1,
-      unitPrice: amount.toString(),
-      totalPrice: amount.toString(),
-    });
+    // 5. Create invoice item using database insert
+    await storage.db
+      .insert(schema.invoiceItems)
+      .values({
+        invoiceId: invoice.id,
+        productName: 'OCUS Job Hunter Extension',
+        description: 'Premium Chrome Extension for OCUS Job Hunting',
+        quantity: 1,
+        unitPrice: amount.toString(),
+        totalPrice: amount.toString(),
+        createdAt: now,
+      });
 
     // 6. Generate activation key
     const activationKey = await storage.createActivationKey({
