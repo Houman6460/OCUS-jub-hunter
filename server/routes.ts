@@ -988,7 +988,9 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
 
   // User-authenticated payment intent creation (for dashboard purchases)
   app.post("/api/create-user-payment-intent", async (req: Request, res: Response) => {
+    console.log('[/api/create-user-payment-intent] Received request');
     try {
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
       // This would normally check authentication, but for now we'll use basic validation
       const userId = req.headers['user-id'] || req.body.userId;
       
@@ -1133,7 +1135,9 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
 
   // User-specific payment intent creation for dashboard purchases
   app.post("/api/user/create-payment-intent", async (req: Request, res: Response) => {
+    console.log('[/api/user/create-payment-intent] Received request');
     try {
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
       const { amount } = req.body;
 
       // Validate input
@@ -1586,7 +1590,9 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
 
   // Stripe payment route
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
+    console.log('[/api/create-payment-intent] Received request');
     try {
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
       const { amount, customerEmail, customerName, couponCode, originalAmount, discountAmount, referralCode } = req.body;
 
       // Validate input
