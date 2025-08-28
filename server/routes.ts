@@ -1754,13 +1754,13 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           customerId: order.userId || null,
           customerName: order.customerName,
           customerEmail: order.customerEmail,
-          invoiceDate: new Date(),
-          dueDate: new Date(),
+          invoiceDate: Math.floor(Date.now() / 1000),
+          dueDate: Math.floor(Date.now() / 1000),
           subtotal: order.finalAmount,
           totalAmount: order.finalAmount,
           currency: (order.currency || 'USD').toUpperCase(),
           status: 'paid',
-          paidAt: new Date(),
+          paidAt: Math.floor(Date.now() / 1000),
           notes: `Invoice for order #${order.id}`
         });
 
@@ -1999,7 +1999,7 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
       customerId,
       customerName,
       customerEmail,
-      invoiceDate: new Date(),
+      invoiceDate: Math.floor(Date.now() / 1000),
       dueDate: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000), // 30 days from now
       subtotal: subtotal.toFixed(2),
       totalAmount: totalAmount.toFixed(2),
@@ -2167,9 +2167,24 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
 
             if (order && user) {
               console.log('Order and user found. Generating invoice...');
-              // Create invoice data structure for PDF generation
+              const invoiceNumber = await storage.generateInvoiceNumber();
               const invoiceData = {
-                ...order,
+                id: 0, // Placeholder, not used in PDF
+                invoiceNumber: invoiceNumber,
+                orderId: order.id,
+                customerId: user.id,
+                customerName: user.name || user.email,
+                customerEmail: user.email,
+                invoiceDate: Math.floor(Date.now() / 1000),
+                dueDate: Math.floor(Date.now() / 1000),
+                subtotal: order.finalAmount,
+                totalAmount: order.finalAmount,
+                currency: order.currency || 'USD',
+                status: 'paid',
+                paidAt: Math.floor(Date.now() / 1000),
+                createdAt: Math.floor(Date.now() / 1000),
+                updatedAt: Math.floor(Date.now() / 1000),
+                notes: `Invoice for order #${order.id}`,
                 items: [{
                   productName: 'OCUS Job Hunter Extension',
                   description: 'Chrome extension for job hunting automation',
@@ -2179,10 +2194,21 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
                 }]
               };
               const invoiceSettings = await storage.getInvoiceSettings();
-              const invoicePath = await generateInvoicePDF(invoiceData, invoiceSettings);
+              const pdfBuffer = await generateInvoicePDF(invoiceData, invoiceSettings);
+
+              // Save the PDF to a file
+              const invoicesDir = path.join(__dirname, '..', 'public', 'invoices');
+              await fsp.mkdir(invoicesDir, { recursive: true });
+              const invoiceFilename = `invoice-${invoiceData.invoiceNumber}.pdf`;
+              const invoiceFilePath = path.join(invoicesDir, invoiceFilename);
+              await fsp.writeFile(invoiceFilePath, pdfBuffer);
+
+              // Store the public URL path in the database
+              const publicInvoiceUrl = `/invoices/${invoiceFilename}`;
+
               // Update order with invoice URL using direct database query
-              await db.update(orders).set({ invoiceUrl: invoicePath }).where(eq(orders.id, orderId));
-              console.log(`Invoice generated and saved for order ${orderId} at ${invoicePath}`);
+              await db.update(orders).set({ invoiceUrl: publicInvoiceUrl }).where(eq(orders.id, orderId));
+              console.log(`Invoice generated and saved for order ${orderId} at ${publicInvoiceUrl}`);
             } else {
               console.error(`Could not find order ${orderId} or user ${userId} to generate invoice.`);
             }
