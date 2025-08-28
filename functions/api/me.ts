@@ -114,6 +114,36 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               isAuthenticated: true
             });
           }
+
+          // Fallback to settings table (for purchases made when users table was missing)
+          const userSettingsKey = `user_${userEmail.replace('@', '_at_').replace('.', '_dot_')}`;
+          const userSetting = await session.prepare(`
+            SELECT value FROM settings WHERE key = ?
+          `).bind(userSettingsKey).first();
+
+          console.log('User setting lookup result:', userSetting);
+
+          if (userSetting && typeof userSetting.value === 'string') {
+            try {
+              const userData = JSON.parse(userSetting.value);
+              if (userData.isPremium) {
+                return json({
+                  id: userData.id || userEmail, // Fallback id
+                  email: userData.email,
+                  name: userData.name,
+                  role: 'customer',
+                  createdAt: userData.updatedAt, // Use updatedAt as a proxy for creation
+                  isPremium: true,
+                  extensionActivated: true, // Assume activated if premium
+                  totalSpent: 0, // Not tracked in this fallback
+                  totalOrders: 0, // Not tracked in this fallback
+                  isAuthenticated: true
+                });
+              }
+            } catch (parseError) {
+              console.error('Failed to parse user data from settings:', parseError);
+            }
+          }
         } catch (dbError) {
           console.error('Database error in /api/me:', dbError);
         }
