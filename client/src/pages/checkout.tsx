@@ -115,21 +115,52 @@ export default function Checkout() {
         });
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         try {
+          console.log('Calling complete-stripe-payment API with:', {
+            paymentIntentId: paymentIntent.id,
+            customerEmail: customerData.customerEmail,
+            customerName: customerData.customerName
+          });
+
           const response = await apiRequest('POST', '/api/complete-stripe-payment', {
             paymentIntentId: paymentIntent.id,
             customerEmail: customerData.customerEmail,
             customerName: customerData.customerName
           });
   
+          console.log('Purchase completion response status:', response.status);
+          
           if (response.ok) {
             const result: OrderCompletionResponse = await response.json();
+            console.log('Purchase completion result:', result);
+            
             if (result.success) {
               // Premium access activated - no activation key needed
               localStorage.setItem('premiumActivated', 'true');
+              console.log('Premium activation successful');
+            } else {
+              console.error('Purchase completion failed:', result.message);
+              toast({
+                title: "Purchase Error",
+                description: result.message || "Failed to activate premium access",
+                variant: "destructive",
+              });
             }
+          } else {
+            const errorText = await response.text();
+            console.error('Purchase completion API error:', response.status, errorText);
+            toast({
+              title: "Purchase Error", 
+              description: `Failed to complete purchase: ${response.status}`,
+              variant: "destructive",
+            });
           }
         } catch (err) {
           console.error('Failed to complete order:', err);
+          toast({
+            title: "Purchase Error",
+            description: "Network error during purchase completion",
+            variant: "destructive",
+          });
         }
         
         toast({
