@@ -148,7 +148,7 @@ async function createStripeCheckoutSession(stripe: Stripe, plan: string, custome
       setup_future_usage: 'on_session',
     },
     subscription_data: isSubscription ? {
-      trial_from_plan: true,
+      trial_period_days: 7,
     } : undefined,
   });
 
@@ -179,8 +179,8 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         const schemaPath = './functions/schema.sql'; // Path is relative to project root
                 const script = await fsp.readFile(schemaPath, 'utf8');
         
-        // better-sqlite3's exec method can run multi-statement SQL scripts.
-        db.exec(script);
+        // Execute the SQL script using raw queries
+        await db.run(script);
         
         console.log('Database has been successfully reset and initialized.');
         res.status(200).send('Database reset successfully.');
@@ -1165,7 +1165,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
       const validatedData = schema.parse({ amount });
 
       // Reinitialize Stripe to get latest settings
-      await initializeStripe();
+      await initializeStripe(storage);
       
       // Check if Stripe is configured and account is ready for live payments
       if (!stripe) {
@@ -1454,7 +1454,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         discountType: validatedData.discountType,
         discountValue: validatedData.discountValue.toString(),
         usageLimit: validatedData.usageLimit || null,
-        expiresAt: validatedData.expiresAt ? new Date(validatedData.expiresAt) : null,
+        expiresAt: validatedData.expiresAt ? Math.floor(new Date(validatedData.expiresAt).getTime() / 1000) : null,
         isActive: true,
 
 
@@ -1571,7 +1571,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         return res.status(400).json({ message: "Coupon is not active" });
       }
 
-      if (coupon.expiresAt && new Date() > coupon.expiresAt) {
+      if (coupon.expiresAt && Date.now() / 1000 > coupon.expiresAt) {
         return res.status(400).json({ message: "Coupon has expired" });
       }
 
@@ -1751,6 +1751,16 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
         const invoiceNumber = await storage.generateInvoiceNumber();
         const invoice = await storage.createInvoice({
           invoiceNumber,
+          customerId: order.userId || null,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          invoiceDate: new Date(),
+          dueDate: new Date(),
+          subtotal: order.finalAmount,
+          totalAmount: order.finalAmount,
+          currency: (order.currency || 'USD').toUpperCase(),
+          status: 'paid',
+          paidAt: new Date(),
           notes: `Invoice for order #${order.id}`
         });
 
@@ -1990,7 +2000,7 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
       customerName,
       customerEmail,
       invoiceDate: new Date(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      dueDate: Math.floor((Date.now() + 30 * 24 * 60 * 60 * 1000) / 1000), // 30 days from now
       subtotal: subtotal.toFixed(2),
       totalAmount: totalAmount.toFixed(2),
       currency: 'USD',
@@ -2157,7 +2167,19 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
 
             if (order && user) {
               console.log('Order and user found. Generating invoice...');
-              const invoicePath = await generateInvoicePDF(order, user);
+              // Create invoice data structure for PDF generation
+              const invoiceData = {
+                ...order,
+                items: [{
+                  productName: 'OCUS Job Hunter Extension',
+                  description: 'Chrome extension for job hunting automation',
+                  quantity: 1,
+                  unitPrice: order.finalAmount,
+                  totalPrice: order.finalAmount
+                }]
+              };
+              const invoiceSettings = await storage.getInvoiceSettings();
+              const invoicePath = await generateInvoicePDF(invoiceData, invoiceSettings);
               // Update order with invoice URL using direct database query
               await db.update(orders).set({ invoiceUrl: invoicePath }).where(eq(orders.id, orderId));
               console.log(`Invoice generated and saved for order ${orderId} at ${invoicePath}`);
