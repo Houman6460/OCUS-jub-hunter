@@ -89,7 +89,7 @@ export const onRequestPost = async ({ request, env }: any) => {
       return new Response(JSON.stringify({
         success: true,
         user,
-        token: `jwt-token-${user.id}-${Date.now()}`
+        token: `jwt-token-${user.email}-${Date.now()}`
       }), {
         headers: { 
           'Content-Type': 'application/json',
