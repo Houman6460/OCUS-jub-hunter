@@ -1184,7 +1184,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           }
 
           // Update user to premium
-          await storage.updateUser(user.id, { isPremium: true, premiumActivatedAt: new Date().toISOString() });
+          await storage.updateUser(user.id, { accountType: 'Premium', premiumActivatedAt: new Date() });
 
           // Update order status
           await storage.updateOrderStatus(order.id, 'paid');
@@ -1230,7 +1230,7 @@ export default async function defineRoutes(app: Express, db: DbInstance): Promis
           const pdfUrl = `/invoices/invoice-${invoiceNumber}.pdf`;
           console.log(`Invoice PDF generated at ${pdfUrl}`);
 
-          await storage.updateInvoice(invoice.id, { pdfUrl });
+          await storage.updateInvoice(invoice.id, { pdfPath: pdfUrl });
           console.log(`Invoice ${invoice.id} updated with PDF URL.`);
         }
       } catch (error) {
