@@ -93,7 +93,8 @@ import {
 } from "@shared/schema";
 import { eq, desc, count, and, gte, lte, sql } from "drizzle-orm";
 import type { DbInstance } from './db';
-import crypto from "crypto";
+// Use Web Crypto API for Cloudflare compatibility
+// import crypto from "crypto";
 
 export interface IStorage {
   // Users
@@ -887,9 +888,8 @@ export class DatabaseStorage implements IStorage {
 
   // Lottery Scratch Activation System
   generateUniqueActivationKey(): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 9).toUpperCase();
-    return `OCUS-${timestamp}-${random}`;
+    // Use Web Crypto API compatible method
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 
   async revealActivationKey(customerId: string): Promise<Customer> {
@@ -1593,6 +1593,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
     return updatedOrder;
+  }
+
+  // Missing method implementations for Stripe webhook
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [newOrder] = await this.db
+      .insert(orders)
+      .values({ ...order, createdAt: new Date().getTime(), updatedAt: new Date().getTime() })
+      .returning();
+    return newOrder;
+  }
+
+  async updateCustomer(id: number | string, updates: Partial<InsertCustomer>): Promise<Customer> {
+    const customerId = typeof id === 'string' ? parseInt(id) : id;
+    const [updatedCustomer] = await this.db
+      .update(customers)
+      .set({ ...updates, updatedAt: new Date().getTime() })
+      .where(eq(customers.id, customerId))
+      .returning();
+    return updatedCustomer;
+  }
+
+  async createInvoice(invoice: InsertInvoice): Promise<Invoice> {
+    const [newInvoice] = await this.db
+      .insert(invoices)
+      .values({ ...invoice, createdAt: new Date().getTime(), updatedAt: new Date().getTime() })
+      .returning();
+    return newInvoice;
+  }
+
+  async createInvoiceItem(item: InsertInvoiceItem): Promise<InvoiceItem> {
+    const [newItem] = await this.db
+      .insert(invoiceItems)
+      .values({ ...item, createdAt: new Date().getTime() })
+      .returning();
+    return newItem;
   }
 
 }
