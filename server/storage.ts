@@ -111,6 +111,7 @@ export interface IStorage {
   getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | undefined>;
   getOrderByPaypalOrderId(paypalOrderId: string): Promise<Order | undefined>;
   updateOrderStatus(id: number, status: string, completedAt?: Date): Promise<Order>;
+  updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order>;
   incrementDownloadCount(id: number): Promise<Order>;
   getAllOrders(): Promise<Order[]>;
   getOrdersWithPagination(page: number, limit: number): Promise<{ orders: Order[], total: number }>;
@@ -1582,6 +1583,16 @@ export class DatabaseStorage implements IStorage {
         await this.createDashboardFeature(feature);
       }
     }
+  }
+
+  // Order Management - Missing method implementation
+  async updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order> {
+    const [updatedOrder] = await this.db
+      .update(orders)
+      .set({ ...updates, updatedAt: new Date().getTime() })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
   }
 
 }

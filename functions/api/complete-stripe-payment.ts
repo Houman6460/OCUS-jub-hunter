@@ -1,8 +1,11 @@
 // Cloudflare Pages Function: /api/complete-stripe-payment
-// Redirects to the correct purchase-complete endpoint
+// Handles Stripe payment completion using the storage layer
 
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { Env } from '../lib/context';
+import { DatabaseStorage } from '../../server/storage';
+import { drizzle } from 'drizzle-orm/d1';
+import * as schema from '../../shared/schema';
 
 interface StripePaymentRequest {
   paymentIntentId: string;
@@ -15,7 +18,7 @@ function json(data: any, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' ? 'https://jobhunter.one' : '*',
     },
   });
 }
@@ -31,128 +34,149 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     console.log('Stripe payment completion request:', { paymentIntentId, customerEmail, customerName });
 
-    // Call the purchase-complete endpoint with the correct data structure
-    const purchaseCompleteRequest = {
-      paymentIntentId,
-      customerEmail,
-      customerName,
-      amount: 29.99, // Default amount - should be passed from frontend
-      currency: 'USD',
-      productType: 'premium_extension'
-    };
-
-    // Call purchase-complete logic directly using the same logic
     if (!env.DB) {
       console.error('D1 database not available');
       return json({ success: false, message: 'Database not available' }, 500);
     }
 
-    const now = new Date().toISOString();
+    // Initialize database connection and storage
+    const db = drizzle(env.DB, { schema });
+    const storage = new DatabaseStorage(db);
+
+    const now = new Date().getTime();
+    const amount = 29.99; // Default amount - should be passed from frontend
+    const currency = 'USD';
 
     try {
-      // Use D1 Sessions API to ensure consistency after writes
-      const session = env.DB.withSession('first-primary');
-      
-      // Use a batch transaction to ensure all or nothing behavior
-      const existingCustomer = await session.prepare(`SELECT id FROM customers WHERE email = ?`).bind(customerEmail).first<{ id: number }>();
-      const customerId = existingCustomer?.id;
-
-      const statements = [];
-
-      // 1. Update users table
-      statements.push(session.prepare(`
-        UPDATE users 
-        SET is_premium = 1, extension_activated = 1, premium_activated_at = ?
-        WHERE email = ?
-      `).bind(now, customerEmail));
-
-      if (customerId) {
-        // 2. Update existing customer
-        statements.push(session.prepare(`
-          UPDATE customers SET is_premium = 1, extension_activated = 1 WHERE id = ?
-        `).bind(customerId));
+      // 1. Find or create customer
+      let customer = await storage.getCustomerByEmail(customerEmail);
+      if (!customer) {
+        console.log(`Creating new customer: ${customerEmail}`);
+        customer = await storage.createCustomer({
+          email: customerEmail,
+          name: customerName || customerEmail,
+          extensionActivated: true,
+          subscriptionStatus: 'active',
+          totalSpent: amount.toString(),
+          totalOrders: 1,
+          lastOrderDate: now,
+        });
       } else {
-        // 2. Or create new customer
-        statements.push(session.prepare(`
-          INSERT INTO customers (email, name, is_premium, extension_activated, created_at) 
-          VALUES (?, ?, 1, 1, ?)
-        `).bind(customerEmail, customerName || customerEmail, now));
+        console.log(`Updating existing customer: ${customerEmail}`);
+        await storage.updateCustomer(customer.id, {
+          extensionActivated: true,
+          subscriptionStatus: 'active',
+          totalSpent: (parseFloat(customer.totalSpent) + amount).toString(),
+          totalOrders: customer.totalOrders + 1,
+          lastOrderDate: now,
+          updatedAt: now,
+        });
       }
 
-      // The rest of the operations depend on the customerId, which we don't know before the batch runs.
-      // This is a limitation of D1 batch. We have to run the first part, get the ID, then run the second part.
-      // This is still better than no transaction at all.
-
-      console.log('Running initial batch for user and customer update...');
-      await session.batch(statements);
-      console.log('User and customer tables updated successfully.');
-
-      // Get the customer ID (either existing or newly created) - use same session for consistency
-      const finalCustomer = await session.prepare(`SELECT id FROM customers WHERE email = ?`).bind(customerEmail).first<{ id: number }>();
-      if (!finalCustomer) {
-        throw new Error('Failed to find or create customer record.');
+      // 2. Update user if exists (for authenticated users)
+      const user = await storage.getUserByEmail(customerEmail);
+      if (user) {
+        console.log(`Updating user premium status: ${customerEmail}`);
+        await storage.updateUser(user.id, {
+          isPremium: true,
+          extensionActivated: true,
+          premiumActivatedAt: now.toString(),
+          totalSpent: (parseFloat(user.totalSpent) + amount).toString(),
+          totalOrders: user.totalOrders + 1,
+        });
       }
-      const finalCustomerId = finalCustomer.id;
-      console.log('Final customer ID for orders/invoices:', finalCustomerId);
 
-      // Now, create the order and invoice in a second batch
+      // 3. Create order record
       const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const activationCode = `activation_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
       
-      // We need the orderId for the invoice, which is not available pre-batch.
-      // We will have to do these sequentially but can wrap them in a manual transaction if D1 supported it.
-      // For now, we accept the small risk between these inserts.
-
-      const orderResult = await session.prepare(`
-        INSERT INTO orders (customerId, customerEmail, customerName, productId, productName, originalAmount, finalAmount, currency, status, paymentMethod, paymentIntentId, downloadToken, createdAt, completedAt)
-        VALUES (?, ?, ?, 1, 'OCUS Job Hunter Extension', ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?)
-      `).bind(finalCustomerId, customerEmail, customerName || customerEmail, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, purchaseCompleteRequest.currency.toLowerCase(), paymentIntentId, downloadToken, now, now).run();
-
-      const orderId = orderResult.meta?.last_row_id;
-      if (!orderId) {
-        throw new Error('Failed to create order, cannot retrieve order ID.');
-      }
-
-      const invoiceNumber = `INV-${orderId}-${Date.now()}`;
-
-      const finalBatch = [];
-      // 3. Create invoice
-      finalBatch.push(session.prepare(`
-        INSERT INTO invoices (orderId, invoiceNumber, customerId, customerEmail, 
-                             amount, invoiceDate, dueDate, subtotal, taxAmount, discountAmount, 
-                             totalAmount, currency, status, paidAt, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0.00, ?, ?, 'paid', ?, ?, ?)
-      `).bind(orderId, invoiceNumber, finalCustomerId, customerEmail, 
-               purchaseCompleteRequest.amount, now, now, purchaseCompleteRequest.amount, purchaseCompleteRequest.amount, 
-               purchaseCompleteRequest.currency, now, now, now));
-      
-      console.log('Running final batch for invoice...');
-      await session.batch(finalBatch);
-      console.log('Invoice created successfully for order ID:', orderId);
-
-      console.log('Purchase completed successfully:', {
-        customerId: finalCustomerId,
-        orderId,
-        paymentIntentId
+      console.log('Creating order record...');
+      const order = await storage.createOrder({
+        userId: user?.id,
+        customerEmail,
+        customerName: customerName || customerEmail,
+        originalAmount: amount.toString(),
+        finalAmount: amount.toString(),
+        currency: currency.toLowerCase(),
+        status: 'completed',
+        paymentMethod: 'stripe',
+        paymentIntentId,
+        downloadToken,
+        activationCode,
+        completedAt: now,
       });
+
+      console.log(`Order created with ID: ${order.id}`);
+
+      // 4. Create invoice
+      const invoiceNumber = `INV-${order.id}-${Date.now()}`;
+      console.log(`Creating invoice: ${invoiceNumber}`);
+      
+      const invoice = await storage.createInvoice({
+        orderId: order.id,
+        invoiceNumber,
+        customerId: customer.id,
+        customerName: customerName || customerEmail,
+        customerEmail,
+        invoiceDate: now,
+        dueDate: now, // Immediate payment
+        subtotal: amount.toString(),
+        taxAmount: '0.00',
+        discountAmount: '0.00',
+        totalAmount: amount.toString(),
+        currency: currency.toUpperCase(),
+        status: 'paid',
+        paidAt: now,
+      });
+
+      // 5. Create invoice item
+      await storage.createInvoiceItem({
+        invoiceId: invoice.id,
+        productName: 'OCUS Job Hunter Extension',
+        description: 'Premium Chrome Extension for OCUS Job Hunting',
+        quantity: 1,
+        unitPrice: amount.toString(),
+        totalPrice: amount.toString(),
+      });
+
+      // 6. Generate activation key
+      const activationKey = await storage.createActivationKey({
+        activationKey: activationCode,
+        orderId: order.id,
+        userId: user?.id,
+      });
+
+      console.log(`✅ Payment completed successfully for ${customerEmail}:`);
+      console.log(`   - Customer ID: ${customer.id}`);
+      console.log(`   - Order ID: ${order.id}`);
+      console.log(`   - Invoice: ${invoiceNumber}`);
+      console.log(`   - Activation Code: ${activationCode}`);
+      console.log(`   - Amount: ${amount} ${currency}`);
     
       return json({
         success: true,
-        message: 'Payment completed successfully - Premium access activated'
+        message: 'Payment completed successfully - Premium access activated',
+        data: {
+          orderId: order.id,
+          invoiceNumber,
+          activationCode,
+          downloadToken
+        }
       });
 
     } catch (error: any) {
       console.error('Error in complete-stripe-payment:', error);
       return json({ 
         success: false, 
-        message: error.message 
+        message: `Payment completion failed: ${error.message}` 
       }, 500);
     }
   } catch (error: any) {
-    console.error('Error in complete-stripe-payment:', error);
+    console.error('Error parsing request in complete-stripe-payment:', error);
     return json({ 
       success: false, 
-      message: error.message 
-    }, 500);
+      message: 'Invalid request format' 
+    }, 400);
   }
 };
 
@@ -160,9 +184,10 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' ? 'https://jobhunter.one' : '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
     },
   });
 };

@@ -1,16 +1,20 @@
 import { PagesFunction } from '@cloudflare/workers-types';
-
-interface Env {
-  DB: D1Database;
-}
+import { Env } from '../../lib/context';
+import { DatabaseStorage } from '../../../server/storage';
+import { drizzle } from 'drizzle-orm/d1';
+import * as schema from '../../../shared/schema';
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const url = new URL(request.url);
     const customerEmail = url.searchParams.get('email');
+    const userId = url.searchParams.get('userId'); // Support both email and userId
 
-    if (!customerEmail) {
-      return new Response(JSON.stringify({ error: 'Email parameter is required' }), {
+    if (!customerEmail && !userId) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Email or userId parameter is required' 
+      }), {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
@@ -19,54 +23,91 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       });
     }
 
-    let orders = [];
-
-    try {
-      // Try to fetch from orders table first
-      const orderResults = await env.DB.prepare(`
-        SELECT * FROM orders 
-        WHERE customerEmail = ? 
-        ORDER BY createdAt DESC
-      `).bind(customerEmail).all();
-      orders = orderResults.results || [];
-    } catch (dbError) {
-      console.log('Orders table not found, checking fallback storage:', dbError);
-      
-      // Fallback: Get orders from settings table
-      const settingsResults = await env.DB.prepare(`
-        SELECT key, value FROM settings 
-        WHERE key LIKE 'order_%'
-      `).all();
-      
-      const allOrders = [];
-      for (const setting of (settingsResults.results || [])) {
-        try {
-          const orderData = JSON.parse(setting.value as string);
-          if (orderData.customerEmail === customerEmail) {
-            allOrders.push(orderData);
-          }
-        } catch (parseError) {
-          console.log('Error parsing order data:', parseError);
+    if (!env.DB) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Database not available' 
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
         }
-      }
-      
-      // Sort by completedAt or createdAt
-      orders = allOrders.sort((a, b) => {
-        const dateA = new Date(a.completedAt || a.createdAt);
-        const dateB = new Date(b.completedAt || b.createdAt);
-        return dateB.getTime() - dateA.getTime();
       });
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      orders: orders
-    }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+    // Initialize database connection and storage
+    const db = drizzle(env.DB, { schema });
+    const storage = new DatabaseStorage(db);
+
+    let orders = [];
+    let customer = null;
+
+    try {
+      if (customerEmail) {
+        // Get customer by email
+        customer = await storage.getCustomerByEmail(customerEmail);
+        if (customer) {
+          // Get orders for this customer
+          orders = await storage.getCustomerOrders(customer.id.toString());
+        }
+        
+        // Also check if there's a user account with this email
+        const user = await storage.getUserByEmail(customerEmail);
+        if (user) {
+          const userOrders = await storage.getUserOrders(user.id);
+          // Merge and deduplicate orders
+          const allOrders = [...orders, ...userOrders];
+          const uniqueOrders = allOrders.filter((order, index, self) => 
+            index === self.findIndex(o => o.id === order.id)
+          );
+          orders = uniqueOrders;
+        }
+      } else if (userId) {
+        // Get orders by user ID
+        orders = await storage.getUserOrders(parseInt(userId));
       }
-    });
+
+      // Sort orders by creation date (most recent first)
+      orders.sort((a, b) => {
+        const dateA = a.completedAt || a.createdAt || 0;
+        const dateB = b.completedAt || b.createdAt || 0;
+        return dateB - dateA;
+      });
+
+      console.log(`Found ${orders.length} orders for ${customerEmail || userId}`);
+
+      return new Response(JSON.stringify({
+        success: true,
+        orders: orders,
+        customer: customer ? {
+          id: customer.id,
+          email: customer.email,
+          name: customer.name,
+          subscriptionStatus: customer.subscriptionStatus,
+          extensionActivated: customer.extensionActivated
+        } : null
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+
+    } catch (dbError) {
+      console.error('Database error in user-orders:', dbError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Database query failed',
+        details: String(dbError)
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
 
   } catch (error) {
     console.error('Error fetching user orders:', error);
@@ -91,6 +132,7 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
     },
   });
 };
