@@ -1,24 +1,23 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import passport from 'passport';
 import Stripe from "stripe";
 import multer from "multer";
-import { storage } from "./storage";
+import { DatabaseStorage } from "./storage";
 import OpenAI from "openai";
 import { emailService } from "./emailService";
 import { fileService } from "./fileService";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
-import { z } from "zod";
 import validator from "validator";
-import { db } from "./db";
 import { orders, customers, extensionUsageStats, users, tickets, ticketMessages, missions, userTrials } from "@shared/schema";
 import { eq, sql, desc, count } from "drizzle-orm";
 import archiver from "archiver";
 import path from "path";
-import { passport, reinitializeStrategies } from "./socialAuth";
+import { configurePassport, reinitializeStrategies } from './socialAuth';
 import session from "express-session";
 import { captchaService } from "./captcha";
 import { TranslationService } from "./translationService";
-import { affiliateService } from "./affiliateService";
+import { AffiliateService } from "./affiliateService";
 import bcrypt from "bcrypt";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -47,7 +46,7 @@ declare global {
 let stripe: Stripe | null = null;
 let currentStripeKey: string | null = null;
 
-async function initializeStripe() {
+async function initializeStripe(storage: DatabaseStorage) {
   try {
     // Try to get Stripe keys from database (admin settings - stored in authSettings)
     const authSettings = await storage.getAuthSettings?.();
@@ -93,8 +92,6 @@ async function initializeStripe() {
   }
 }
 
-// Initialize Stripe on startup
-initializeStripe();
 
 // OpenAI setup
 let openai: OpenAI | null = null;
@@ -156,8 +153,15 @@ async function createStripeCheckoutSession(stripe: Stripe, plan: string, custome
   return session;
 }
 
-export default async function defineRoutes(app: Express, storage: any, db: any): Promise<Server> {
+export default async function defineRoutes(app: Express, db: DbInstance): Promise<Server> {
+  const storage = new DatabaseStorage(db);
+  const affiliateService = new AffiliateService(db);
+  // Passport is configured in server/index.ts
+
   const server = createServer(app);
+
+  // Initialize Stripe now that we have a database connection
+  await initializeStripe(storage);
 
   // In development, add an endpoint to reset the database for easier testing.
   if (process.env.NODE_ENV === 'development') {
@@ -518,7 +522,7 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
   app.use(passport.session());
 
   // Initialize OAuth strategies after database connection is ready
-  await reinitializeStrategies();
+  await reinitializeStrategies(storage);
 
   // Add routes for checking strategy status
   app.get("/api/auth-strategies/status", async (req: Request, res: Response) => {
@@ -595,7 +599,7 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
       console.log('Auth settings updated, reinitializing strategies...');
 
       // Reinitialize OAuth strategies
-      await reinitializeStrategies();
+      await reinitializeStrategies(storage);
       console.log('OAuth strategies reinitialized successfully');
 
       res.json({ 
@@ -722,7 +726,7 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
 
       // Reinitialize OAuth strategies with new settings
       try {
-        await reinitializeStrategies();
+        await reinitializeStrategies(storage);
         console.log('OAuth strategies reinitialized after settings update');
       } catch (error) {
         console.error('Failed to reinitialize OAuth strategies:', error);
@@ -1384,9 +1388,7 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
     await createPaypalOrder(req, res);
   });
 
-  app.post("/api/paypal/order/:orderID/capture", async (req: Request, res: Response) => {
-    await capturePaypalOrder(req, res);
-  });
+  app.post("/api/paypal/order/:orderID/capture", capturePaypalOrder(db));
 
   // Settings routes
   app.get("/api/settings", async (req: Request, res: Response) => {
@@ -1690,7 +1692,7 @@ export default async function defineRoutes(app: Express, storage: any, db: any):
   });
 
   // Stripe webhook for payment confirmation
-  app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
+  app.post("/api/stripe/webhook", express.raw({ type: 'application/json' }), async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -2135,6 +2137,67 @@ app.post("/api/invoices", requireAuth, async (req: Request, res: Response) => {
       console.error('Error updating invoice settings:', error);
       res.status(500).json({ error: error.message });
     }
+  });
+
+  // Stripe webhook handler
+  app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req: Request, res: Response) => {
+    const sig = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!stripe) {
+      console.error('Stripe is not initialized, cannot process webhook.');
+      return res.status(503).send('Stripe is not initialized');
+    }
+
+    if (!webhookSecret) {
+      console.error('Stripe webhook secret is not set.');
+      return res.status(500).send('Webhook secret not configured.');
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error(`Error verifying Stripe webhook signature: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Log the received event for debugging
+    console.log('Stripe webhook event received and verified:', {
+      id: event.id,
+      type: event.type,
+      api_version: event.api_version,
+      created: new Date(event.created * 1000).toISOString()
+    });
+
+    // Handle the event
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        const paymentIntentSucceeded = event.data.object as Stripe.PaymentIntent;
+        console.log('PaymentIntent was successful!', paymentIntentSucceeded);
+        // TODO: Fulfill the purchase, e.g., update user's subscription status in the database.
+        break;
+      case 'payment_intent.created':
+        const paymentIntentCreated = event.data.object as Stripe.PaymentIntent;
+        console.log('PaymentIntent was created!', paymentIntentCreated);
+        break;
+      case 'payment_intent.payment_failed':
+        const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
+        console.log('PaymentIntent failed.', paymentIntentFailed);
+        // TODO: Notify the user about the payment failure.
+        break;
+      case 'checkout.session.completed':
+        const session = event.data.object as Stripe.Checkout.Session;
+        console.log('Checkout Session was completed!', session);
+        // TODO: Fulfill the purchase based on the session details.
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    res.json({received: true});
   });
 
   return server;
