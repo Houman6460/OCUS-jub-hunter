@@ -61,37 +61,43 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         }
 
         try {
+          // Use D1 Sessions API for consistent reads after writes
+          const session = env.DB.withSession('first-primary');
+          
           // Get customer info first
-          const customer = await env.DB.prepare(`
-            SELECT id, email, name
-            FROM customers WHERE id = ?
-          `).bind(parseInt(userId)).first();
+          const customer = await session.prepare(`
+            SELECT id FROM customers WHERE email = ?
+          `).bind(userId).first<{ id: number }>();
 
           if (!customer) {
-            return json({ error: 'Customer not found' }, 404);
+            return json({ success: true, orders: [] });
           }
 
-          // Get orders for this customer using email match
-          const orders = await env.DB.prepare(`
+          // Get orders for this customer
+          const orders = await session.prepare(`
             SELECT 
               id,
               customerEmail,
               customerName,
+              productId,
+              productName,
               originalAmount,
               finalAmount,
               currency,
               status,
               paymentMethod,
+              paymentIntentId,
               downloadToken,
               downloadCount,
               maxDownloads,
               activationCode,
+              invoiceNumber,
               createdAt,
               completedAt
-            FROM orders
+            FROM orders 
             WHERE customerEmail = ?
             ORDER BY createdAt DESC
-          `).bind(customer.email).all();
+          `).bind(userId).all();
 
           return json(orders.results || []);
 

@@ -61,39 +61,45 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         }
 
         try {
+          // Use D1 Sessions API for consistent reads after writes
+          const session = env.DB.withSession('first-primary');
+          
           // Get customer info first
-          const customer = await env.DB.prepare(`
-            SELECT id, email, name
-            FROM customers WHERE id = ?
-          `).bind(parseInt(userId)).first();
+          const customer = await session.prepare(`
+            SELECT id FROM customers WHERE email = ?
+          `).bind(userId).first<{ id: number }>();
 
           if (!customer) {
-            return json({ error: 'Customer not found' }, 404);
+            return json({ success: true, invoices: [] });
           }
 
-          // Get invoices for this customer using email match
-          const invoices = await env.DB.prepare(`
+          // Get invoices for this customer with order details
+          const invoices = await session.prepare(`
             SELECT 
               i.id,
-              i.invoiceNumber as invoice_number,
-              i.orderId as order_id,
-              o.finalAmount as amount,
+              i.orderId,
+              i.invoiceNumber,
+              i.customerId,
+              i.customerEmail,
+              i.invoiceDate,
+              i.dueDate,
+              i.subtotal,
+              i.taxAmount,
+              i.discountAmount,
+              i.totalAmount,
               i.currency,
-              i.taxAmount as tax_amount,
               i.status,
-              i.invoiceDate as invoice_date,
-              i.dueDate as due_date,
-              i.paidAt as paid_at,
-              i.createdAt as created_at,
-              o.customerName as customer_name,
-              o.customerEmail as customer_email,
-              o.paymentMethod as payment_method,
-              'premium-extension' as product_id
+              i.paidAt,
+              i.createdAt,
+              i.updatedAt,
+              o.productName,
+              o.paymentMethod,
+              o.downloadToken
             FROM invoices i
-            LEFT JOIN orders o ON i.orderId = o.id
-            WHERE o.customerEmail = ?
+            JOIN orders o ON i.orderId = o.id
+            WHERE i.customerEmail = ?
             ORDER BY i.createdAt DESC
-          `).bind(customer.email).all();
+          `).bind(userId).all();
 
           return json(invoices.results || []);
 
