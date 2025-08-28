@@ -1,18 +1,18 @@
 -- D1 Database Schema for OCUS Ticket System
 -- Run: wrangler d1 execute ocus-tickets --file=./functions/schema.sql
 
--- Drop existing tables if they exist (for development)
+-- Drop existing tables if they exist (for development) - in correct order to avoid FK constraints
+DROP TABLE IF EXISTS invoices;
+DROP TABLE IF EXISTS activation_codes;
 DROP TABLE IF EXISTS ticket_messages;
+DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS tickets;
 DROP TABLE IF EXISTS countdown_banners;
-DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS auth_settings;
 DROP TABLE IF EXISTS settings;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS customers;
-DROP TABLE IF EXISTS invoices;
-DROP TABLE IF EXISTS activation_codes;
 
 CREATE TABLE IF NOT EXISTS tickets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,16 +138,16 @@ CREATE TABLE IF NOT EXISTS orders (
   FOREIGN KEY (productId) REFERENCES products(id)
 );
 
--- Users Table
--- Customers Table (renamed from users for clarity)
-CREATE TABLE IF NOT EXISTS customers (
+-- Users Table (primary table for authentication and premium status)
+CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   hashedPassword TEXT,
   isActive BOOLEAN DEFAULT 1,
-  isPremium BOOLEAN DEFAULT 0, -- Deprecated, use extension_activated
+  is_premium BOOLEAN DEFAULT 0,
   extension_activated BOOLEAN DEFAULT 0,
+  premium_activated_at TEXT,
   registrationDate TEXT NOT NULL DEFAULT (datetime('now')),
   lastLoginAt TEXT,
   activationToken TEXT,
@@ -156,8 +156,16 @@ CREATE TABLE IF NOT EXISTS customers (
   updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Create a view for backward compatibility if 'users' is still used elsewhere
-CREATE VIEW IF NOT EXISTS users AS SELECT * FROM customers;
+-- Customers Table (for order/billing information)
+CREATE TABLE IF NOT EXISTS customers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  is_premium BOOLEAN DEFAULT 0,
+  extension_activated BOOLEAN DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 -- Dashboard Features Table
 CREATE TABLE IF NOT EXISTS dashboard_features (
@@ -181,14 +189,17 @@ CREATE TABLE IF NOT EXISTS activation_codes (
 CREATE TABLE IF NOT EXISTS invoices (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   orderId INTEGER NOT NULL,
-  customerId INTEGER NOT NULL,
   invoiceNumber TEXT NOT NULL UNIQUE,
-  amount REAL NOT NULL,
-  currency TEXT NOT NULL DEFAULT 'EUR',
-  taxAmount REAL DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'unpaid', -- unpaid, paid, void
+  customerId INTEGER NOT NULL,
+  customerEmail TEXT NOT NULL,
   invoiceDate TEXT NOT NULL DEFAULT (datetime('now')),
   dueDate TEXT,
+  subtotal REAL NOT NULL,
+  taxAmount REAL DEFAULT 0.00,
+  discountAmount REAL DEFAULT 0.00,
+  totalAmount REAL NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'unpaid', -- unpaid, paid, void
   paidAt TEXT,
   pdfUrl TEXT,
   createdAt TEXT NOT NULL DEFAULT (datetime('now')),
@@ -213,8 +224,9 @@ CREATE INDEX IF NOT EXISTS idx_products_active ON products(isActive);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customerEmail);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(createdAt);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_active ON users(isActive);
 CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
-CREATE INDEX IF NOT EXISTS idx_customers_active ON customers(isActive);
 CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices(customerId);
 CREATE INDEX IF NOT EXISTS idx_invoices_order_id ON invoices(orderId);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customerId);
