@@ -392,9 +392,20 @@ export const seoSettings = sqliteTable("seo_settings", {
 });
 
 
+export const usersRelations = relations(users, ({ many }) => ({
+  orders: many(orders),
+}));
 
-export const ordersRelations = relations(orders, ({ many }) => ({
+export const ordersRelations = relations(orders, ({ many, one }) => ({
   downloads: many(downloads),
+  invoice: one(invoices, {
+    fields: [orders.id],
+    references: [invoices.orderId],
+  }),
+  user: one(users, {
+    fields: [orders.userId],
+    references: [users.id],
+  }),
 }));
 
 export const downloadsRelations = relations(downloads, ({ one }) => ({
@@ -403,6 +414,7 @@ export const downloadsRelations = relations(downloads, ({ one }) => ({
     references: [orders.id],
   }),
 }));
+
 
 
 
