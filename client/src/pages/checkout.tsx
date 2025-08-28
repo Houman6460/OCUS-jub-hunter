@@ -1,6 +1,6 @@
 import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Shield,
+  CheckCircle,
   Check,
   CreditCard,
   Mail,
@@ -313,8 +314,8 @@ export default function Checkout() {
     } catch (error) {
       setCouponValidation(null);
       toast({
-        title: t.common.error,
-        description: t.checkout?.couponValidationError,
+        title: "Error",
+        description: t.checkout?.couponValidationError || "Coupon validation failed",
         variant: "destructive",
       });
     } finally {
@@ -342,8 +343,8 @@ export default function Checkout() {
         .catch(() => {
           setIsLoading(false);
           toast({
-            title: t.common.error,
-            description: t.checkout?.paymentInitializationError,
+            title: "Error",
+            description: t.checkout?.paymentInitializationError || "Payment initialization failed",
             variant: "destructive",
           });
         });
