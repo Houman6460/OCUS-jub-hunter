@@ -68,8 +68,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
     const body = await request.text();
 
-    // Verify webhook signature
-    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+    const cryptoProvider = Stripe.createSubtleCryptoProvider();
+
+    // Verify webhook signature using Web Crypto provider (Workers-compatible)
+    event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret, undefined, cryptoProvider);
     console.log('Stripe webhook signature verified for event:', event.type);
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err?.message || err);
