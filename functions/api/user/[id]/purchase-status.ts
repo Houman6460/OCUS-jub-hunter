@@ -53,33 +53,39 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
     }
 
     try {
-      // First check users table (for registered customers)
-      const user = await env.DB.prepare(`
-        SELECT id, extension_activated, is_premium
-        FROM users WHERE id = ?
-      `).bind(parseInt(userId)).first();
-
-      let customer = null;
-      let hasPremiumStatus = false;
-      let hasExtensionActivated = false;
-
-      if (user) {
-        hasPremiumStatus = user.is_premium === 1;
-        hasExtensionActivated = user.extension_activated === 1;
-        console.log('User found:', userId, 'Premium:', hasPremiumStatus, 'Extension:', hasExtensionActivated);
-      } else {
-        // Fallback to customers table
-        customer = await env.DB.prepare(`
-          SELECT id, extension_activated, is_premium
-          FROM customers WHERE id = ?
-        `).bind(parseInt(userId)).first();
-
-        if (customer) {
-          hasPremiumStatus = customer.is_premium === 1;
-          hasExtensionActivated = customer.extension_activated === 1;
-          console.log('Customer found:', userId, 'Premium:', hasPremiumStatus, 'Extension:', hasExtensionActivated);
-        }
+      // Parse email from token
+      if (!token.startsWith('jwt-token-')) {
+        return json({
+          hasPurchased: false,
+          totalSpent: '0.00',
+          completedOrders: 0,
+          lastPurchaseDate: null
+        }, 401);
       }
+
+      const parts = token.split('-');
+      if (parts.length < 3) {
+        return json({
+          hasPurchased: false,
+          totalSpent: '0.00',
+          completedOrders: 0,
+          lastPurchaseDate: null
+        }, 401);
+      }
+
+      const email = parts[2];
+
+      // First check users table (registered users)
+      const user = await env.DB.prepare(`
+        SELECT id, email, extension_activated, is_premium
+        FROM users WHERE email = ?
+      `).bind(email).first<{ id: number; email: string; extension_activated: number; is_premium: number }>();
+
+      // If not found in users, check customers table
+      const customer = user ? null : await env.DB.prepare(`
+        SELECT id, email, extension_activated
+        FROM customers WHERE email = ?
+      `).bind(email).first<{ id: number; email: string; extension_activated: number }>();
 
       if (!user && !customer) {
         return json({
@@ -90,20 +96,23 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
         });
       }
 
-      // Check completed orders with correct column names
+      const hasPremiumStatus = (user?.is_premium === 1) || Boolean(customer?.extension_activated);
+      const hasExtensionActivated = (user?.extension_activated === 1) || Boolean(customer?.extension_activated);
+
+      // Check completed orders using customer_email
       const orderStats = await env.DB.prepare(`
         SELECT COUNT(*) as completedOrders, 
                SUM(final_amount) as totalPaid,
                MAX(completed_at) as lastPurchaseDate
         FROM orders 
-        WHERE customer_id = ? AND status = 'completed' AND final_amount > 0
-      `).bind(parseInt(userId)).first();
+        WHERE customer_email = ? AND status = 'completed' AND final_amount > 0
+      `).bind(email).first<{ completedOrders: number; totalPaid: string; lastPurchaseDate: string | number | null }>();
 
       const completedOrders = Number(orderStats?.completedOrders || 0);
       const totalPaid = String(orderStats?.totalPaid || '0.00');
       const lastPurchaseDate = orderStats?.lastPurchaseDate;
 
-      const hasPurchased = hasPremiumStatus && hasExtensionActivated;
+      const hasPurchased = (completedOrders > 0 && parseFloat(totalPaid || '0') > 0) || (hasPremiumStatus || hasExtensionActivated);
 
       return json({
         hasPurchased,

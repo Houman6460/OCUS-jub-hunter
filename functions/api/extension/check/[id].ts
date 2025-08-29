@@ -18,7 +18,7 @@ function json(data: any, status = 200) {
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, params, env }) => {
   try {
-        const paramId = params.id as string;
+    const paramId = params.id as string;
     const authHeader = request.headers.get('Authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -39,20 +39,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, params, env })
 
     // For real users, verify token and check database
     if (token.startsWith('jwt-token-')) {
-      const userIdFromToken = parseInt(token.split('-')[2], 10);
-      const userIdFromParam = parseInt(paramId, 10);
-
-      if (isNaN(userIdFromToken) || isNaN(userIdFromParam) || userIdFromToken !== userIdFromParam) {
-        return json({ canUse: false, reason: 'Token mismatch' }, 403);
+      const parts = token.split('-');
+      if (parts.length < 3) {
+        return json({ canUse: false, reason: 'Invalid token' }, 401);
       }
+
+      const userEmail = parts[2];
 
       if (!env.DB) {
         return json({ canUse: false, reason: 'Database not available' }, 500);
       }
 
       const customer = await env.DB.prepare(
-        'SELECT extension_activated FROM customers WHERE id = ?'
-      ).bind(userIdFromParam).first<{ extension_activated: number }>();
+        'SELECT extension_activated FROM customers WHERE email = ?'
+      ).bind(userEmail).first<{ extension_activated: number }>();
 
       if (customer && customer.extension_activated) {
         return json({

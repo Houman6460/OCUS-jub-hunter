@@ -36,10 +36,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     // For real users, verify premium access from the database
     if (token.startsWith('jwt-token-')) {
-      const userId = parseInt(token.split('-')[2], 10);
-      if (isNaN(userId)) {
+      const parts = token.split('-');
+      if (parts.length < 3) {
         return new Response('Invalid token format', { status: 401 });
       }
+
+      const userEmail = parts[2]; // Token format: jwt-token-{email}-{timestamp}
 
       if (!env.DB) {
         return new Response('Database not available', { status: 500 });
@@ -47,24 +49,24 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
       // Check both customer status AND actual completed orders
       const customer = await env.DB.prepare(
-        'SELECT extension_activated, total_spent FROM customers WHERE id = ?'
-      ).bind(userId).first<{ extension_activated: number; total_spent: string }>();
+        'SELECT id, extension_activated, total_spent FROM customers WHERE email = ?'
+      ).bind(userEmail).first<{ id: number; extension_activated: number; total_spent: string }>();
 
       if (!customer) {
         return new Response('Customer not found', { status: 404 });
       }
 
-      // Verify customer has completed orders with payment
+      // Verify customer has completed orders with payment (orders keyed by customer_email)
       const orderCheck = await env.DB.prepare(`
         SELECT COUNT(*) as orderCount, SUM(final_amount) as totalPaid
         FROM orders 
-        WHERE user_id = ? AND status = 'completed' AND final_amount > 0
-      `).bind(userId).first<{ orderCount: number; totalPaid: string }>();
+        WHERE customer_email = ? AND status = 'completed' AND final_amount > 0
+      `).bind(userEmail).first<{ orderCount: number; totalPaid: string }>();
 
-      const hasValidPurchase = customer.extension_activated && 
-                              orderCheck && 
-                              orderCheck.orderCount > 0 && 
-                              parseFloat(orderCheck.totalPaid || '0') > 0;
+      const hasValidPurchase = Boolean(customer.extension_activated) && 
+                              orderCheck !== null && 
+                              Number(orderCheck.orderCount || 0) > 0 && 
+                              parseFloat(String(orderCheck.totalPaid || '0')) > 0;
 
       if (hasValidPurchase) {
         // Log the download attempt for security tracking
@@ -78,7 +80,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               ip_address, user_agent, created_at
             ) VALUES (?, ?, 'premium', ?, ?, ?, ?)
           `).bind(
-            userId,
+            customer.id,
             downloadToken,
             now,
             request.headers.get('CF-Connecting-IP') || 'unknown',
@@ -113,3 +115,4 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     return new Response('Download failed', { status: 500 });
   }
 };
+
