@@ -40,7 +40,8 @@ async function generateInvoicePDF(invoiceData: any): Promise<string> {
   return `/api/invoices/${invoiceData.invoiceNumber}.pdf`;
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async (ctx) => {
+  const { request, env, waitUntil } = ctx as any;
   const signature = request.headers.get('stripe-signature') || request.headers.get('Stripe-Signature');
   if (!signature) {
     console.error('Webhook Error: Missing Stripe-Signature header');
@@ -86,7 +87,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, storage);
+        console.log('Scheduling checkout.session.completed processing via waitUntil');
+        waitUntil((async () => {
+          try {
+            await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, storage);
+          } catch (e) {
+            console.error('Deferred processing error (checkout.session.completed):', e);
+          }
+        })());
         break;
       case 'payment_intent.succeeded':
         console.log('Payment intent succeeded:', (event.data.object as any).id);
@@ -103,7 +111,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    return json({ received: true, processed: true });
+    // Acknowledge immediately; processing continues asynchronously
+    return json({ received: true, scheduled: true });
   } catch (err: any) {
     console.error('Error processing Stripe webhook:', err);
     return new Response(`Webhook processing error: ${err.message}`, { status: 500 });
