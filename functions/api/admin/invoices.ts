@@ -13,7 +13,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         i.invoice_number,
         i.order_id,
         i.customer_id,
-        i.amount,
+        i.total_amount as amount,
         i.currency,
         i.tax_amount,
         i.status,
@@ -21,12 +21,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         i.due_date,
         i.paid_at,
         i.created_at,
-        u.name as customer_name,
-        u.email as customer_email,
-        o.product_id,
+        i.customer_name,
+        i.customer_email,
         o.payment_method
       FROM invoices i
-      LEFT JOIN users u ON i.customer_id = u.id
       LEFT JOIN orders o ON i.order_id = o.id
       ORDER BY i.created_at DESC
     `;

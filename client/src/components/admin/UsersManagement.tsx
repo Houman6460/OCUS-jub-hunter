@@ -353,7 +353,7 @@ export function UsersManagement() {
                       <div>
                         <p className="text-xs text-gray-500">Registered</p>
                         <p className="text-sm font-medium">
-                          {format(new Date(user.created_at), 'MMM dd, yyyy')}
+                          {user.created_at ? format(new Date(Number(user.created_at) * 1000), 'MMM dd, yyyy') : 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -394,11 +394,11 @@ export function UsersManagement() {
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-500">
                         {user.last_download && (
-                          <span>Last activity: {format(new Date(user.last_download), 'MMM dd, yyyy HH:mm')}</span>
+                          <span>Last activity: {format(new Date(Number(user.last_download) * 1000), 'MMM dd, yyyy HH:mm')}</span>
                         )}
                         {getUserInvoices(user.id).length > 0 && (
                           <span className="ml-4">
-                            Latest invoice: {format(new Date(getUserInvoices(user.id)[0]?.invoice_date), 'MMM dd, yyyy')}
+                            Latest invoice: {getUserInvoices(user.id)[0]?.invoice_date ? format(new Date(Number(getUserInvoices(user.id)[0].invoice_date) * 1000), 'MMM dd, yyyy') : 'N/A'}
                           </span>
                         )}
                       </div>
