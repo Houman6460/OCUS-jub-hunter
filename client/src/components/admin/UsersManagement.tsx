@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,15 +47,73 @@ interface UserStats {
 export function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [error, setError] = useState<string | null>(null);
+
+  // Add error logging
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('UsersManagement Error:', event.error);
+      setError(event.error?.message || 'Unknown error occurred');
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   // Fetch users data
-  const { data, isLoading, refetch } = useQuery<{ users: User[], stats: UserStats }>({
+  const { data, isLoading, refetch, error: queryError } = useQuery<{ users: User[], stats: UserStats }>({
     queryKey: ['/api/admin/users'],
+    queryFn: async () => {
+      try {
+        // Use development server port in development mode
+        const baseUrl = import.meta.env.DEV ? 'http://localhost:5001' : '';
+        const response = await fetch(`${baseUrl}/api/admin/users`, {
+          credentials: 'include', // Include cookies for session auth
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+        }
+        const result = await response.json();
+        console.log('Users API response:', result);
+        return result;
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        throw err;
+      }
+    },
+    retry: 1,
+    staleTime: 30000,
   });
 
   // Fetch user invoices
-  const { data: userInvoices } = useQuery({
+  const { data: userInvoices, error: invoicesError } = useQuery({
     queryKey: ['/api/admin/invoices'],
+    queryFn: async () => {
+      try {
+        // Use development server port in development mode
+        const baseUrl = import.meta.env.DEV ? 'http://localhost:5001' : '';
+        const response = await fetch(`${baseUrl}/api/admin/invoices`, {
+          credentials: 'include', // Include cookies for session auth
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          console.warn('Invoices API failed, continuing without invoices');
+          return [];
+        }
+        const result = await response.json();
+        console.log('Invoices API response:', result);
+        return result;
+      } catch (err) {
+        console.warn('Error fetching invoices:', err);
+        return []; // Return empty array instead of throwing
+      }
+    },
+    retry: 1,
+    staleTime: 30000,
   });
 
   const users = data?.users || [];
@@ -138,10 +196,32 @@ export function UsersManagement() {
     }
   };
 
+  // Show error state
+  if (error || queryError) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Users</h3>
+          <p className="text-gray-600 mb-4">{error || queryError?.message || 'Unknown error'}</p>
+          <Button onClick={() => {
+            setError(null);
+            refetch();
+          }} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+          <p className="text-gray-600">Loading users...</p>
+        </div>
       </div>
     );
   }
