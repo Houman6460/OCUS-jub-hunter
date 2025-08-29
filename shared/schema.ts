@@ -13,7 +13,7 @@ export const users = sqliteTable("users", {
   isPremium: integer("is_premium", { mode: 'boolean' }).default(false),
   extensionActivated: integer("extension_activated", { mode: 'boolean' }).default(false),
   premiumActivatedAt: text("premium_activated_at"),
-  totalSpent: text("total_spent", { precision: 10, scale: 2 }).default("0"),
+  totalSpent: text("total_spent").default("0"),
   totalOrders: integer("total_orders").default(0),
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`),
 });
@@ -23,9 +23,9 @@ export const orders = sqliteTable("orders", {
   userId: integer("user_id").references(() => users.id), // Link to authenticated users
   customerEmail: text("customer_email").notNull(),
   customerName: text("customer_name").notNull(),
-  originalAmount: text("original_amount", { precision: 10, scale: 2 }).notNull(),
-  finalAmount: text("final_amount", { precision: 10, scale: 2 }).notNull(),
-  discountAmount: text("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  originalAmount: text("original_amount").notNull(),
+  finalAmount: text("final_amount").notNull(),
+  discountAmount: text("discount_amount").default("0"),
   couponCode: text("coupon_code"),
   referralCode: text("referral_code"), // Added for affiliate tracking
   currency: text("currency").default("usd"),
@@ -46,8 +46,8 @@ export const products = sqliteTable("products", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: text("price", { precision: 10, scale: 2 }).notNull(),
-  beforePrice: text("before_price", { precision: 10, scale: 2 }),
+  price: text("price").notNull(),
+  beforePrice: text("before_price"),
   currency: text("currency").default("eur"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
@@ -59,7 +59,7 @@ export const coupons = sqliteTable("coupons", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   code: text("code").notNull().unique(),
   discountType: text("discount_type").notNull(), // "percentage" or "fixed"
-  discountValue: text("discount_value", { precision: 10, scale: 2 }).notNull(),
+  discountValue: text("discount_value").notNull(),
   isActive: integer("is_active", { mode: 'boolean' }).default(true),
   usageLimit: integer("usage_limit"), // null for unlimited
   usageCount: integer("usage_count").default(0),
@@ -92,7 +92,7 @@ export const missions = sqliteTable("missions", {
   userId: text("user_id").notNull(), // Extension user ID
   customerId: integer("customer_id"), // References users table if logged in
   missionName: text("mission_name").notNull(),
-  compensationAmount: text("compensation_amount", { precision: 10, scale: 2 }),
+  compensationAmount: text("compensation_amount"),
   status: text("status").notNull().default("assignment_accepted"), // assignment_accepted, appointment_confirmation, media_upload, billing_payment, assignment_complete
   assignmentAcceptedAt: integer("assignment_accepted_at").default(sql`(CURRENT_TIMESTAMP)`),
   appointmentConfirmedAt: integer("appointment_confirmed_at"),
@@ -251,7 +251,7 @@ export const customers = sqliteTable("customers", {
   stripeCustomerId: text("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: text("stripe_subscription_id", { length: 255 }),
   paypalCustomerId: text("paypal_customer_id", { length: 255 }),
-  totalSpent: text("total_spent", { precision: 10, scale: 2 }).default("0").notNull(),
+  totalSpent: text("total_spent").default("0").notNull(),
   totalOrders: integer("total_orders").default(0).notNull(),
   lastOrderDate: integer("last_order_date"),
   
@@ -264,8 +264,8 @@ export const customers = sqliteTable("customers", {
   // Affiliate program
   referralCode: text("referral_code", { length: 20 }).unique(),
   referredBy: text("referred_by", { length: 255 }),
-  totalEarnings: text("total_earnings", { precision: 10, scale: 2 }).default("0"),
-  commissionRate: text("commission_rate", { precision: 5, scale: 2 }).default("10.00"), // 10% default
+  totalEarnings: text("total_earnings").default("0"),
+  commissionRate: text("commission_rate").default("10.00"), // 10% default
   
   // Profile
   phone: text("phone", { length: 50 }),
@@ -282,7 +282,7 @@ export const affiliateTransactions = sqliteTable("affiliate_transactions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   affiliateId: integer("affiliate_id").notNull().references(() => customers.id),
   orderId: integer("order_id").notNull().references(() => orders.id),
-  commission: text("commission", { precision: 10, scale: 2 }).notNull(),
+  commission: text("commission").notNull(),
   status: text("status", { length: 20 }).default("pending").notNull(), // pending, paid, cancelled
   paidAt: integer("paid_at"),
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
@@ -313,11 +313,11 @@ export const customerPayments = sqliteTable("customer_payments", {
   paymentMethod: text("payment_method", { length: 20 }).notNull(), // stripe, paypal
   paymentIntentId: text("payment_intent_id", { length: 255 }),
   paypalOrderId: text("paypal_order_id", { length: 255 }),
-  amount: text("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: text("amount").notNull(),
   currency: text("currency", { length: 3 }).default("usd").notNull(),
   status: text("status", { length: 20 }).default("pending").notNull(), // pending, completed, failed, refunded
   failureReason: text("failure_reason"),
-  refundAmount: text("refund_amount", { precision: 10, scale: 2 }).default("0"),
+  refundAmount: text("refund_amount").default("0"),
   refundReason: text("refund_reason"),
   processedAt: integer("processed_at"),
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
@@ -333,7 +333,7 @@ export const globalUsageStats = sqliteTable("global_usage_stats", {
   totalJobsFound: integer("total_jobs_found").default(0).notNull(),
   totalJobsApplied: integer("total_jobs_applied").default(0).notNull(),
   totalSuccessfulJobs: integer("total_successful_jobs").default(0).notNull(),
-  avgSessionDuration: text("avg_session_duration", { precision: 8, scale: 2 }).default("0").notNull(),
+  avgSessionDuration: text("avg_session_duration").default("0").notNull(),
   topPlatform: text("top_platform", { length: 50 }),
   topLocation: text("top_location", { length: 100 }),
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
@@ -484,8 +484,8 @@ export const countdownBanners = sqliteTable('countdown_banners', {
   subtitleEn: text('subtitle_en').notNull(),
   titleTranslations: text('title_translations').default('{}'),
   subtitleTranslations: text('subtitle_translations').default('{}'),
-  targetPrice: text('target_price', { precision: 10, scale: 2 }).notNull(),
-  originalPrice: text('original_price', { precision: 10, scale: 2 }),
+  targetPrice: text('target_price').notNull(),
+  originalPrice: text('original_price'),
   endDateTime: integer('end_date_time').notNull(),
   backgroundColor: text('background_color', { length: 20 }).default('gradient-primary'),
   textColor: text('text_color', { length: 20 }).default('white'),
@@ -767,9 +767,9 @@ export const affiliatePrograms = sqliteTable("affiliate_programs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 100 }).notNull(),
   rewardType: text("reward_type", { length: 20 }).default("percentage").notNull(), // percentage, fixed
-  commissionRate: text("commission_rate", { precision: 5, scale: 2 }), // for percentage
-  fixedAmount: text("fixed_amount", { precision: 10, scale: 2 }), // for fixed amount
-  minPayout: text("min_payout", { precision: 10, scale: 2 }).default("50.00"),
+  commissionRate: text("commission_rate"), // for percentage
+  fixedAmount: text("fixed_amount"), // for fixed amount
+  minPayout: text("min_payout").default("50.00"),
   cookieLifetime: integer("cookie_lifetime").default(30), // days
   autoApproval: integer("auto_approval", { mode: 'boolean' }).default(false),
   isActive: integer("is_active", { mode: 'boolean' }).default(true),
@@ -783,12 +783,12 @@ export const affiliatePrograms = sqliteTable("affiliate_programs", {
 export const affiliateSettings = sqliteTable("affiliate_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   defaultRewardType: text("default_reward_type", { length: 20 }).default("percentage").notNull(),
-  defaultCommissionRate: text("default_commission_rate", { precision: 5, scale: 2 }).default("10.00"),
-  defaultFixedAmount: text("default_fixed_amount", { precision: 10, scale: 2 }).default("5.00"),
-  minPayoutAmount: text("min_payout_amount", { precision: 10, scale: 2 }).default("50.00"),
+  defaultCommissionRate: text("default_commission_rate").default("10.00"),
+  defaultFixedAmount: text("default_fixed_amount").default("5.00"),
+  minPayoutAmount: text("min_payout_amount").default("50.00"),
   cookieLifetimeDays: integer("cookie_lifetime_days").default(30),
   autoApprovalEnabled: integer("auto_approval_enabled", { mode: 'boolean' }).default(false),
-  autoApprovalThreshold: text("auto_approval_threshold", { precision: 10, scale: 2 }).default("100.00"),
+  autoApprovalThreshold: text("auto_approval_threshold").default("100.00"),
   payoutFrequency: text("payout_frequency", { length: 20 }).default("monthly"), // weekly, monthly, quarterly
   isActive: integer("is_active", { mode: 'boolean' }).default(true),
   updatedAt: integer("updated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
@@ -797,7 +797,7 @@ export const affiliateSettings = sqliteTable("affiliate_settings", {
 export const affiliatePayouts = sqliteTable("affiliate_payouts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   affiliateId: integer("affiliate_id").notNull().references(() => customers.id),
-  amount: text("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: text("amount").notNull(),
   paymentMethod: text("payment_method", { length: 20 }).notNull(), // paypal, bank, manual
   paymentEmail: text("payment_email", { length: 255 }),
   bankDetails: text("bank_details"),
@@ -851,10 +851,10 @@ export const invoices = sqliteTable("invoices", {
   billingAddress: text("billing_address"),
   invoiceDate: integer("invoice_date").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   dueDate: integer("due_date").notNull(),
-  subtotal: text("subtotal", { precision: 10, scale: 2 }).notNull(),
-  taxAmount: text("tax_amount", { precision: 10, scale: 2 }).default("0.00"),
-  discountAmount: text("discount_amount", { precision: 10, scale: 2 }).default("0.00"),
-  totalAmount: text("total_amount", { precision: 10, scale: 2 }).notNull(),
+  subtotal: text("subtotal").notNull(),
+  taxAmount: text("tax_amount").default("0.00"),
+  discountAmount: text("discount_amount").default("0.00"),
+  totalAmount: text("total_amount").notNull(),
   currency: text("currency", { length: 3 }).default("USD").notNull(),
   status: text("status", { length: 20 }).default("issued").notNull(), // issued, paid, overdue, cancelled
   paidAt: integer("paid_at"),
@@ -870,8 +870,8 @@ export const invoiceItems = sqliteTable("invoice_items", {
   productName: text("product_name", { length: 255 }).notNull(),
   description: text("description"),
   quantity: integer("quantity").default(1).notNull(),
-  unitPrice: text("unit_price", { precision: 10, scale: 2 }).notNull(),
-  totalPrice: text("total_price", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: text("unit_price").notNull(),
+  totalPrice: text("total_price").notNull(),
   createdAt: integer("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull()
 });
 
