@@ -32,81 +32,74 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       return json([
         {
           id: 1,
-          invoice_number: 'INV-2024-001',
+          invoice_number: 'INV-2025-000001',
           order_id: 1,
-          amount: '29.99',
-          currency: 'eur',
-          tax_amount: '0.00',
-          status: 'paid',
-          invoice_date: new Date().toISOString(),
-          paid_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
           customer_name: 'Demo User',
           customer_email: 'demo@example.com',
-          payment_method: 'stripe',
-          product_id: 'premium-extension'
+          invoice_date: new Date().toISOString(),
+          due_date: new Date().toISOString(),
+          subtotal: '29.99',
+          tax_amount: '0.00',
+          discount_amount: '0.00',
+          total_amount: '29.99',
+          currency: 'USD',
+          status: 'paid',
+          paid_at: new Date().toISOString(),
+          notes: 'Premium extension purchase',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          payment_method: 'stripe'
         }
       ]);
     }
     
-    // Handle jwt-token-{userId}-{timestamp} format
+    // Handle jwt-token-{email}-{timestamp} format
     if (token.startsWith('jwt-token-')) {
       const parts = token.split('-');
-      if (parts.length >= 3) {
-        const userId = parts[2];
-        
-        // Check database for real user invoices
-        if (!env.DB) {
-          return json({ error: 'Database not available' }, 500);
-        }
+      if (parts.length < 3) {
+        return json({ error: 'Invalid token' }, 401);
+      }
+      const userEmail = parts[2];
 
-        try {
-          // Use D1 Sessions API for consistent reads after writes
-          const session = env.DB.withSession('first-primary');
-          
-          // Get customer info first
-          const customer = await session.prepare(`
-            SELECT id FROM customers WHERE email = ?
-          `).bind(userId).first<{ id: number }>();
+      // Check database for real user invoices
+      if (!env.DB) {
+        return json({ error: 'Database not available' }, 500);
+      }
 
-          if (!customer) {
-            return json({ success: true, invoices: [] });
-          }
+      try {
+        // Get invoices for this customer with order details
+        const query = `
+          SELECT 
+            i.id AS id,
+            i.invoice_number AS invoice_number,
+            i.order_id AS order_id,
+            i.customer_name AS customer_name,
+            i.customer_email AS customer_email,
+            i.invoice_date AS invoice_date,
+            i.due_date AS due_date,
+            i.subtotal AS subtotal,
+            i.tax_amount AS tax_amount,
+            i.discount_amount AS discount_amount,
+            i.total_amount AS total_amount,
+            i.currency AS currency,
+            i.status AS status,
+            i.paid_at AS paid_at,
+            i.notes AS notes,
+            i.created_at AS created_at,
+            i.updated_at AS updated_at,
+            o.payment_method AS payment_method
+          FROM invoices i
+          LEFT JOIN orders o ON i.order_id = o.id
+          WHERE i.customer_email = ?
+          ORDER BY i.created_at DESC
+        `;
 
-          // Get invoices for this customer with order details
-          const invoices = await session.prepare(`
-            SELECT 
-              i.id,
-              i.orderId,
-              i.invoiceNumber,
-              i.customerId,
-              i.customerEmail,
-              i.invoiceDate,
-              i.dueDate,
-              i.subtotal,
-              i.taxAmount,
-              i.discountAmount,
-              i.totalAmount,
-              i.currency,
-              i.status,
-              i.paidAt,
-              i.createdAt,
-              i.updatedAt,
-              o.productName,
-              o.paymentMethod,
-              o.downloadToken
-            FROM invoices i
-            JOIN orders o ON i.orderId = o.id
-            WHERE i.customerEmail = ?
-            ORDER BY i.createdAt DESC
-          `).bind(userId).all();
+        const invoices = await env.DB.prepare(query).bind(userEmail).all();
+        return json(invoices.results || []);
 
-          return json(invoices.results || []);
-
-        } catch (dbError) {
-          console.error('Database error in /api/me/invoices:', dbError);
-          return json({ error: 'Database error' }, 500);
-        }
+      } catch (dbError) {
+        console.error('Database error in /api/me/invoices:', dbError);
+        return json({ error: 'Database error' }, 500);
       }
     }
     
