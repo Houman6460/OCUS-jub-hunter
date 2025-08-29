@@ -1589,7 +1589,7 @@ export class DatabaseStorage implements IStorage {
   async updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order> {
     const [updatedOrder] = await this.db
       .update(orders)
-      .set({ ...updates, updatedAt: new Date().getTime() })
+      .set({ ...updates })
       .where(eq(orders.id, id))
       .returning();
     return updatedOrder;
@@ -1599,9 +1599,17 @@ export class DatabaseStorage implements IStorage {
   async createOrder(order: InsertOrder): Promise<Order> {
     const [newOrder] = await this.db
       .insert(orders)
-      .values({ ...order, createdAt: new Date().getTime(), updatedAt: new Date().getTime() })
+      .values({ ...order, createdAt: new Date().getTime() })
       .returning();
     return newOrder;
+  }
+
+  async getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | undefined> {
+    const [order] = await this.db
+      .select()
+      .from(orders)
+      .where(eq(orders.paymentIntentId, paymentIntentId));
+    return order || undefined;
   }
 
   async updateCustomer(id: number | string, updates: Partial<InsertCustomer>): Promise<Customer> {

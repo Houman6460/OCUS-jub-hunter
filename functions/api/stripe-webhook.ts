@@ -127,6 +127,15 @@ async function handleCheckoutSessionCompleted(
     throw new Error('Customer email is required for checkout completion');
   }
 
+  // Idempotency guard: if we've already created an order for this payment intent, exit early
+  if (paymentIntentId) {
+    const existing = await storage.getOrderByPaymentIntentId(paymentIntentId);
+    if (existing) {
+      console.log(`Idempotency: order already exists for paymentIntentId=${paymentIntentId}. Order ID: ${existing.id}`);
+      return;
+    }
+  }
+
   console.log(`Processing purchase for: ${customerEmail}, Amount: ${amount} ${currency.toUpperCase()}`);
 
   const now = new Date().getTime();
