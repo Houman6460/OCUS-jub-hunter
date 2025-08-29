@@ -88,7 +88,7 @@ export function UsersManagement() {
   });
 
   // Fetch user invoices
-  const { data: userInvoices, error: invoicesError } = useQuery({
+  const { data: userInvoices } = useQuery({
     queryKey: ['/api/admin/invoices'],
     queryFn: async () => {
       try {
