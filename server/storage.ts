@@ -91,7 +91,7 @@ import {
   type InvoiceSettings,
   type InsertInvoiceSettings
 } from "@shared/schema";
-import { eq, desc, count, and, gte, lte, sql } from "drizzle-orm";
+import { eq, desc, asc, count, and, gte, lte, sql } from "drizzle-orm";
 import type { DbInstance } from './db';
 // Use Web Crypto API for Cloudflare compatibility
 // import crypto from "crypto";

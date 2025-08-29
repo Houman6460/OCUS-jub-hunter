@@ -10,3 +10,6 @@ dev.db
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# local env (wrangler dev variables)
+.dev.vars
