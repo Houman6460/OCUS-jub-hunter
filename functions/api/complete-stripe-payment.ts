@@ -304,6 +304,94 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             console.warn('Users table update skipped in settings fallback:', ignoreUserUpdate);
           }
 
+          // Best-effort: Insert Order and Invoice so purchase history shows up even if customers table fails
+          try {
+            const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const activationCode = `activation_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
+
+            await session2
+              .prepare(`
+                INSERT INTO orders (
+                  customer_email, customer_name,
+                  original_amount, final_amount, currency,
+                  status, payment_method, payment_intent_id,
+                  download_token, activation_code,
+                  created_at, completed_at
+                ) VALUES (?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?, ?)
+              `)
+              .bind(
+                customerEmail,
+                customerName || customerEmail,
+                amount.toString(),
+                amount.toString(),
+                currency.toLowerCase(),
+                paymentIntentId,
+                downloadToken,
+                activationCode,
+                now,
+                now,
+              )
+              .run();
+
+            // Retrieve order id using payment_intent_id
+            const orderRow = await session2
+              .prepare(`SELECT id FROM orders WHERE payment_intent_id = ?`)
+              .bind(paymentIntentId)
+              .first<{ id: number }>();
+
+            const orderIdForInvoice = orderRow?.id ?? null;
+            const invoiceNumber = `INV-${orderIdForInvoice ?? 'NA'}-${now}`;
+
+            // Insert invoice (avoid customer_id reference)
+            await session2
+              .prepare(`
+                INSERT INTO invoices (
+                  invoice_number, order_id, customer_name, customer_email,
+                  invoice_date, due_date,
+                  subtotal, tax_amount, discount_amount, total_amount,
+                  currency, status, paid_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, '0.00', '0.00', ?, ?, 'paid', ?)
+              `)
+              .bind(
+                invoiceNumber,
+                orderIdForInvoice,
+                customerName || customerEmail,
+                customerEmail,
+                now,
+                now,
+                amount.toString(),
+                amount.toString(),
+                currency.toUpperCase(),
+                now,
+              )
+              .run();
+
+            // Retrieve invoice id and insert invoice item
+            const invoiceRow = await session2
+              .prepare(`SELECT id FROM invoices WHERE invoice_number = ?`)
+              .bind(invoiceNumber)
+              .first<{ id: number }>();
+
+            if (invoiceRow?.id) {
+              await session2
+                .prepare(`
+                  INSERT INTO invoice_items (
+                    invoice_id, product_name, description, quantity, unit_price, total_price
+                  ) VALUES (?, ?, ?, 1, ?, ?)
+                `)
+                .bind(
+                  invoiceRow.id,
+                  'OCUS Job Hunter Extension',
+                  'Premium Chrome Extension for OCUS Job Hunting',
+                  amount.toString(),
+                  amount.toString(),
+                )
+                .run();
+            }
+          } catch (orderInvoiceErr) {
+            console.warn('Order/invoice insert skipped in settings fallback:', orderInvoiceErr);
+          }
+
           return json({
             success: true,
             message: 'Payment completed (settings fallback) - Premium access activated',
