@@ -34504,7 +34504,20 @@ var init_dashboard_features = __esm({
     onRequestPut10 = /* @__PURE__ */ __name2(async ({ request, env }) => {
       try {
         const { featureName, isEnabled } = await request.json();
+        if (!featureName || typeof isEnabled === "undefined") {
+          return new Response(JSON.stringify({
+            success: false,
+            message: "featureName and isEnabled are required"
+          }), {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+            }
+          });
+        }
         const storage2 = new FeatureStorage(env.DB);
+        await storage2.initializeFeatures();
         await storage2.updateFeatureState(featureName, isEnabled);
         return new Response(JSON.stringify({
           success: true,
@@ -34520,6 +34533,7 @@ var init_dashboard_features = __esm({
           }
         });
       } catch (error) {
+        console.error("dashboard-features PUT failed:", error);
         return new Response(JSON.stringify({
           success: false,
           message: "Failed to update feature"

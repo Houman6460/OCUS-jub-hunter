@@ -121,8 +121,23 @@ export const onRequestGet = async ({ env }: { env: any }) => {
 export const onRequestPut = async ({ request, env }: { request: Request; env: any }) => {
   try {
     const { featureName, isEnabled } = await request.json();
-    
+
+    if (!featureName || typeof isEnabled === 'undefined') {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'featureName and isEnabled are required'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+    }
+
     const storage = new FeatureStorage(env.DB);
+    // Ensure table exists before updating to avoid 500s on fresh DBs
+    await storage.initializeFeatures();
     await storage.updateFeatureState(featureName, isEnabled);
     
     return new Response(JSON.stringify({
@@ -140,6 +155,7 @@ export const onRequestPut = async ({ request, env }: { request: Request; env: an
     });
     
   } catch (error) {
+    console.error('dashboard-features PUT failed:', error);
     return new Response(JSON.stringify({
       success: false,
       message: 'Failed to update feature'

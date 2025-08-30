@@ -33900,7 +33900,20 @@ var init_dashboard_features = __esm({
     onRequestPut10 = /* @__PURE__ */ __name(async ({ request, env }) => {
       try {
         const { featureName, isEnabled } = await request.json();
+        if (!featureName || typeof isEnabled === "undefined") {
+          return new Response(JSON.stringify({
+            success: false,
+            message: "featureName and isEnabled are required"
+          }), {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+            }
+          });
+        }
         const storage2 = new FeatureStorage(env.DB);
+        await storage2.initializeFeatures();
         await storage2.updateFeatureState(featureName, isEnabled);
         return new Response(JSON.stringify({
           success: true,
@@ -33916,6 +33929,7 @@ var init_dashboard_features = __esm({
           }
         });
       } catch (error) {
+        console.error("dashboard-features PUT failed:", error);
         return new Response(JSON.stringify({
           success: false,
           message: "Failed to update feature"
@@ -63506,10 +63520,10 @@ var init_functionsRoutes_0_8044054200943971 = __esm({
   }
 });
 
-// ../.wrangler/tmp/bundle-2XRAb4/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-JoyPJ3/middleware-loader.entry.ts
 init_functionsRoutes_0_8044054200943971();
 
-// ../.wrangler/tmp/bundle-2XRAb4/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-JoyPJ3/middleware-insertion-facade.js
 init_functionsRoutes_0_8044054200943971();
 
 // ../node_modules/wrangler/templates/pages-template-worker.ts
@@ -64005,7 +64019,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-2XRAb4/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-JoyPJ3/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -64038,7 +64052,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-2XRAb4/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-JoyPJ3/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
