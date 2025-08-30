@@ -76,14 +76,32 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           console.log('User lookup result:', user);
 
           if (user) {
+            // If a user exists, also check customers table for subscription flags
+            let cust: any = null;
+            try {
+              cust = await session.prepare(`
+                SELECT subscription_status, extension_activated
+                FROM customers WHERE email = ?
+              `).bind(userEmail).first();
+            } catch (e) {
+              console.error('Customer lookup for user failed:', e);
+            }
+
+            const customerIsPremium = cust
+              ? (String(cust.subscription_status || '').toLowerCase() === 'active') || Boolean(cust.extension_activated)
+              : false;
+
+            const computedIsPremium = Boolean(user.is_premium) || customerIsPremium;
+            const computedExtensionActivated = Boolean(user.extension_activated) || Boolean(cust?.extension_activated);
+
             return json({
               id: user.id,
               email: user.email,
               name: user.name,
               role: user.role || 'customer',
               createdAt: user.created_at,
-              isPremium: Boolean(user.is_premium),
-              extensionActivated: Boolean(user.extension_activated),
+              isPremium: computedIsPremium,
+              extensionActivated: computedExtensionActivated,
               premiumActivatedAt: user.premium_activated_at,
               totalSpent: parseFloat(String(user.total_spent || '0')),
               totalOrders: parseInt(String(user.total_orders || '0')),
