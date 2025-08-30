@@ -285,6 +285,25 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             .bind(settingsKey, JSON.stringify(valueObj))
             .run();
 
+          // Also try to update users table if it exists (best-effort)
+          try {
+            await session2
+              .prepare(`
+                UPDATE users
+                SET 
+                  is_premium = 1,
+                  extension_activated = 1,
+                  premium_activated_at = ?,
+                  total_spent = CAST(COALESCE(total_spent, '0') AS REAL) + ?,
+                  total_orders = COALESCE(total_orders, 0) + 1
+                WHERE email = ?
+              `)
+              .bind(now.toString(), amount, customerEmail)
+              .run();
+          } catch (ignoreUserUpdate) {
+            console.warn('Users table update skipped in settings fallback:', ignoreUserUpdate);
+          }
+
           return json({
             success: true,
             message: 'Payment completed (settings fallback) - Premium access activated',
