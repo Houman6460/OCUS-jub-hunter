@@ -165,11 +165,106 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       });
 
     } catch (error: any) {
-      console.error('Error in complete-stripe-payment:', error);
-      return json({ 
-        success: false, 
-        message: `Payment completion failed: ${error.message}` 
-      }, 500);
+      console.error('Error in complete-stripe-payment (primary path):', error);
+      // Fallback: Use raw D1 queries with backward-compatible columns
+      try {
+        if (!env.DB) {
+          return json({ success: false, message: 'Database not available' }, 500);
+        }
+
+        const session = env.DB.withSession('first-primary');
+        const amountNum = amount; // 29.99
+
+        // 1) Update existing customer by email; if none, insert minimal row
+        const updateRes = await session
+          .prepare(`
+            UPDATE customers
+            SET 
+              extension_activated = 1,
+              subscription_status = 'active',
+              total_spent = CAST(COALESCE(total_spent, '0') AS REAL) + ?,
+              total_orders = COALESCE(total_orders, 0) + 1,
+              last_order_date = ?
+            WHERE email = ?
+          `)
+          .bind(amountNum, now, customerEmail)
+          .run();
+
+        const changes = (updateRes as any)?.meta?.changes ?? 0;
+        if (!changes) {
+          await session
+            .prepare(`
+              INSERT INTO customers (
+                email, name, extension_activated, subscription_status, total_spent, total_orders, last_order_date, created_at
+              ) VALUES (?, ?, 1, 'active', ?, 1, ?, ?)
+            `)
+            .bind(
+              customerEmail,
+              customerName || customerEmail,
+              amountNum,
+              now,
+              now,
+            )
+            .run();
+        }
+
+        // 2) Update user if exists (ignore if no row)
+        await session
+          .prepare(`
+            UPDATE users
+            SET 
+              is_premium = 1,
+              extension_activated = 1,
+              premium_activated_at = ?,
+              total_spent = CAST(COALESCE(total_spent, '0') AS REAL) + ?,
+              total_orders = COALESCE(total_orders, 0) + 1
+            WHERE email = ?
+          `)
+          .bind(now.toString(), amountNum, customerEmail)
+          .run();
+
+        // 3) Insert order
+        const downloadToken = `download_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const activationCode = `activation_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
+        await session
+          .prepare(`
+            INSERT INTO orders (
+              customer_email, customer_name,
+              original_amount, final_amount, currency,
+              status, payment_method, payment_intent_id,
+              download_token, activation_code,
+              created_at, completed_at
+            ) VALUES (?, ?, ?, ?, ?, 'completed', 'stripe', ?, ?, ?, ?, ?)
+          `)
+          .bind(
+            customerEmail,
+            customerName || customerEmail,
+            amountNum.toString(),
+            amountNum.toString(),
+            currency.toLowerCase(),
+            paymentIntentId,
+            downloadToken,
+            activationCode,
+            now,
+            now,
+          )
+          .run();
+
+        return json({
+          success: true,
+          message: 'Payment completed successfully (fallback) - Premium access activated',
+          data: {
+            activationCode,
+            downloadToken,
+          }
+        });
+      } catch (fallbackError: any) {
+        console.error('Fallback path failed in complete-stripe-payment:', fallbackError);
+        return json({ 
+          success: false, 
+          message: `Payment completion failed: ${error.message}` 
+        }, 500);
+      }
     }
   } catch (error: any) {
     console.error('Error parsing request in complete-stripe-payment:', error);
