@@ -18,7 +18,7 @@ function json(data: any, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' ? 'https://jobhunter.one' : '*',
+      'Access-Control-Allow-Origin': '*',
     },
   });
 }
@@ -421,9 +421,9 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' ? 'https://jobhunter.one' : '*',
+      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
     },
   });
