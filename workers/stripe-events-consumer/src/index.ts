@@ -4,7 +4,7 @@
 
 export default {
   // Cloudflare Queues consumer handler (stub)
-  async queue(batch: any, env: Record<string, unknown>, ctx: ExecutionContext) {
+  async queue(batch: any, env: Record<string, unknown>, ctx: any) {
     try {
       const size = batch?.messages?.length ?? 0;
       console.log('[stripe-events-consumer] batch received:', size);
