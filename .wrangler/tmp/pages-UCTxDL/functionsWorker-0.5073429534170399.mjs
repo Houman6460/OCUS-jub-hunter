@@ -29828,6 +29828,7 @@ var init_db = __esm({
       }
       async addTicketMessage(message) {
         const now = (/* @__PURE__ */ new Date()).toISOString();
+        await this.ensureAttachmentsColumn();
         const result = await this.db.prepare(`
       INSERT INTO ticket_messages (ticket_id, message, is_from_customer, sender_name, sender_email, created_at, attachments)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -29843,6 +29844,18 @@ var init_db = __esm({
         ).first();
         await this.db.prepare("UPDATE tickets SET updated_at = ? WHERE id = ?").bind(now, message.ticket_id).run();
         return result;
+      }
+      // Best-effort runtime migration to avoid 500s if the DB was created before attachments was added
+      async ensureAttachmentsColumn() {
+        try {
+          const info = await this.db.prepare("PRAGMA table_info(ticket_messages)").all();
+          const columns = info?.results || [];
+          const hasAttachments = columns.some((c4) => (c4?.name || c4?.NAME) === "attachments");
+          if (!hasAttachments) {
+            await this.db.prepare("ALTER TABLE ticket_messages ADD COLUMN attachments TEXT").run();
+          }
+        } catch (e2) {
+        }
       }
     };
   }
@@ -32586,23 +32599,31 @@ var init_analytics = __esm({
     init_functionsRoutes_0_8044054200943971();
     onRequestGet15 = /* @__PURE__ */ __name(async (context) => {
       try {
-        const ordersStatsQuery = `
-      SELECT 
-        COUNT(*) as totalOrders,
-        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
-        SUM(CASE WHEN status = 'completed' THEN CAST(final_amount as REAL) ELSE 0 END) as totalRevenue
-      FROM orders
-    `;
-        const usersStatsQuery = `
-      SELECT 
-        COUNT(*) as totalUsers,
-        COUNT(CASE WHEN is_premium = 1 THEN 1 END) as premiumUsers
-      FROM users
-    `;
-        const [ordersStats, usersStats] = await Promise.all([
-          context.env.DB.prepare(ordersStatsQuery).first(),
-          context.env.DB.prepare(usersStatsQuery).first()
-        ]);
+        let ordersStats = { totalOrders: 0, completedOrders: 0, totalRevenue: 0 };
+        let usersStats = { totalUsers: 0, premiumUsers: 0 };
+        try {
+          const ordersStatsQuery = `
+        SELECT 
+          COUNT(*) as totalOrders,
+          COUNT(CASE WHEN status = 'completed' THEN 1 END) as completedOrders,
+          SUM(CASE WHEN status = 'completed' THEN CAST(final_amount as REAL) ELSE 0 END) as totalRevenue
+        FROM orders
+      `;
+          const row = await context.env.DB.prepare(ordersStatsQuery).first();
+          if (row) ordersStats = row;
+        } catch (_3) {
+        }
+        try {
+          const usersStatsQuery = `
+        SELECT 
+          COUNT(*) as totalUsers,
+          COUNT(CASE WHEN is_premium = 1 THEN 1 END) as premiumUsers
+        FROM users
+      `;
+          const row = await context.env.DB.prepare(usersStatsQuery).first();
+          if (row) usersStats = row;
+        } catch (_3) {
+        }
         const analytics = {
           totalRevenue: Number(ordersStats?.totalRevenue) || 0,
           totalSales: Number(ordersStats?.completedOrders) || 0,
@@ -32610,10 +32631,7 @@ var init_analytics = __esm({
           avgRating: 4.9
           // Static rating
         };
-        return new Response(JSON.stringify({
-          success: true,
-          ...analytics
-        }), {
+        return new Response(JSON.stringify({ success: true, ...analytics }), {
           headers: {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
@@ -34894,6 +34912,7 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
   is_from_customer BOOLEAN NOT NULL DEFAULT 1,
   sender_name TEXT NOT NULL,
   sender_email TEXT,
+  attachments TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
 );
@@ -63487,10 +63506,10 @@ var init_functionsRoutes_0_8044054200943971 = __esm({
   }
 });
 
-// ../.wrangler/tmp/bundle-CfmbtI/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-2XRAb4/middleware-loader.entry.ts
 init_functionsRoutes_0_8044054200943971();
 
-// ../.wrangler/tmp/bundle-CfmbtI/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-2XRAb4/middleware-insertion-facade.js
 init_functionsRoutes_0_8044054200943971();
 
 // ../node_modules/wrangler/templates/pages-template-worker.ts
@@ -63986,7 +64005,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-CfmbtI/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-2XRAb4/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -64019,7 +64038,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-CfmbtI/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-2XRAb4/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

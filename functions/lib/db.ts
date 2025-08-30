@@ -223,6 +223,8 @@ export class TicketStorage {
 
   async addTicketMessage(message: Omit<TicketMessage, 'id' | 'created_at'>): Promise<TicketMessage> {
     const now = new Date().toISOString();
+    // Ensure schema is compatible: add attachments column if missing (best-effort, idempotent)
+    await this.ensureAttachmentsColumn();
     
     // Insert message
     const result = await this.db.prepare(`
@@ -245,5 +247,20 @@ export class TicketStorage {
       .run();
 
     return result as TicketMessage;
+  }
+
+  // Best-effort runtime migration to avoid 500s if the DB was created before attachments was added
+  private async ensureAttachmentsColumn(): Promise<void> {
+    try {
+      const info = await this.db.prepare('PRAGMA table_info(ticket_messages)').all<any>();
+      const columns = (info?.results as any[]) || [];
+      const hasAttachments = columns.some((c: any) => (c?.name || c?.NAME) === 'attachments');
+      if (!hasAttachments) {
+        await this.db.prepare('ALTER TABLE ticket_messages ADD COLUMN attachments TEXT').run();
+      }
+    } catch (e) {
+      // Swallow errors here to avoid blocking message creation; insert will still fail loudly if truly incompatible
+      // console.warn('ensureAttachmentsColumn check failed:', e);
+    }
   }
 }

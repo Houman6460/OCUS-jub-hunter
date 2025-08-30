@@ -309,6 +309,7 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
   is_from_customer INTEGER NOT NULL DEFAULT 1,
   sender_name TEXT NOT NULL,
   sender_email TEXT,
+  attachments TEXT,
   created_at INTEGER DEFAULT (CURRENT_TIMESTAMP),
   FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
 );
