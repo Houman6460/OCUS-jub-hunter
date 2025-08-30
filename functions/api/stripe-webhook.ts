@@ -89,16 +89,39 @@ export const onRequestPost: PagesFunction<Env> = async (ctx) => {
   try {
     // Handle the event
     switch (event.type) {
-      case 'checkout.session.completed':
-        console.log('Scheduling checkout.session.completed processing via waitUntil');
-        waitUntil((async () => {
+      case 'checkout.session.completed': {
+        const sessionObj = event.data.object as Stripe.Checkout.Session;
+        if (env.STRIPE_EVENTS_QUEUE) {
+          console.log('Enqueuing checkout.session.completed to STRIPE_EVENTS_QUEUE');
           try {
-            await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, storage);
+            waitUntil(env.STRIPE_EVENTS_QUEUE.send({
+              eventType: event.type,
+              eventId: event.id,
+              created: event.created,
+              session: sessionObj,
+            }));
           } catch (e) {
-            console.error('Deferred processing error (checkout.session.completed):', e);
+            console.error('Queue enqueue failed; falling back to inline processing:', e);
+            waitUntil((async () => {
+              try {
+                await handleCheckoutSessionCompleted(sessionObj, storage);
+              } catch (err) {
+                console.error('Deferred processing error (checkout.session.completed fallback):', err);
+              }
+            })());
           }
-        })());
+        } else {
+          console.log('Queue not configured; scheduling inline processing via waitUntil');
+          waitUntil((async () => {
+            try {
+              await handleCheckoutSessionCompleted(sessionObj, storage);
+            } catch (e) {
+              console.error('Deferred processing error (checkout.session.completed):', e);
+            }
+          })());
+        }
         break;
+      }
       case 'payment_intent.succeeded':
         console.log('Payment intent succeeded:', (event.data.object as any).id);
         break;
