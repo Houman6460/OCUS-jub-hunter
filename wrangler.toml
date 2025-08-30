@@ -7,3 +7,13 @@ pages_build_output_dir = "dist/public"
 binding = "DB"
 database_name = "ocus-tickets"
 database_id = "cc9216e4-8167-486a-b174-89087493b2ea"
+
+# Queues (optional) — producer binding for Stripe events
+# Uncomment and set up the queue to enable producer binding in Pages Functions
+# [[queues.producers]]
+# binding = "STRIPE_EVENTS_QUEUE"
+# queue = "stripe-events"
+#
+# To create the queue:
+#   wrangler queues create stripe-events
+# To reference in code, check for env.STRIPE_EVENTS_QUEUE before sending.
