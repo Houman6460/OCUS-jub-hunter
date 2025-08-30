@@ -33,11 +33,14 @@ async function getWebhookSecret(env: Env): Promise<string | null> {
   return null;
 }
 
-// Helper to generate invoice PDF (placeholder for now)
+// Helper to get invoice PDF URL (served dynamically by Pages Function)
 async function generateInvoicePDF(invoiceData: any): Promise<string> {
-  // TODO: Implement PDF generation using jsPDF or similar
-  // For now, return a placeholder URL
-  return `/api/invoices/${invoiceData.invoiceNumber}.pdf`;
+  const invoiceId = invoiceData?.id || invoiceData?.invoiceId;
+  // Our download endpoint generates the PDF on demand by invoice ID
+  if (invoiceId) return `/api/invoices/${invoiceId}/download`;
+  // Fallback: if only invoiceNumber is present (shouldn't happen), still return route (may 404)
+  const invoiceNumber = invoiceData?.invoiceNumber;
+  return `/api/invoices/${encodeURIComponent(invoiceNumber || '')}/download`;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (ctx) => {
@@ -250,15 +253,8 @@ async function handleCheckoutSessionCompleted(
 
     console.log(`Activation key created: ${activationKey.activationKey}`);
 
-    // 7. Generate invoice PDF URL (placeholder)
-    const invoiceUrl = await generateInvoicePDF({
-      invoiceNumber,
-      customerName: customerName || customerEmail,
-      customerEmail,
-      amount,
-      currency,
-      date: new Date(now).toISOString(),
-    });
+    // 7. Get invoice PDF URL (served by /api/invoices/:id/download)
+    const invoiceUrl = await generateInvoicePDF({ id: invoice.id, invoiceNumber });
 
     // 8. Update order with invoice URL
     await storage.updateOrder(order.id, { invoiceUrl });
