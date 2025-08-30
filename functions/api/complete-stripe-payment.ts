@@ -260,10 +260,45 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         });
       } catch (fallbackError: any) {
         console.error('Fallback path failed in complete-stripe-payment:', fallbackError);
-        return json({ 
-          success: false, 
-          message: `Payment completion failed: ${error.message}` 
-        }, 500);
+        // Second-level fallback: write premium to settings so /api/me recognizes it immediately
+        try {
+          if (!env.DB) {
+            return json({ success: false, message: 'Database not available' }, 500);
+          }
+
+          const session2 = env.DB.withSession('first-primary');
+          const settingsKey = `user_${customerEmail.replace('@', '_at_').replace('.', '_dot_')}`;
+          const valueObj = {
+            id: customerEmail,
+            email: customerEmail,
+            name: customerName || customerEmail,
+            isPremium: true,
+            extensionActivated: true,
+            updatedAt: now,
+          };
+
+          await session2
+            .prepare(`
+              INSERT INTO settings ("key", value) VALUES (?, ?)
+              ON CONFLICT("key") DO UPDATE SET value = excluded.value
+            `)
+            .bind(settingsKey, JSON.stringify(valueObj))
+            .run();
+
+          return json({
+            success: true,
+            message: 'Payment completed (settings fallback) - Premium access activated',
+            data: {
+              via: 'settings',
+            }
+          });
+        } catch (settingsError: any) {
+          console.error('Settings fallback failed in complete-stripe-payment:', settingsError);
+          return json({ 
+            success: false, 
+            message: `Payment completion failed: primary=${error?.message}; fallback=${fallbackError?.message}; settings=${settingsError?.message}` 
+          }, 500);
+        }
       }
     }
   } catch (error: any) {
