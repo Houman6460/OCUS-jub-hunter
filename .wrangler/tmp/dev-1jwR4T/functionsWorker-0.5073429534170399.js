@@ -34440,9 +34440,11 @@ var init_dashboard_features = __esm({
         try {
           await this.db.prepare(`
         CREATE TABLE IF NOT EXISTS dashboard_features (
-          feature_name TEXT PRIMARY KEY,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          feature_name TEXT NOT NULL UNIQUE,
           is_enabled INTEGER DEFAULT 1,
-          updated_at TEXT DEFAULT (datetime('now'))
+          description TEXT,
+          updated_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
         )
       `).run();
           const defaultFeatures = ["affiliate-program", "analytics", "billing"];

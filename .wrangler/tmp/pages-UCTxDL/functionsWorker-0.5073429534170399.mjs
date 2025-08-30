@@ -33836,9 +33836,11 @@ var init_dashboard_features = __esm({
         try {
           await this.db.prepare(`
         CREATE TABLE IF NOT EXISTS dashboard_features (
-          feature_name TEXT PRIMARY KEY,
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          feature_name TEXT NOT NULL UNIQUE,
           is_enabled INTEGER DEFAULT 1,
-          updated_at TEXT DEFAULT (datetime('now'))
+          description TEXT,
+          updated_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
         )
       `).run();
           const defaultFeatures = ["affiliate-program", "analytics", "billing"];
@@ -63520,10 +63522,10 @@ var init_functionsRoutes_0_8044054200943971 = __esm({
   }
 });
 
-// ../.wrangler/tmp/bundle-JoyPJ3/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-J3CL9L/middleware-loader.entry.ts
 init_functionsRoutes_0_8044054200943971();
 
-// ../.wrangler/tmp/bundle-JoyPJ3/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-J3CL9L/middleware-insertion-facade.js
 init_functionsRoutes_0_8044054200943971();
 
 // ../node_modules/wrangler/templates/pages-template-worker.ts
@@ -64019,7 +64021,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-JoyPJ3/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-J3CL9L/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -64052,7 +64054,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-JoyPJ3/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-J3CL9L/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
