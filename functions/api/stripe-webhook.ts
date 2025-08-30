@@ -14,7 +14,7 @@ function json(data: any, status = 200) {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': 'https://stripe.com', // Only allow Stripe
+      'Access-Control-Allow-Origin': '*', // Webhook: server-to-server; allow all origins
     },
   });
 }
@@ -275,7 +275,7 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
   return new Response(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': 'https://stripe.com',
+      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, stripe-signature, Stripe-Signature',
       'Access-Control-Max-Age': '86400',
