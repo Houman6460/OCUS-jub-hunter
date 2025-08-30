@@ -70,7 +70,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           `).bind(userId).first<{ id: number }>();
 
           if (!customer) {
-            return json({ success: true, orders: [] });
+            return json([]);
           }
 
           // Get orders for this customer
