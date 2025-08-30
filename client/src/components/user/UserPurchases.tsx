@@ -123,12 +123,13 @@ function PurchaseForm({ onSuccess, paymentIntentId, onPaymentSuccess }: { onSucc
 }
 
 // Purchase dialog wrapper with Stripe Elements
-function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
+function PurchaseDialog({ onSuccess, customerEmail, customerName }: { onSuccess: () => void; customerEmail: string; customerName: string }) {
   const [open, setOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
   const [stripePublishableKey, setStripePublishableKey] = useState<string>('');
   const [amount, setAmount] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('eur');
+  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const { toast } = useToast();
 
   const handleSuccess = () => {
@@ -138,7 +139,7 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
 
   // Fetch client secret when dialog opens
   React.useEffect(() => {
-    if (open && !clientSecret) {
+    if (open && !clientSecret && customerEmail) {
       console.log('Initializing payment flow...');
       
       apiRequest('GET', '/api/admin/pricing')
@@ -163,8 +164,8 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
           return apiRequest('POST', '/api/create-user-payment-intent', {
             amount: priceAmount,
             currency: priceCurrency,
-            customerEmail: 'user@example.com',
-            customerName: 'User',
+            customerEmail: customerEmail,
+            customerName: customerName,
             productId: 'ocus-extension'
           });
         })
@@ -187,6 +188,9 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
           }
           
           setClientSecret(data.clientSecret);
+          if (data.paymentIntentId) {
+            setPaymentIntentId(data.paymentIntentId);
+          }
           setStripePublishableKey(data.publishableKey);
           
           if (data.publishableKey && !stripePromise) {
@@ -208,7 +212,7 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
           setOpen(false);
         });
     }
-  }, [open, clientSecret, toast]);
+  }, [open, clientSecret, toast, customerEmail, customerName]);
 
   // Handle successful payment
   const handlePaymentSuccess = async (paymentIntentId: string) => {
@@ -216,8 +220,8 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
       // Complete the purchase and create order record
       const response = await apiRequest('POST', '/api/orders/complete-purchase', {
         paymentIntentId,
-        customerEmail: 'user@example.com', // This should come from user context
-        customerName: 'User', // This should come from user context
+        customerEmail: customerEmail,
+        customerName: customerName,
         amount: amount,
         currency: currency
       });
@@ -269,7 +273,7 @@ function PurchaseDialog({ onSuccess }: { onSuccess: () => void }) {
         </DialogHeader>
         {stripePublishableKey && clientSecret ? (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <PurchaseForm onSuccess={handleSuccess} paymentIntentId={clientSecret} onPaymentSuccess={handlePaymentSuccess} />
+            <PurchaseForm onSuccess={handleSuccess} paymentIntentId={paymentIntentId} onPaymentSuccess={handlePaymentSuccess} />
           </Elements>
         ) : (
           <div className="text-center py-8">
@@ -304,6 +308,18 @@ export function UserPurchases() {
     queryKey: ['/api/products/pricing'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/products/pricing');
+      return res.json();
+    },
+  });
+
+  // Get current user info for dynamic purchase data
+  const { data: customer } = useQuery({
+    queryKey: ['/api/me'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/me');
+      if (!res.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
       return res.json();
     },
   });
@@ -408,7 +424,11 @@ export function UserPurchases() {
                 )}
               </div>
             </div>
-            <PurchaseDialog onSuccess={handlePurchaseSuccess} />
+            <PurchaseDialog 
+              onSuccess={handlePurchaseSuccess} 
+              customerEmail={customer?.email || ''} 
+              customerName={customer?.name || customer?.email || 'User'} 
+            />
           </div>
         </CardContent>
       </Card>

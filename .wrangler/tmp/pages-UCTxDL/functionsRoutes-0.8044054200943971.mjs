@@ -143,6 +143,8 @@ import { onRequestOptions as __api_chat_ts_onRequestOptions } from "/Users/houma
 import { onRequestPost as __api_chat_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/chat.ts"
 import { onRequestOptions as __api_complete_stripe_payment_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/complete-stripe-payment.ts"
 import { onRequestPost as __api_complete_stripe_payment_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/complete-stripe-payment.ts"
+import { onRequestOptions as __api_create_payment_intent_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/create-payment-intent.ts"
+import { onRequestPost as __api_create_payment_intent_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/create-payment-intent.ts"
 import { onRequestOptions as __api_create_user_payment_intent_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/create-user-payment-intent.ts"
 import { onRequestPost as __api_create_user_payment_intent_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/create-user-payment-intent.ts"
 import { onRequestGet as __api_download_premium_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/download-premium.ts"
@@ -167,6 +169,8 @@ import { onRequestPost as __api_test_user_ts_onRequestPost } from "/Users/houman
 import { onRequestGet as __api_tickets_index_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/tickets/index.ts"
 import { onRequestOptions as __api_tickets_index_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/tickets/index.ts"
 import { onRequestPost as __api_tickets_index_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/api/tickets/index.ts"
+import { onRequestOptions as __webhooks_stripe_ts_onRequestOptions } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/webhooks/stripe.ts"
+import { onRequestPost as __webhooks_stripe_ts_onRequestPost } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/webhooks/stripe.ts"
 import { onRequestGet as __health_ts_onRequestGet } from "/Users/houmanghavamzadeh/CascadeProjects/ocus-job-hunter/functions/health.ts"
 
 export const routes = [
@@ -1186,6 +1190,20 @@ export const routes = [
       modules: [__api_complete_stripe_payment_ts_onRequestPost],
     },
   {
+      routePath: "/api/create-payment-intent",
+      mountPath: "/api",
+      method: "OPTIONS",
+      middlewares: [],
+      modules: [__api_create_payment_intent_ts_onRequestOptions],
+    },
+  {
+      routePath: "/api/create-payment-intent",
+      mountPath: "/api",
+      method: "POST",
+      middlewares: [],
+      modules: [__api_create_payment_intent_ts_onRequestPost],
+    },
+  {
       routePath: "/api/create-user-payment-intent",
       mountPath: "/api",
       method: "OPTIONS",
@@ -1352,6 +1370,20 @@ export const routes = [
       method: "POST",
       middlewares: [],
       modules: [__api_tickets_index_ts_onRequestPost],
+    },
+  {
+      routePath: "/webhooks/stripe",
+      mountPath: "/webhooks",
+      method: "OPTIONS",
+      middlewares: [],
+      modules: [__webhooks_stripe_ts_onRequestOptions],
+    },
+  {
+      routePath: "/webhooks/stripe",
+      mountPath: "/webhooks",
+      method: "POST",
+      middlewares: [],
+      modules: [__webhooks_stripe_ts_onRequestPost],
     },
   {
       routePath: "/health",
