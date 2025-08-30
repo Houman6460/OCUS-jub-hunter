@@ -93,7 +93,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
           // Fallback to customers table (for legacy users) - search by email
           const customer = await session.prepare(`
-            SELECT id, email, name, is_premium, extension_activated, created_at,
+            SELECT id, email, name, subscription_status, extension_activated, created_at,
                    total_spent, total_orders
             FROM customers WHERE email = ?
           `).bind(userEmail).first();
@@ -107,7 +107,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
               name: customer.name,
               role: 'customer',
               createdAt: customer.created_at,
-              isPremium: Boolean(customer.is_premium),
+              isPremium: (String(customer.subscription_status || '').toLowerCase() === 'active') || Boolean(customer.extension_activated),
               extensionActivated: Boolean(customer.extension_activated),
               totalSpent: parseFloat(String(customer.total_spent || '0')),
               totalOrders: parseInt(String(customer.total_orders || '0')),
